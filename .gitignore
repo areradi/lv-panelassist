@@ -6,3 +6,17 @@ dist/
 build/
 *.spec
 config.json
+ 
+# Local backups, patches, generated tests/reports/diagrams 
+*.bak 
+*.bak_v* 
+patch_*.py 
+test_sld_*.py 
+gui_github.py 
+github_*.py 
+/ctrl_*.svg 
+/sld_*.svg 
+/lv_assist/*.bak 
+/lv_assist/*.bak_v* 
+/lv_assist/Input_Load_List_Template.xlsx 
+/lv_assist/LV_Panel_Engineering_Report.html 

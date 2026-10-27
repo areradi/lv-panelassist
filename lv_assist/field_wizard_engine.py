@@ -204,79 +204,10 @@ class IndustrialAutomationEngine:
         return inst_outputs, plc_summary
 
     @staticmethod
-    def generate_standard_control_circuit_svg(feeder_tag: str = "=PUMP1+MCC1") -> str:
-        """
-        تولید نقشه شماتیک استاندارد مدار فرمان ۲۴ ولت صنعتی (IEC 60204-1)
-        شامل شینه +24VDC، کنتاکت بی‌متال 95-96، استپ اضطراری، سلکتور Local/Remote،
-        کنتاکت رله PLC، بوبین کنتاکتور -K1M (A1/A2) و فیدبک Run/Trip به کارت DI پی‌ال‌سی
-        """
-        return f"""
-        <svg viewBox="0 0 780 360" width="100%" height="340" style="background:#FFFFFF; border:1px solid #1F4E78; border-radius:6px; font-family:Calibri,sans-serif;">
-            <!-- Top +24VDC Rail & Bottom 0VDC (M) Rail -->
-            <line x1="30" y1="35" x2="750" y2="35" stroke="#C0392B" stroke-width="3"/>
-            <text x="35" y="25" fill="#C0392B" font-size="12" font-weight="bold">L+ (+24V DC PELV — Protected by SITOP SEL1200 -F0)</text>
-
-            <line x1="30" y1="325" x2="750" y2="325" stroke="#1F618D" stroke-width="3"/>
-            <text x="35" y="345" fill="#1F618D" font-size="12" font-weight="bold">M (0V DC — Grounded to PE Bar per IEC 60204-1 Clause 9.4.2.1)</text>
-
-            <!-- PATH 1: Main Contactor Coil Command (Local / PLC Auto) -->
-            <line x1="120" y1="35" x2="120" y2="75" stroke="#000" stroke-width="1.8"/>
-            <!-- 95-96 Overload NC Contact -->
-            <line x1="120" y1="75" x2="108" y2="105" stroke="#000" stroke-width="2"/>
-            <circle cx="120" cy="75" r="3" fill="#000"/><circle cx="120" cy="108" r="3" fill="#000"/>
-            <text x="130" y="95" fill="#1F4E78" font-size="11" font-weight="bold">{feeder_tag}-Q1 / -F1 (95-96 NC Trip)</text>
-
-            <!-- E-Stop NC Contact -->
-            <line x1="120" y1="108" x2="120" y2="140" stroke="#000" stroke-width="1.8"/>
-            <line x1="120" y1="140" x2="108" y2="168" stroke="#C0392B" stroke-width="2"/>
-            <text x="130" y="158" fill="#C0392B" font-size="11" font-weight="bold">+DOOR-S0 (E-Stop NC)</text>
-
-            <!-- Local / Remote Selector Split -->
-            <line x1="120" y1="170" x2="120" y2="195" stroke="#000" stroke-width="1.8"/>
-            <line x1="80" y1="195" x2="160" y2="195" stroke="#000" stroke-width="1.8"/>
-            <text x="170" y="198" fill="#000" font-size="11" font-weight="bold">+DOOR-S1 (1-0-2 Hand/Off/Auto)</text>
-
-            <!-- Left Branch: Local Start + Self-Hold 13-14 -->
-            <line x1="80" y1="195" x2="80" y2="225" stroke="#000" stroke-width="1.5"/>
-            <line x1="80" y1="225" x2="70" y2="250" stroke="#000" stroke-width="1.8"/>
-            <text x="22" y="242" fill="#000" font-size="10">-S2 Start</text>
-            <line x1="80" y1="252" x2="80" y2="270" stroke="#000" stroke-width="1.5"/>
-
-            <!-- Right Branch: PLC Coupling Relay Contact -K_DO -->
-            <line x1="160" y1="195" x2="160" y2="225" stroke="#000" stroke-width="1.5"/>
-            <line x1="160" y1="225" x2="150" y2="250" stroke="#1E8449" stroke-width="2"/>
-            <text x="168" y="242" fill="#1E8449" font-size="10" font-weight="bold">-K_DO1 (11-14 PLC Cmd)</text>
-            <line x1="160" y1="252" x2="160" y2="270" stroke="#000" stroke-width="1.5"/>
-
-            <!-- Rejoin to Contactor Coil -K1M (A1/A2) -->
-            <line x1="80" y1="270" x2="160" y2="270" stroke="#000" stroke-width="1.8"/>
-            <line x1="120" y1="270" x2="120" y2="282" stroke="#000" stroke-width="1.8"/>
-            <rect x="98" y="282" width="44" height="28" fill="#EBF5FB" stroke="#1F4E78" stroke-width="2"/>
-            <text x="120" y="300" fill="#1F4E78" font-size="11" font-weight="bold" text-anchor="middle">-K1M</text>
-            <text x="82" y="288" fill="#555" font-size="9">A1</text>
-            <text x="82" y="318" fill="#555" font-size="9">A2</text>
-            <line x1="120" y1="310" x2="120" y2="325" stroke="#000" stroke-width="1.8"/>
-
-            <!-- PATH 2: Run Feedback to PLC DI (%I0.0) & Green Lamp -H1 -->
-            <line x1="390" y1="35" x2="390" y2="130" stroke="#000" stroke-width="1.8"/>
-            <line x1="390" y1="130" x2="378" y2="160" stroke="#000" stroke-width="2"/>
-            <text x="400" y="150" fill="#1F4E78" font-size="11" font-weight="bold">{feeder_tag}-K1M (13-14 NO Aux)</text>
-            <line x1="390" y1="162" x2="390" y2="282" stroke="#000" stroke-width="1.8"/>
-            <rect x="345" y="282" width="90" height="28" fill="#E9F7EF" stroke="#1E8449" stroke-width="2"/>
-            <text x="390" y="300" fill="#1E8449" font-size="11" font-weight="bold" text-anchor="middle">PLC DI: RUN</text>
-            <line x1="390" y1="310" x2="390" y2="325" stroke="#000" stroke-width="1.8"/>
-
-            <!-- PATH 3: Trip/Fault Feedback to PLC DI (%I0.1) & Red Lamp -H2 -->
-            <line x1="600" y1="35" x2="600" y2="130" stroke="#000" stroke-width="1.8"/>
-            <line x1="600" y1="130" x2="588" y2="160" stroke="#C0392B" stroke-width="2"/>
-            <text x="610" y="150" fill="#C0392B" font-size="11" font-weight="bold">{feeder_tag}-Q1 / -F1 (97-98 NO Trip)</text>
-            <line x1="600" y1="162" x2="600" y2="282" stroke="#000" stroke-width="1.8"/>
-            <rect x="555" y="282" width="90" height="28" fill="#FDEDEC" stroke="#C0392B" stroke-width="2"/>
-            <text x="600" y="300" fill="#C0392B" font-size="11" font-weight="bold" text-anchor="middle">PLC DI: TRIP</text>
-            <line x1="600" y1="310" x2="600" y2="325" stroke="#000" stroke-width="1.8"/>
-        </svg>
-        """.strip()
-
+    def generate_standard_control_circuit_svg(feeder_tag: str = "=PUMP1+MCC1", panel_tag: str = "+MCC1", page_no: str = "CC-01") -> str:
+        """IEC 60617 / EPLAN-style ladder control circuit (delegates to lv_assist.iec_ladder_svg)."""
+        from lv_assist.iec_ladder_svg import render_control_circuit_ladder
+        return render_control_circuit_ladder(feeder_tag=feeder_tag, panel_tag=panel_tag, page_no=page_no)
     @staticmethod
     def get_plain_language_tcc_guide_html() -> str:
         return """
