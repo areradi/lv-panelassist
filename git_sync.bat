@@ -28,7 +28,7 @@ if exist ".pytest_cache" rd /s /q ".pytest_cache"
 
 echo.
 echo ============================================================================
-echo [STEP 4/4] Staging & Pushing Approved Changes to GitHub...
+echo [STEP 4/4] Staging ^& Pushing Approved Changes to GitHub...
 echo Repository: https://github.com/areradi/lv-panelassist.git
 echo ============================================================================
 set /p COMMIT_MSG="Enter commit message for this stage (e.g., Add Field Wizard, PLC/Sensors & IEC 81346): "

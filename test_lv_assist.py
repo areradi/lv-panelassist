@@ -1048,7 +1048,7 @@ class TestPhase5PanelLayout:
         assert PanelLayoutGenerator.BUS_BAR_ZONE_HEIGHT_MM == 120.0
         assert PanelLayoutGenerator._form_partition_factor("Form 4b") == 1.15
         assert PanelLayoutGenerator._form_partition_factor("Form 3a") == 1.10
-        assert PanelLayoutGenerator._form_partition_factor("Form 2b") == 1.0
+        assert PanelLayoutGenerator._form_partition_factor("Form 2b") == 1.05
 
     def test_layout_spare_fill_with_form(self):
         project = make_project(internal_separation_form="Form 4b")
@@ -1064,7 +1064,7 @@ class TestPhase5PanelLayout:
         outs2, summary2, _ = EngineeringEngine(CATALOG).process_project(
             make_project(internal_separation_form="Form 2b"), feeders)
         res2 = PanelLayoutGenerator.generate(make_project(internal_separation_form="Form 2b"), outs2, summary2)
-        assert res2.form_partition_factor == 1.0
+        assert res2.form_partition_factor == 1.05
         assert res4.fill_factor_pct > res2.fill_factor_pct
 
     def test_layout_mccb_arc_clearance(self):
@@ -1853,7 +1853,10 @@ class TestPhase8EplanMacro:
             "  [System.AttributeUsage(System.AttributeTargets.Method)]\n"
             "  public class StartAttribute : System.Attribute {}\n"
             "}\n"
-            "namespace Eplan.EplApi.ApplicationFramework {}\n",
+            "namespace Eplan.EplApi.ApplicationFramework {\n"
+            "  public class ActionCallingContext { public void AddParameter(string k, string v){} }\n"
+            "  public class CommandLineInterpreter { public void Execute(string a){} public void Execute(string a, ActionCallingContext c){} }\n"
+            "}\n",
             encoding="utf-8",
         )
         out = tmp_path / "gen.dll"
@@ -1937,7 +1940,7 @@ class TestPhase9EplanMacroFiles:
             "LV_SLD_Main.ema": ["-Q0", "-Q1", "-Q2", "-Q3", "-Q4", "-Qcap"],
             "LV_Control_PSU.ema": ["-Q01", "-G1", "-F0", "-X1", "-X2"],
             "LV_Control_DOL.ema": ["-Q1", "-S10", "-S11", "-K1", "-H11"],
-            "LV_Control_StarDelta.ema": ["-F2", "-S20", "-S21", "-K2Y", "-K2D", "-K2T", "-H21", "-H22"],
+            "LV_Control_StarDelta.ema": ["-F2", "-S20", "-S21", "-K2T", "-K2Y", "-K2D", "-H21", "-H22"],
             "LV_Control_VFD.ema": ["-S30", "-S31", "-U3", "-H31", "-H32"],
         }
         parts_by_file = {}
@@ -2151,7 +2154,7 @@ class TestPhase10EplanPageMacros:
             "LV_SLD_Main.emp": ["-Q0", "-Q1", "-Q2", "-Q3", "-Q4", "-Qcap"],
             "LV_Control_PSU.emp": ["-Q01", "-G1", "-F0", "-X1", "-X2"],
             "LV_Control_DOL.emp": ["-Q1", "-S10", "-S11", "-K1", "-H11"],
-            "LV_Control_StarDelta.emp": ["-F2", "-S20", "-S21", "-K2Y", "-K2D", "-K2T", "-H21", "-H22"],
+            "LV_Control_StarDelta.emp": ["-F2", "-S20", "-S21", "-K2T", "-K2Y", "-K2D", "-H21", "-H22"],
             "LV_Control_VFD.emp": ["-S30", "-S31", "-U3", "-H31", "-H32"],
         }
         parts_by_file = {}
