@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><title>دفترچه محاسبات مهندسی تابلو (v۰.۵.۰) - پمپ‌خانه صنعتی (MDB-PUMP-02)</title>
+<style>
+@page { size: A4 landscape; margin: 12mm; }
+body { font-family: Tahoma, sans-serif; font-size: 12px; color: #1C2833; background: #F8F9F9; margin: 20px; }
+.container { background: #FFFFFF; padding: 20px; border: 1px solid #BDC3C7; }
+.header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1F4E78; padding-bottom: 12px; margin-bottom: 16px; }
+.print-btn { background: #1F4E78; color: white; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+h2 { font-size: 14px; background: #1F4E78; color: white; padding: 6px 12px; border-radius: 4px; margin-top: 18px; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11px; }
+th, td { border: 1px solid #BDC3C7; padding: 6px 8px; vertical-align: middle; }
+th { background: #EBF5FB; color: #1F4E78; text-align: center; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media print { .no-print { display: none !important; } body { background: #FFF; margin: 0; } .container { border: none; } }
+</style></head>
+<body><div class="container">
+<div class="header-box"><div><h1>دفترچه محاسبات مهندسی تابلو (v۰.۵.۰)</h1><p>پروژه: <b>پمپ‌خانه صنعتی (MDB-PUMP-02)</b> | تاریخ: 2026-10-24 11:07</p></div>
+<div class="no-print"><button class="print-btn" onclick="window.print()">🖨️ چاپ / PDF</button></div></div>
+<div class="grid-2">
+<div><h2>۱. مشخصات رابط شبکه و بودجه ۲۴ ولت</h2><table>
+<tr><th>پارامتر</th><th>مقدار</th></tr>
+<tr><td>ولتاژ و سیستم زمین</td><td dir="ltr"><b>400.0V / TN-S</b></td></tr>
+<tr><td>جریان اتصال کوتاه (Ik″)</td><td dir="ltr"><b>22.0 kA</b><br><small>ورودی مستقیم کاربر (Ik″)</small></td></tr>
+<tr><td>نوع تابلو / سناریو</td><td dir="ltr"><b>MCC / NONE</b></td></tr>
+<tr><td>حداکثر افت ولتاژ استارت</td><td dir="ltr"><b>0.9%</b> <small>F01</small></td></tr>
+<tr><td>بودجه ۲۴ ولت (PLC + بوبین)</td><td dir="ltr"><b>78.2 W (3.91 A)</b></td></tr>
+<tr><td>منبع تغذیه SITOP</td><td dir="ltr"><b>6EP1332-2BA20</b></td></tr>
+</table></div>
+<div><h2>۲. خلاصه بار، شینه و حرارت</h2><table>
+<tr><th>پارامتر</th><th>مقدار</th></tr>
+<tr><td>جریان طراحی (InA)</td><td dir="ltr"><b>130.75 A</b> (Main: 3VA2216-5HL32-0AA0)</td></tr>
+<tr><td>شینه‌کشی فاز و PE</td><td dir="ltr"><b>Cu 20x5 mm (3P+N) | PE: Cu 20x5 mm (PE - 100 mm²)</b></td></tr>
+<tr><td>تلفات حرارتی کل / دفع طبیعی</td><td dir="ltr"><b>902.0 W / 279.0 W</b></td></tr>
+<tr><td>محفظه ریتال</td><td dir="ltr"><b>VX 8806.000</b></td></tr>
+<tr><td>THDi پانل</td><td dir="ltr"><b>-</b></td></tr>
+<tr><td>بانک خازنی</td><td dir="ltr"><b>25.0 kvar (استاندارد)</b></td></tr>
+</table></div></div>
+<h2>۳. جدول فیدرها و سایزینگ کابل و PE</h2><table>
+<thead><tr><th>کد</th><th>شرح بار</th><th>نوع</th><th>kW</th><th>Ib</th><th>تجهیزات</th><th>کابل قدرت و PE</th><th>dU%</th><th>سلکتیویته</th><th>تلفات</th></tr></thead>
+<tbody><tr>
+                <td><b>F01</b><br><small>=PWR+MCC1</small></td>
+                <td>پمپ سیرکولاسیون ۱ (15kW DOL)</td><td>MOTOR_DOL</td><td>15.0</td>
+                <td><b>27.99 A</b></td><td dir="ltr">3RV2021-4EA10<br><small>KM: 3RT2027-1BB40</small><br><small>ΔU<sub>start</sub>: 0.9%</small></td>
+                <td dir="ltr"><b>3x6+6 mm² Cu (3P+PE)</b><br><small>Iz=28.5A | L=45.0m</small></td>
+                <td>1.76%</td><td>VERIFIED_TOTAL</td><td>19.7 W</td>
+            </tr><tr>
+                <td><b>F02</b><br><small>=PWR+MCC1</small></td>
+                <td>کمپرسور (30kW Star-Delta)</td><td>MOTOR_STAR_DELTA</td><td>30.0</td>
+                <td><b>54.14 A</b></td><td dir="ltr">3RV2031-4JA10<br><small>KM/KD: 3RT2027-1BB40 | KY: 3RT2026-1BB40</small><br><small>ΔU<sub>start</sub>: 0.5%</small></td>
+                <td dir="ltr"><b>Line: 3x25+16 mm² | Motor Y-Δ: 2x(3x10)+16 mm² Cu</b><br><small>Iz=66.8A | L=55.0m</small></td>
+                <td>1.05%</td><td>VERIFIED_TOTAL</td><td>46.4 W</td>
+            </tr><tr>
+                <td><b>F03</b><br><small>=PWR+MCC1</small></td>
+                <td>پمپ VFD (18.5kW)</td><td>MOTOR_VFD</td><td>18.5</td>
+                <td><b>31.23 A</b></td><td dir="ltr">3VA1163-4ED32-0AA0<br><small>VFD: 6SL3210-1KE23-8UF1</small><br><small>ΔU<sub>start</sub>: 0.2%</small></td>
+                <td dir="ltr"><b>3x10+10 mm² Cu (Shielded EMC CY/NYCWY)</b><br><small>Iz=39.7A | L=40.0m</small></td>
+                <td>1.17%</td><td>VERIFIED_TOTAL</td><td>554.3 W</td>
+            </tr><tr>
+                <td><b>F04</b><br><small>=PWR+MCC1</small></td>
+                <td>روشنایی و پریز (12kW)</td><td>LIGHTING_SOCKET</td><td>12.0</td>
+                <td><b>19.25 A</b></td><td dir="ltr">3VA1125-4ED32-0AA0</td>
+                <td dir="ltr"><b>3x4+N2.5+6 mm² Cu (3P+N+PE)</b><br><small>Iz=22.3A | L=60.0m</small></td>
+                <td>2.55%</td><td>VERIFIED_TOTAL</td><td>9.3 W</td>
+            </tr></tbody></table>
+<h2>۴. کارنامه کنترل طراحی (Validation Log)</h2><table>
+<thead><tr><th>وضعیت</th><th>کد</th><th>استاندارد</th><th>شرح</th><th>شواهد</th><th>اقدام</th></tr></thead>
+<tbody><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-COORD-002</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60947-4-1</td><td>هماهنگی تیپ ۲ (بدون آسیب، آماده استارت مجدد) برقرار است.</td>
+                <td dir="ltr"><small>۳RV۲۰۲۱-۴EA۱۰ + ۳RT۲۰۲۷-۱BB۴۰ برای ۲۸.۰A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CABLE-009</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>سایز کابل و PE هماهنگ است.</td>
+                <td dir="ltr"><small>Iz=۲۸.۵A >= ۲۸.۰A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-VDROP-003</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>بررسی افت ولتاژ (۵.۰%).</td>
+                <td dir="ltr"><small>Delta_U = ۱.۷۶%</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-PROT-SC-001</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>قدرت قطع کلید متناسب با اتصال کوتاه است.</td>
+                <td dir="ltr"><small>Icu=۵۵.۰kA >= Ik''=۲۲.۰kA</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-MOT-YD-008</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60947-4-1</td><td>سایزینگ سه‌کنتاکتور و بی‌متال ستاره-مثلث انجام شد.</td>
+                <td dir="ltr"><small>I_delta=۳۱.۲۶A, I_star=۱۸.۰۵A</small></td><td>اینترلاک بین کنتاکتورها رعایت شود.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-COORD-002</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60947-4-1</td><td>هماهنگی تیپ ۲ (بدون آسیب، آماده استارت مجدد) برقرار است.</td>
+                <td dir="ltr"><small>۳RU۲۱۲۶-۴EB۰ + ۳RT۲۰۲۷-۱BB۴۰ برای ۳۱.۲۶A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CABLE-009</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>سایز کابل و PE هماهنگ است.</td>
+                <td dir="ltr"><small>Iz=۶۶.۸A >= ۵۴.۱A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-VDROP-003</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>بررسی افت ولتاژ (۵.۰%).</td>
+                <td dir="ltr"><small>Delta_U = ۱.۰۵%</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-PROT-SC-001</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>قدرت قطع کلید متناسب با اتصال کوتاه است.</td>
+                <td dir="ltr"><small>Icu=۵۵.۰kA >= Ik''=۲۲.۰kA</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CABLE-009</b><br><small>F03</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>سایز کابل و PE هماهنگ است.</td>
+                <td dir="ltr"><small>Iz=۳۹.۷A >= ۳۱.۲A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-VDROP-003</b><br><small>F03</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>بررسی افت ولتاژ (۵.۰%).</td>
+                <td dir="ltr"><small>Delta_U = ۱.۱۷%</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-PROT-SC-001</b><br><small>F03</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>قدرت قطع کلید متناسب با اتصال کوتاه است.</td>
+                <td dir="ltr"><small>Icu=۳۶.۰kA >= Ik''=۲۲.۰kA</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CABLE-009</b><br><small>F04</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>سایز کابل و PE هماهنگ است.</td>
+                <td dir="ltr"><small>Iz=۲۲.۳A >= ۱۹.۲A</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-VDROP-003</b><br><small>F04</small></td>
+                <td dir="ltr">IEC 60364-5-52</td><td>بررسی افت ولتاژ (۳.۰%).</td>
+                <td dir="ltr"><small>Delta_U = ۲.۵۵%</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-PROT-SC-001</b><br><small>F04</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>قدرت قطع کلید متناسب با اتصال کوتاه است.</td>
+                <td dir="ltr"><small>Icu=۳۶.۰kA >= Ik''=۲۲.۰kA</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#F2F4F4;">
+                <td style="color:#566573; font-weight:bold; text-align:center;">INSUFFICIENT ?</td>
+                <td dir="ltr"><b>RULE-HARM-013</b><br><small>PANEL</small></td>
+                <td dir="ltr">IEC 61000-3-2</td><td>THDi کل پانل قابل ارزیابی نیست (هیچ فیدری THDi ندارد)</td>
+                <td dir="ltr"><small>-</small></td><td>THDi فیدرهای غیرخطی (VFD/UPS) را وارد کنید</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CAP-015</b><br><small>PANEL</small></td>
+                <td dir="ltr">IEC 60831-1</td><td>بانک خازنی ۱۴.۵kvar لازم؛ نصب ۲۵.۰kvar استاندارد</td>
+                <td dir="ltr"><small>cos φ=۰.۸۹ → هدف ۰.۹۵؛ Qc=۱۴.۵kvar</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CAP-017</b><br><small>PANEL</small></td>
+                <td dir="ltr">IEC 60831-1</td><td>حفاظت بانک خازنی انتخاب شد</td>
+                <td dir="ltr"><small>Ic=۳۶.۱A → In ≥ ۱.۵×Ic → ۳VA۱۱۶۳-۴ED۳۲-۰AA۰</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CAP-016</b><br><small>PANEL</small></td>
+                <td dir="ltr">IEC 61642</td><td>فرکانس رزونانس h=۲۴.۶۹ از هارمونیک‌های غالب فاصله دارد</td>
+                <td dir="ltr"><small>Ssc=۱۵۲۴۲.۰kVA، Qc=۲۵.۰kvar</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-SEL-005</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>سلکتیویته کامل برقرار است.</td>
+                <td dir="ltr"><small>Is=۵۵.۰kA [Siemens Selectivity Manual ۳VA/۳RV۲ - Table ۵-۲ (Total up to ۵۵kA)]</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-SEL-005</b><br><small>F02</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>سلکتیویته کامل برقرار است.</td>
+                <td dir="ltr"><small>Is=۵۵.۰kA [Siemens Selectivity Manual ۳VA/۳RV۲ - Table ۵-۲ (Total up to ۵۵kA)]</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-SEL-005</b><br><small>F03</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>سلکتیویته کامل برقرار است.</td>
+                <td dir="ltr"><small>Is=۲۵.۰kA [Siemens Selectivity Manual ۳VA۱/۳VA۲ - Table ۳-۴ (Is = ۲۵kA)]</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-SEL-005</b><br><small>F04</small></td>
+                <td dir="ltr">IEC 60947-2</td><td>سلکتیویته کامل برقرار است.</td>
+                <td dir="ltr"><small>Is=۲۵.۰kA [Siemens Selectivity Manual ۳VA۱/۳VA۲ - Table ۳-۴ (Is = ۲۵kA)]</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-CTRL-24V-010</b><br><small>CTRL_24VDC</small></td>
+                <td dir="ltr">IEC 60204-1</td><td>ظرفیت دائم و لحظه‌ای منبع تغذیه ۲۴ ولت تأیید شد.</td>
+                <td dir="ltr"><small>I_des=۳.۹۱A, Peak=۳.۲۶A -> ۶EP۱۳۳۲-۲BA۲۰</small></td><td>اتصال قطب منفی به PE (PELV).</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-THERM-016</b><br><small>PANEL</small></td>
+                <td dir="ltr">IEC 61439-1</td><td>دمای داخلی تخمینی ۵۰.۰°C (حد مجاز ۵۰.۰°C)</td>
+                <td dir="ltr"><small>تلفات ۹۰۲.۰W / اتلاف ۲۷۹.۰W / هوادهی ۲۰۵.۶m³/h</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr><tr style="background-color:#E9F7EF;">
+                <td style="color:#1E8449; font-weight:bold; text-align:center;">COMPLETED ✓</td>
+                <td dir="ltr"><b>RULE-VDIP-013</b><br><small>F01</small></td>
+                <td dir="ltr">IEC 60034-1</td><td>افت ولتاژ استارت بزرگ‌ترین موتور ۰.۹% است.</td>
+                <td dir="ltr"><small>ΔU استارت = ۰.۹% (حد مجاز ۱۵%)</small></td><td>نیاز به اقدام ندارد.</td>
+            </tr></tbody></table>
+<h2>مراجع و استانداردها</h2><table>
+<thead><tr><th>استاندارد</th><th>کاربرد در این پروژه</th></tr></thead>
+<tbody><tr><td dir='ltr'><b>IEC 60034-1</b><br><small>ماشین‌های الکتریکی دوار - مقادیر نامی</small></td><td>جریان راه‌اندازی و رفتار موتور</td></tr><tr><td dir='ltr'><b>IEC 60204-1</b><br><small>تجهیزات الکتریکی ماشین‌آلات</small></td><td>مدار فرمان ۲۴VDC و رنگ‌بندی</td></tr><tr><td dir='ltr'><b>IEC 60364-5-52</b><br><small>سیم‌کشی و ظرفیت جریان‌دهی</small></td><td>انتخاب مقطع کابل و افت ولتاژ</td></tr><tr><td dir='ltr'><b>IEC 60947-2</b><br><small>کلیدهای فشار ضعیف (قدرت قطع و سلکتیویته)</small></td><td>Icu/Ics و هماهنگی حفاظتی</td></tr><tr><td dir='ltr'><b>IEC 60947-4-1</b><br><small>کنتاکتورها و راه‌اندازهای موتور</small></td><td>ترکیب MPCB+کنتاکتور و تیپ هماهنگی ۱/۲</td></tr><tr><td dir='ltr'><b>IEC 61000-3-2</b><br><small>محدودیت هارمونیک‌های جریان</small></td><td>THDi و سایزینگ نول</td></tr></tbody></table></div></body></html>
