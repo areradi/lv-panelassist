@@ -627,7 +627,12 @@ class LVAssistApp(ctk.CTk):
         self._run_calculations_and_refresh()
 
     def _run_calculations_and_refresh(self):
-        f_outs, summary, validations = self.engine.process_project(self.current_project, self.current_feeders)
+        try:
+            f_outs, summary, validations = self.engine.process_project(self.current_project, self.current_feeders)
+        except ValueError as error:
+            self._mark_stale()
+            messagebox.showerror(tr("msg_error"), str(error))
+            return
         self.last_results = (f_outs, summary, validations)
         self.lbl_project_title.configure(text=tr("lbl_project", name=self.current_project.project_name, tag=self.current_project.panel_tag))
         self.kpi_labels["main_current"].configure(text=f"{summary.design_main_current_a}A\n{summary.main_breaker.part_number if summary.main_breaker else '-'}")

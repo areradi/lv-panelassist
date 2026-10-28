@@ -6,7 +6,16 @@ from lv_assist.result_contract import ValidationStatus
 from lv_assist.core_verification import CheckResult, ShortCircuitProfile, TripTimeEstimate
 from lv_assist.run_metadata import RunMetadata
 from lv_assist.i18n import tr
+from lv_assist.text_validation import require_exportable_text
 from lv_assist.evidence_matching import exact_applicability, exact_value, valid_review_date
+
+class EngineeringTextInput(BaseModel):
+    @field_validator("*", mode="before")
+    @classmethod
+    def exportable_input_text(cls, value):
+        require_exportable_text(value)
+        return value
+
 
 class EarthingSystem(str, Enum):
     TN_S = "TN-S"
@@ -72,7 +81,7 @@ class SourceType(str, Enum):
     ASSUMED = "ASSUMED"
 
 
-class PropertySource(BaseModel):
+class PropertySource(EngineeringTextInput):
     """Recorded provenance; a label alone never constitutes reviewed evidence."""
 
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
@@ -118,7 +127,7 @@ class SpdClass(str, Enum):
     T2 = "T2"
     T1_T2 = "T1_T2"
 
-class ProjectSpec(BaseModel):
+class ProjectSpec(EngineeringTextInput):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     project_name: str = Field(..., min_length=2)
@@ -151,7 +160,7 @@ class ProjectSpec(BaseModel):
     spd_class: SpdClass = Field(default=SpdClass.T2)
     spd_connection_length_m: float = Field(default=0.5, ge=0.0, le=10.0)
 
-class FeederInput(BaseModel):
+class FeederInput(EngineeringTextInput):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     feeder_id: str = Field(..., min_length=1)
@@ -183,7 +192,7 @@ class FeederInput(BaseModel):
             raise ValueError("Only 1P and 3P loads are supported; 2P needs an explicit voltage model.")
         return value
 
-class CatalogDevice(BaseModel):
+class CatalogDevice(EngineeringTextInput):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     part_number: str = Field(min_length=1)

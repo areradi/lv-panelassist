@@ -444,3 +444,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [checklist publication policy](../engineering/design_checklist_preflight_policy.md).
 - **Remaining risks:** real evidence/reviewer workflow, immutable context, signing
   and independent field/engineering acceptance remain open. P0 stays OPEN.
+
+## Review unit 26 — Exportable input text and visible validation failure
+
+- **Observed:** invalid XML/UTF-8 characters could survive input models and fail
+  hashing/serialization later; mutable-input recalculation errors escaped the GUI.
+- **Expected:** invalid text fails at the named field before arithmetic, without
+  silent character replacement; valid FA/EN/DE/tags remain usable.
+- **Implementation:** shared before-field text policy on four input model types,
+  nested provenance checking, localized messages with ASCII code points; GUI keeps
+  prior results stale and displays expected input errors.
+- **Tests:** 60 model/nested/engine/actual-report/three-language GUI cases; previous
+  input/numeric/export tests remain enabled and unchanged.
+- **Evidence:** [text input policy](../engineering/exportable_input_text_policy.md).
+- **Remaining risks:** auxiliary data schemas, tag grammar, font/RTL field tests
+  and independent numerical/engineering verification remain open. P0 stays OPEN.
