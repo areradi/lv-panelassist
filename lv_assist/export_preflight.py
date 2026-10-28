@@ -14,8 +14,8 @@ class ExportSnapshotError(ValueError):
 def require_current_result(project, outputs, summary, checks, catalog_path):
     try:
         metadata = summary.run_metadata
-        if metadata is None:
-            raise ValueError('Missing run identity')
+        if metadata is None or checks is None:
+            raise ValueError('Missing run identity or validation context')
         snapshot = json.loads(metadata.input_snapshot_json)
         recorded_project = ProjectSpec.model_validate(snapshot['project'])
         inputs = [FeederInput.model_validate(row) for row in snapshot['feeders']]

@@ -570,9 +570,9 @@ class TestPhase7SldTccTuning:
 
 class TestPhase3Eplan:
     def test_eplan_csv_columns_and_rows(self, tmp_path):
-        project, outs, summary, _ = _phase3_project()
+        project, outs, summary, checks = _phase3_project()
         path = tmp_path / "parts.csv"
-        EplanExporter.export_csv(str(path), project, outs, summary)
+        EplanExporter.export_csv(str(path), project, outs, summary, validations=checks)
         import csv
         with open(str(path), encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))
@@ -583,9 +583,9 @@ class TestPhase3Eplan:
 
     def test_eplan_suggested_when_no_device(self, tmp_path):
         project = make_project(prospective_ik_ka=150.0)
-        outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, [make_feeder()])
+        outs, summary, checks = EngineeringEngine(CATALOG).process_project(project, [make_feeder()])
         path = tmp_path / "parts.csv"
-        EplanExporter.export_csv(str(path), project, outs, summary)
+        EplanExporter.export_csv(str(path), project, outs, summary, validations=checks)
         with open(str(path), encoding="utf-8-sig") as f:
             content = f.read()
         assert "To be purchased" in content
@@ -827,9 +827,9 @@ class TestPhase4Exports:
 
     def test_eplan_cap_bank_rows(self, tmp_path):
         import csv
-        project, outs, summary, _ = _phase4_cap_project()
+        project, outs, summary, checks = _phase4_cap_project()
         path = tmp_path / "parts.csv"
-        EplanExporter.export_csv(str(path), project, outs, summary)
+        EplanExporter.export_csv(str(path), project, outs, summary, validations=checks)
         with open(str(path), encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))
         assert any("=PFC" in r[4] for r in rows)
@@ -1011,10 +1011,10 @@ class TestPhase5ControlCircuits:
             assert tag in svg
 
     def test_connections_csv(self, tmp_path):
-        project, outs, summary = self._motor_project()
+        project, outs, summary, checks = self._motor_project(include_checks=True)
         wires = ControlCircuitGenerator.build_all_wires(project, outs, summary)
         path = tmp_path / "connections.csv"
-        ControlCircuitGenerator.export_connections_csv(str(path), project, outs, summary)
+        ControlCircuitGenerator.export_connections_csv(str(path), project, outs, summary, validations=checks)
         with open(str(path), encoding="utf-8-sig") as fh:
             lines = fh.read().splitlines()
         assert lines[0].startswith("Connection,")
@@ -1266,9 +1266,9 @@ class TestPhase6EplanParts:
             make_feeder("F02", load_type=LoadType.MOTOR_STAR_DELTA, power_kw=30.0, cos_phi=0.86, efficiency=0.93),
             make_feeder("F03", load_type=LoadType.SUB_FEEDER, power_kw=10.0),
         ]
-        outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, feeders)
+        outs, summary, checks = EngineeringEngine(CATALOG).process_project(project, feeders)
         path = tmp_path / "parts_mgmt.csv"
-        EplanPartsExporter.export_csv(str(path), project, outs, summary)
+        EplanPartsExporter.export_csv(str(path), project, outs, summary, validations=checks)
         import csv
         with open(str(path), encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))
@@ -1282,9 +1282,9 @@ class TestPhase6EplanParts:
         assert max(int(r[-1]) for r in star_delta_contactor) >= 3
 
     def test_parts_product_groups_mapped(self, tmp_path):
-        project, outs, summary, _ = _phase3_project()
+        project, outs, summary, checks = _phase3_project()
         path = tmp_path / "parts_mgmt.csv"
-        EplanPartsExporter.export_csv(str(path), project, outs, summary)
+        EplanPartsExporter.export_csv(str(path), project, outs, summary, validations=checks)
         import csv
         with open(str(path), encoding="utf-8-sig") as f:
             rows = list(csv.reader(f))

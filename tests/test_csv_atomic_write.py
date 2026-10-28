@@ -56,7 +56,7 @@ def test_gui_write_error_shows_failure_instead_of_success(tmp_path, monkeypatch,
     monkeypatch.setattr('lv_assist.gui.filedialog.asksaveasfilename', lambda **kwargs: str(path))
     monkeypatch.setattr('lv_assist.gui.messagebox.showerror', lambda title, message: errors.append(message))
     monkeypatch.setattr('lv_assist.gui.messagebox.showinfo', lambda *args: successes.append(args))
-    def exporter(filename, *args, **kwargs):
+    def exporter(filename, *args, validations, **kwargs):
         def rows():
             yield ['partly written']
             raise OSError('synthetic write failure')

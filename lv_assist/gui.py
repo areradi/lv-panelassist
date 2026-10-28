@@ -803,11 +803,11 @@ class LVAssistApp(ctk.CTk):
             "03_Single_Line_Diagram.svg": lambda p: SldGenerator.generate_svg_file(p, project, f_outs, summary),
             "04_Time_Current_Curves.svg": lambda p: TccGenerator.generate_svg_file(p, project, f_outs, summary),
             "05_Control_Circuits.svg": lambda p: ControlCircuitGenerator.generate_svg_file(p, project, f_outs, summary),
-            "06_Control_Connections_EPLAN.csv": lambda p: ControlCircuitGenerator.export_connections_csv(p, project, f_outs, summary),
+            "06_Control_Connections_EPLAN.csv": lambda p: ControlCircuitGenerator.export_connections_csv(p, project, f_outs, summary, validations=validations),
             "07_Panel_Layout.svg": lambda p: PanelLayoutGenerator.generate_svg_file(p, project, f_outs, summary),
             "08_Control_Circuits.dxf": lambda p: ControlLadderDxfExporter.export_file(p, project, f_outs, summary),
-            "09_EPLAN_Parts_Import.csv": lambda p: EplanExporter.export_csv(p, project, f_outs, summary),
-            "10_EPLAN_Parts_Management.csv": lambda p: EplanPartsExporter.export_csv(p, project, f_outs, summary),
+            "09_EPLAN_Parts_Import.csv": lambda p: EplanExporter.export_csv(p, project, f_outs, summary, validations=validations),
+            "10_EPLAN_Parts_Management.csv": lambda p: EplanPartsExporter.export_csv(p, project, f_outs, summary, validations=validations),
             "11_EPLAN_Generate_Pages.cs": lambda p: EplanMacroExporter.export_file(p, project, f_outs, summary),
         }
         count = 0
@@ -939,7 +939,10 @@ class LVAssistApp(ctk.CTk):
                                           filetypes=[("CSV", "*.csv")])
         if path:
             try:
-                exporter(path, self.current_project, res[0], res[1], mode=mode)
+                exporter(path, self.current_project, res[0], res[1], mode=mode, validations=res[2])
+            except ExportSnapshotError:
+                messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+                return
             except (OSError, UnicodeError, csv.Error):
                 messagebox.showerror(tr("msg_error"), tr("csv_write_failed"))
                 return

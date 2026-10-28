@@ -15,6 +15,7 @@ from lv_assist.models import (
 from lv_assist.catalog import TripCurveRepository
 from lv_assist.i18n import tr
 from lv_assist.csv_export import CsvMode, write_csv
+from lv_assist.report_export import export_current_report
 
 
 def _esc(s: str) -> str:
@@ -506,7 +507,12 @@ class EplanExporter:
         return f"{func}{loc}{bmk}"
 
     @classmethod
-    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE) -> None:
+    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE, validations=None) -> None:
+        return export_current_report(filepath, project, feeders, summary, validations,
+            lambda path, p, f, s, checks: cls._render_csv(path, p, f, s, mode=mode))
+
+    @classmethod
+    def _render_csv(cls, filepath, project, feeders, summary, *, mode):
         rows: List[list] = []
         for func, loc, bmk, cat, dev, spec, qty in _bom_entries(project, feeders, summary):
             if dev is None:
@@ -537,7 +543,12 @@ class EplanPartsExporter:
     }
 
     @classmethod
-    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE) -> None:
+    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE, validations=None) -> None:
+        return export_current_report(filepath, project, feeders, summary, validations,
+            lambda path, p, f, s, checks: cls._render_csv(path, p, f, s, mode=mode))
+
+    @classmethod
+    def _render_csv(cls, filepath, project, feeders, summary, *, mode):
         agg: dict = {}
         for _, _, _, _, dev, _, qty in _bom_entries(project, feeders, summary):
             if dev is None:

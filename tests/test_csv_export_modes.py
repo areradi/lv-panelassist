@@ -34,11 +34,11 @@ def test_real_exporters_default_machine_and_explicit_spreadsheet_mode(tmp_path, 
     for device in devices:
         if device.device_type == 'ENCLOSURE':
             device.series = '=1+1'
-    feeders, summary, _ = EngineeringEngine(devices).process_project(project, inputs)
+    feeders, summary, checks = EngineeringEngine(devices).process_project(project, inputs)
     paths = [tmp_path / name for name in ('default.csv', 'machine.csv', 'spreadsheet.csv')]
-    exporter(str(paths[0]), project, feeders, summary)
-    exporter(str(paths[1]), project, feeders, summary, mode=CsvMode.MACHINE)
-    exporter(str(paths[2]), project, feeders, summary, mode=CsvMode.SPREADSHEET)
+    exporter(str(paths[0]), project, feeders, summary, validations=checks)
+    exporter(str(paths[1]), project, feeders, summary, mode=CsvMode.MACHINE, validations=checks)
+    exporter(str(paths[2]), project, feeders, summary, mode=CsvMode.SPREADSHEET, validations=checks)
     assert paths[0].read_bytes() == paths[1].read_bytes()
     assert paths[0].read_bytes().startswith(b'\xef\xbb\xbf')
     def rows(path):
@@ -66,7 +66,7 @@ def test_gui_mode_and_cancel_reach_actual_csv_writer(monkeypatch, tmp_path, loca
     monkeypatch.setattr('lv_assist.gui.messagebox.askyesnocancel', lambda *args: choice)
     monkeypatch.setattr('lv_assist.gui.filedialog.asksaveasfilename', lambda **kwargs: str(path))
     monkeypatch.setattr('lv_assist.gui.messagebox.showinfo', lambda title, message: messages.append(message))
-    def exporter(filename, *args, mode):
+    def exporter(filename, *args, mode, validations):
         write_csv(filename, ['tag'], [['=INCOMING']], mode=mode)
     app = SimpleNamespace(_get_results=lambda: ([], None, []), current_project=None)
     try:

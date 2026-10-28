@@ -386,3 +386,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [standalone report policy](../engineering/standalone_report_preflight_policy.md).
 - **Remaining risks:** other standalone formats, immutable context, real printing,
   field acceptance and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 22 — Standalone engineering CSV accepted-run guards
+
+- **Observed:** independent CSV APIs could export old/modified run data and did
+  not receive the validation list required for full result-fingerprint checks.
+- **Expected:** every engineering CSV mode uses the full current run context;
+  missing checks cannot silently weaken verification.
+- **Implementation:** validations keyword required for successful public exports,
+  shared private-copy/pre-post guards and staging; GUI/bundle pass checks and GUI
+  shows localized stale warnings.
+- **Tests:** 45 new API/mode/context/renderer/GUI cases plus 42 mode/writer cases;
+  prior CSV fixtures keep actual checks with unchanged content assertions.
+- **Evidence:** [standalone CSV policy](../engineering/standalone_csv_preflight_policy.md).
+- **Remaining risks:** diagrams/macros, immutable context, real field acceptance
+  and independent engineering verification remain open. P0 stays OPEN.
