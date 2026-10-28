@@ -276,3 +276,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [XLSX text policy](../engineering/xlsx_literal_text_policy.md).
 - **Remaining risks:** CSV machine-import vs spreadsheet-safe mode remains open;
   no Excel field acceptance or engineering sign-off. P0 remains OPEN.
+
+## Review unit 14 — Explicit CSV export destinations
+
+- **Observed:** raw CSV fields can become spreadsheet formulas; automatic escaping
+  would change EPLAN tags and break the literal interchange contract.
+- **Expected:** user/API explicitly distinguish protected spreadsheet viewing
+  from unchanged machine interchange, with no silent tag conversion.
+- **Implementation:** shared two-mode writer in all three CSV exporters, GUI
+  destination/cancel choice and localized guidance, machine-CSV note in ZIP.
+- **Tests:** 24 mode/writer/actual-export/GUI cases; bundle expectations retain all
+  existing files plus the new explanatory note.
+- **Evidence:** [CSV mode policy](../engineering/csv_export_mode_policy.md).
+- **Remaining risks:** real spreadsheet/EPLAN field acceptance and atomic CSV
+  writes remain open; P0 engineering gate remains OPEN.

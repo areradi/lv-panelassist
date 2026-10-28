@@ -20,6 +20,7 @@ from lv_assist.models import (
 from lv_assist.catalog import CatalogRepository
 from lv_assist.engine import EngineeringEngine, build_design_verification
 from lv_assist.exporters import ExcelExporter, PrintableReportExporter, DesignVerificationExporter
+from lv_assist.csv_export import CsvMode
 from lv_assist.outputs import SldGenerator, TccGenerator, PdfExporter, EplanExporter, EplanPartsExporter
 from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.dxf_export import ControlLadderDxfExporter
@@ -777,6 +778,8 @@ class LVAssistApp(ctk.CTk):
         count = 0
         with tempfile.TemporaryDirectory(prefix="lvassist_bundle_") as tmp:
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                zf.writestr("00_CSV_README.txt", tr("csv_bundle_note"))
+                count += 1
                 for name, fn in files.items():
                     p = os.path.join(tmp, name)
                     fn(p)
@@ -865,13 +868,21 @@ class LVAssistApp(ctk.CTk):
             else:
                 messagebox.showwarning(tr("msg_warning"), tr("msg_pdf_" + result.reason))
 
-    def action_export_eplan(self):
+    def _export_csv_for_target(self, exporter, filename):
         res = self._get_results()
         if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="EPLAN_Parts_Import.csv", filetypes=[("CSV", "*.csv")])
+        choice = messagebox.askyesnocancel(tr("csv_target_title"), tr("csv_target_prompt"))
+        if choice is None: return
+        mode = CsvMode.SPREADSHEET if choice else CsvMode.MACHINE
+        prefix = "Spreadsheet_" if choice else "EPLAN_"
+        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile=prefix + filename,
+                                          filetypes=[("CSV", "*.csv")])
         if path:
-            EplanExporter.export_csv(path, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+            exporter(path, self.current_project, res[0], res[1], mode=mode)
+            messagebox.showinfo(tr("msg_success"), tr("csv_saved_" + mode.value))
+
+    def action_export_eplan(self):
+        self._export_csv_for_target(EplanExporter.export_csv, "Parts_Import.csv")
 
     def action_export_eplan_script(self):
         res = self._get_results()
@@ -930,12 +941,7 @@ class LVAssistApp(ctk.CTk):
             messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 
     def action_export_connections(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="Control_Connections_EPLAN.csv", filetypes=[("CSV", "*.csv")])
-        if path:
-            ControlCircuitGenerator.export_connections_csv(path, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_csv_for_target(ControlCircuitGenerator.export_connections_csv, "Control_Connections.csv")
 
     def action_export_layout(self):
         res = self._get_results()
@@ -955,12 +961,7 @@ class LVAssistApp(ctk.CTk):
             messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 
     def action_export_parts(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="EPLAN_Parts_Management.csv", filetypes=[("CSV", "*.csv")])
-        if path:
-            EplanPartsExporter.export_csv(path, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_csv_for_target(EplanPartsExporter.export_csv, "Parts_Management.csv")
 
 
     # --- [GUI ADDITIVE: IEC SLD/Ladder bridge methods] ---

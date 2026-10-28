@@ -886,5 +886,10 @@
   "msg_pdf_timeout": "The browser timed out. PDF was not saved; retry or print the HTML report manually.",
   "msg_pdf_browser_failed": "The browser could not print the report. PDF was not saved; check browser availability and permissions.",
   "msg_pdf_invalid_pdf": "The browser did not produce a complete PDF. The previous destination was preserved.",
-  "msg_pdf_write_failed": "PDF could not be saved. Check the destination folder, permissions and free disk space."
+  "msg_pdf_write_failed": "PDF could not be saved. Check the destination folder, permissions and free disk space.",
+  "csv_target_title": "CSV destination",
+  "csv_target_prompt": "Open in a spreadsheet?\nYes: spreadsheet text protection; not for EPLAN import.\nNo: EPLAN machine CSV, exact tags; do not open in a spreadsheet.\nCancel: no export.",
+  "csv_saved_spreadsheet": "Spreadsheet-oriented CSV saved. Potential formula text has an apostrophe prefix. Do not use for EPLAN import; retain the original file.",
+  "csv_saved_machine": "Machine CSV saved with unchanged tags. Use only for machine import, not spreadsheet viewing.",
+  "csv_bundle_note": "CSV files in this bundle are MACHINE/EPLAN interchange files with literal, unchanged tags. Do not open them in Excel or another spreadsheet. For spreadsheet use, export CSV separately and choose Yes for spreadsheet protection, or use 01_Design_Output.xlsx. Actual EPLAN import compatibility still requires field testing."
 }

@@ -886,5 +886,10 @@
   "msg_pdf_timeout": "Zeitlimit des Browsers erreicht. PDF nicht gespeichert; erneut versuchen oder HTML-Bericht manuell drucken.",
   "msg_pdf_browser_failed": "Der Browser konnte den Bericht nicht drucken. PDF nicht gespeichert; Browser und Berechtigungen prüfen.",
   "msg_pdf_invalid_pdf": "Der Browser erzeugte kein vollständiges PDF. Die bisherige Zieldatei blieb erhalten.",
-  "msg_pdf_write_failed": "PDF konnte nicht gespeichert werden. Zielordner, Berechtigungen und freien Speicher prüfen."
+  "msg_pdf_write_failed": "PDF konnte nicht gespeichert werden. Zielordner, Berechtigungen und freien Speicher prüfen.",
+  "csv_target_title": "CSV-Ziel",
+  "csv_target_prompt": "In einer Tabellenkalkulation öffnen?\nJa: Textschutz für Tabellenkalkulation; nicht für EPLAN-Import.\nNein: Maschinen-CSV für EPLAN mit unveränderten Kennzeichen; nicht in Tabellenkalkulation öffnen.\nAbbrechen: kein Export.",
+  "csv_saved_spreadsheet": "CSV für Tabellenkalkulation gespeichert. Formelähnlicher Text hat ein Apostroph-Präfix. Nicht für EPLAN importieren; Originaldatei behalten.",
+  "csv_saved_machine": "Maschinen-CSV mit unveränderten Kennzeichen gespeichert. Nur maschinell importieren, nicht in Tabellenkalkulation öffnen.",
+  "csv_bundle_note": "CSV-Dateien in diesem Paket sind Maschinen-/EPLAN-Austauschdateien mit unveränderten Kennzeichen. Nicht in Excel oder anderen Tabellenkalkulationen öffnen. Dafür CSV separat mit Ja exportieren oder 01_Design_Output.xlsx nutzen. EPLAN-Importkompatibilität erfordert weiterhin Feldtests."
 }

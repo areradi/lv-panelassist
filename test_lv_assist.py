@@ -1691,8 +1691,9 @@ class TestPhase7GuiFeatures:
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         zpath = str(tmp_path / "bundle.zip")
         n = LVAssistApp.build_document_bundle(zpath, project, f_outs, summary, validations, include_pdf=False)
-        assert n == 24
+        assert n == 25
         with zipfile.ZipFile(zpath) as zf:
+            assert zf.read("00_CSV_README.txt").decode() == tr("csv_bundle_note")
             names = zf.namelist()
         for expected in ("01_Design_Output.xlsx", "02_Engineering_Report.html",
                          "02_Design_Verification_Report.html", "03_Single_Line_Diagram.svg",
@@ -2026,7 +2027,7 @@ class TestPhase9EplanMacroFiles:
         macros = [x for x in names if x.startswith("12_EPLAN_Macros/") and x.endswith(".ema")]
         assert len(macros) == 5
         assert "12_EPLAN_Macros/LV_SLD_Main.ema" in names
-        assert n == 24
+        assert n == 25
 
     def test_translation_key_parity_and_new_keys(self):
         import json
@@ -2261,7 +2262,7 @@ class TestPhase10EplanPageMacros:
         assert hasattr(app, "action_export_eplan_page_macros")
         zpath = str(tmp_path / "bundle10.zip")
         n = app.build_document_bundle(zpath, project, f_outs, summary, validations, include_pdf=False)
-        assert n == 24
+        assert n == 25
         with zipfile.ZipFile(zpath) as zf:
             names = zf.namelist()
         pages = [x for x in names if x.startswith("13_EPLAN_Page_Macros/") and x.endswith(".emp")]
@@ -2502,7 +2503,7 @@ class TestPhase12DesignVerification:
         project, outs, summary, validations = self._demo()
         zpath = str(tmp_path / "p12.zip")
         n = LVAssistApp.build_document_bundle(zpath, project, outs, summary, validations, include_pdf=False)
-        assert n == 24
+        assert n == 25
         with zipfile.ZipFile(zpath) as zf:
             assert "02_Design_Verification_Report.html" in zf.namelist()
 
@@ -2785,7 +2786,7 @@ class TestPhase14EplanFieldTest:
         project, outs, summary, validations = self._demo()
         zpath = str(tmp_path / "p14.zip")
         n = LVAssistApp.build_document_bundle(zpath, project, outs, summary, validations, include_pdf=False)
-        assert n == 24
+        assert n == 25
         with zipfile.ZipFile(zpath) as zf:
             names = zf.namelist()
         assert "14_EPLAN_FieldTest/EPLAN_FieldTest_Guide.html" in names

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """اتوماسیون مدارهای کنترلی: دیاگرام نردبانی SVG، لیست سیم‌ها و خروجی اتصالات سازگار با EPLAN."""
-import csv
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -8,6 +7,7 @@ from lv_assist.models import (
     ProjectSpec, FeederCalcOutput, PanelSummaryOutput, ControlWire, LoadType
 )
 from lv_assist.i18n import tr
+from lv_assist.csv_export import CsvMode, write_csv
 
 
 def _esc(s: str) -> str:
@@ -247,12 +247,10 @@ class ControlCircuitGenerator:
 
     @classmethod
     def export_connections_csv(cls, filepath: str, project: ProjectSpec,
-                               feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
+                               feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *,
+                               mode: CsvMode = CsvMode.MACHINE) -> None:
         rows = []
         for w in cls.build_all_wires(project, feeders, summary):
             rows.append([w.wire_no, w.from_dev, w.from_term, w.to_dev, w.to_term,
                          w.cross_section_mm2, w.color, w.remark])
-        with open(filepath, "w", encoding="utf-8-sig", newline="") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(cls.CONN_HEADERS)
-            writer.writerows(rows)
+        write_csv(filepath, cls.CONN_HEADERS, rows, mode=mode)

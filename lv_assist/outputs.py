@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
 import math
 import os
 import shutil
@@ -15,6 +14,7 @@ from lv_assist.models import (
 )
 from lv_assist.catalog import TripCurveRepository
 from lv_assist.i18n import tr
+from lv_assist.csv_export import CsvMode, write_csv
 
 
 def _esc(s: str) -> str:
@@ -506,7 +506,7 @@ class EplanExporter:
         return f"{func}{loc}{bmk}"
 
     @classmethod
-    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
+    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE) -> None:
         rows: List[list] = []
         for func, loc, bmk, cat, dev, spec, qty in _bom_entries(project, feeders, summary):
             if dev is None:
@@ -515,10 +515,7 @@ class EplanExporter:
                 rows.append([dev.part_number, f"{dev.series} {dev.device_type}", dev.manufacturer,
                              f"{dev.series} ({dev.device_type})", cls._tag(func, loc, bmk), cat, qty, "PCS", dev.data_quality.value])
 
-        with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(cls.HEADERS)
-            writer.writerows(rows)
+        write_csv(filepath, cls.HEADERS, rows, mode=mode)
 
 
 class EplanPartsExporter:
@@ -540,7 +537,7 @@ class EplanPartsExporter:
     }
 
     @classmethod
-    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
+    def export_csv(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, mode: CsvMode = CsvMode.MACHINE) -> None:
         agg: dict = {}
         for _, _, _, _, dev, _, qty in _bom_entries(project, feeders, summary):
             if dev is None:
@@ -563,7 +560,4 @@ class EplanPartsExporter:
                          f"{dev.series} ({dev.device_type})", "", td1, td2,
                          cls.GROUP_MAP.get(dev.device_type, "Others"), "PCS", qty])
 
-        with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(cls.HEADERS)
-            writer.writerows(rows)
+        write_csv(filepath, cls.HEADERS, rows, mode=mode)
