@@ -30,6 +30,8 @@ from lv_assist.eplan_field_test import EplanFieldTestKit
 from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
 from lv_assist.result_contract import STATUS_SEVERITY_ORDER
+from lv_assist.run_metadata import run_is_current
+from lv_assist.catalog import catalog_repo
 
 LANG_SEGMENT_TO_CODE = {"FA": "fa", "EN": "en", "DE": "de"}
 
@@ -651,7 +653,7 @@ class LVAssistApp(ctk.CTk):
         warn = sum(1 for v in validations if v.status == ValidationStatus.WARNING)
         missing = sum(v.status == ValidationStatus.INSUFFICIENT_DATA for v in validations)
         ok = sum(v.status == ValidationStatus.COMPLETED for v in validations)
-        self.kpi_labels["val_summary"].configure(text=tr("audit_status_counts", ok=ok, err=err, warn=warn, missing=missing))
+        self.kpi_labels["val_summary"].configure(text=tr("audit_status_counts", ok=ok, err=err, warn=warn, missing=missing).replace(" | ", "\n"))
 
         for item in self.tree_feeders.get_children(): self.tree_feeders.delete(item)
         for f in f_outs:
@@ -687,11 +689,27 @@ class LVAssistApp(ctk.CTk):
         self._stale = True
         self._apply_status()
 
+    def _results_are_current(self):
+        if self._stale or not self.last_results or self.current_project is None:
+            return False
+        metadata = self.last_results[1].run_metadata
+        try:
+            current = metadata is not None and run_is_current(
+                metadata, self.current_project, self.current_feeders, catalog_repo.db_path,
+                self.engine.catalog if hasattr(self, "engine") else None)
+        except (ValueError, OSError):
+            current = False
+        if not current:
+            self._stale = True
+        return current
+
     def _apply_status(self):
         if self._status_lbl is None: return
         if self.current_project is None:
             self._status_lbl.configure(text="")
             return
+        if self.last_results:
+            self._results_are_current()
         if self._stale:
             self._status_lbl.configure(text=tr("lbl_stale"), text_color="#B7950B")
         else:
@@ -726,7 +744,7 @@ class LVAssistApp(ctk.CTk):
         self._run_calculations_and_refresh()
 
     def action_export_all(self):
-        if not self.last_results or self._stale:
+        if not self._results_are_current():
             messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
             return
         path = filedialog.asksaveasfilename(defaultextension=".zip", initialfile="LV_Panel_Design_Bundle.zip", filetypes=[("ZIP", "*.zip")])
@@ -784,7 +802,7 @@ class LVAssistApp(ctk.CTk):
         return count
 
     def action_export_report(self):
-        if not self.last_results: return
+        if not self._results_are_current(): return
         path = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile="LV_Panel_Design_Output.xlsx", filetypes=[("Excel", "*.xlsx")])
         if path:
             f_outs, summary, validations = self.last_results
@@ -792,14 +810,14 @@ class LVAssistApp(ctk.CTk):
             messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 
     def action_open_printable_report(self):
-        if not self.last_results: return
+        if not self._results_are_current(): return
         f_outs, summary, validations = self.last_results
         path = os.path.join(get_app_working_dir(), "LV_Panel_Engineering_Report.html")
         PrintableReportExporter.generate_html_report(path, self.current_project, f_outs, summary, validations)
         webbrowser.open(f"file://{path}")
 
     def action_export_dv(self):
-        if not self.last_results: return
+        if not self._results_are_current(): return
         f_outs, summary, validations = self.last_results
         path = filedialog.asksaveasfilename(defaultextension=".html",
                                             initialfile="Design_Verification_Report.html",
@@ -811,7 +829,7 @@ class LVAssistApp(ctk.CTk):
         messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 
     def _get_results(self):
-        if not self.last_results: return None
+        if not self._results_are_current(): return None
         f_outs, summary, validations = self.last_results
         return f_outs, summary, validations
 
@@ -990,7 +1008,7 @@ class LVAssistApp(ctk.CTk):
         self.txt_svg_inspector.pack(fill="both", expand=True, padx=8, pady=6)
 
     def _get_selected_svg_and_name(self) -> Tuple[str, str]:
-        if not self.last_results:
+        if not self._results_are_current():
             return "", "empty.svg"
         f_outs, summary, _ = self.last_results
         choice = self.cmb_sheet_selector.get()
@@ -1007,7 +1025,7 @@ class LVAssistApp(ctk.CTk):
         return svg_str, "SLD.svg"
 
     def action_refresh_schematic_preview(self):
-        if not self.last_results:
+        if not self._results_are_current():
             return
         f_outs, summary, _ = self.last_results
         svg_str, fname = self._get_selected_svg_and_name()
@@ -1051,7 +1069,7 @@ class LVAssistApp(ctk.CTk):
             messagebox.showinfo("ذخیره شد", f"فایل نقشه برداری SVG ذخیره شد:\n{path}")
 
     def action_save_all_svgs_folder(self):
-        if not self.last_results:
+        if not self._results_are_current():
             return
         folder = filedialog.askdirectory(title="انتخاب پوشه برای ذخیره تمام نقشه‌های SLD و مدار فرمان")
         if folder:

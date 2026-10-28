@@ -28,6 +28,8 @@ class CatalogDataProvenance:
             self.confidence == DataConfidenceLevel.REAL_VERIFIED
             and bool(self.datasheet_title_or_id.strip())
             and bool(self.datasheet_edition_date.strip())
+            and bool(self.last_audited_by and self.last_audited_by.strip())
+            and bool(self.last_audited_date and self.last_audited_date.strip())
         )
 
 
@@ -49,11 +51,11 @@ def evaluate_selectivity_status(
         )
 
     ratio = upstream_in_a / downstream_in_a
-    if ratio < 1.6:
+    if ratio < 1.6 and not has_manufacturer_coordination_table:
         return CheckResult(
             check_id="SELECTIVITY_CHECK",
             title="هماهنگی حفاظتی و سلکتیویتی (Selectivity)",
-            status=ValidationStatus.ERROR,
+            status=ValidationStatus.WARNING,
             measured_or_calc_value=f"In_up / In_down = {ratio:.2f}",
             limit_or_reference="حداقل نسبت پیشنهادی اولیه >= 1.6",
             cause="نسبت جریان نامی کلید بالادست به پایین‌دست کمتر از 1.6 است.",
@@ -66,10 +68,10 @@ def evaluate_selectivity_status(
             return CheckResult(
                 check_id="SELECTIVITY_CHECK",
                 title="هماهنگی حفاظتی و سلکتیویتی (Selectivity)",
-                status=ValidationStatus.COMPLETED,
+                status=ValidationStatus.WARNING,
                 measured_or_calc_value=f"Is = {manufacturer_table_limit_ka:.1f} kA >= Ik = {prospective_ik_ka:.2f} kA",
                 limit_or_reference="جدول هماهنگی تست‌شده سازنده (IEC 60947-2 Annex A)",
-                effect="سلکتیویتی کامل (Total Selectivity) تأیید شد."
+                effect="مرز جدول گزارش شده است؛ زوج دقیق، ولتاژ و تنظیمات هنوز تأیید نشده‌اند."
             )
         return CheckResult(
             check_id="SELECTIVITY_CHECK",

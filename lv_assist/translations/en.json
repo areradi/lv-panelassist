@@ -261,7 +261,7 @@
   "val_harm_mit_desc": "THDi={a}% above 50% — harmonic mitigation required.",
   "val_harm_mit_cons": "Risk of cable and neutral overheating.",
   "val_harm_mit_action": "Use DC chokes, active filters, or 12-pulse rectifiers.",
-  "val_coord_desc": "Type 2 coordination (no damage, ready to restart) verified.",
+  "val_coord_desc": "Type 2 coordination is not verified: a candidate device pair is not a manufacturer-tested combination.",
   "val_coord_ev": "{a} + {b} for {c}A",
   "val_coord_cons": "Starter service life and reliability.",
   "val_coord_action": "Check manufacturer-tested combination table.",
@@ -591,7 +591,7 @@
   "html_kpi_warn": "Warnings",
   "html_kpi_ok": "Passed",
   "html_kpi_ins": "Insufficient",
-  "html_badge_completed": "PASSED ✓",
+  "html_badge_completed": "CHECK COMPLETED ✓",
   "html_badge_warning": "WARNING !",
   "html_badge_error": "ERROR ✗",
   "html_badge_insufficient": "INSUFFICIENT ?",
@@ -860,5 +860,10 @@
   "audit_icu_action": "Check exact model, operating voltage, settings and manufacturer evidence; the displayed device remains proposed.",
   "audit_cable_unknown": "PRELIMINARY: exact ampacity table unavailable",
   "audit_status_counts": "Completed checks: {ok} | Warning: {warn} | Missing data: {missing} | Error: {err}",
-  "audit_preliminary": "PRELIMINARY — NOT FOR CONSTRUCTION"
+  "audit_preliminary": "PRELIMINARY — NOT FOR CONSTRUCTION",
+  "audit_input_invalid": "Invalid project inputs: provide at least one unique feeder and finite numeric data within the calculation domain.",
+  "audit_overload_title": "Cable/protection settings coordination",
+  "audit_overload_basis": "Actual Ir, I2 and applicable Iz are required; adjustability is not a setting.",
+  "audit_overload_action": "Enter actual Ir and documented I2, and obtain applicable cable and device evidence.",
+  "audit_source_gap": "Supporting source/version/applicability and engineering review are not recorded; keep this check preliminary."
 }

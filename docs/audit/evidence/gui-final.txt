@@ -1,0 +1,2 @@
+GUI rendered and recalculated: 4 feeders; 48 validation results
+GUI: four status counters visible; no unevidenced COMPLETED checks; stale input blocked

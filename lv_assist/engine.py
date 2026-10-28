@@ -10,6 +10,7 @@ from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository,
 from lv_assist.busbar import BusbarEngine
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
+from lv_assist.run_metadata import create_run_metadata, catalog_file_hash
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
     TripTimeEstimate as AuditTripTimeEstimate,
@@ -17,6 +18,7 @@ from lv_assist.core_verification import (
     calculate_adiabatic_pe_mm2 as audit_calculate_adiabatic_pe_mm2,
     calculate_network_ik_profile as audit_calculate_network_ik_profile,
     verify_breaking_capacity_icu as audit_verify_breaking_capacity_icu,
+    verify_overload_coordination,
 )
 # --- end audit safe imports ---
 class CableSizingEngine:
@@ -67,7 +69,7 @@ class CableSizingEngine:
         return round((delta_u / u_base) * 100.0, 2)
 
     @classmethod
-    def proposed_table_pe_section(cls, phase_section_mm2: float) -> Optional[float]:
+    def proposed_table_pe_section(cls, phase_section_mm2: float) -> float | None:
         """Geometric candidate only; not an earth-fault/thermal verification."""
         if not math.isfinite(phase_section_mm2) or phase_section_mm2 <= 0:
             return None
@@ -77,8 +79,8 @@ class CableSizingEngine:
 
     @classmethod
     def calculate_pe_section(cls, phase_section_mm2: float,
-                             fault_current_ka: Optional[float] = None,
-                             clear_time_s: Optional[float] = None) -> Optional[float]:
+                             fault_current_ka: float | None = None,
+                             clear_time_s: float | None = None) -> float | None:
         """Preliminary Cu PE candidate; fault_current_ka must be L-PE, not bus 3P.
 
         k=143 is inherited and unreviewed. A candidate is never proof of ADS or
@@ -96,13 +98,13 @@ class CableSizingEngine:
 
     @classmethod
     def select_feeder_cable(
-        cls, ib_a: float, protection_in_a: float, is_adjustable_prot: bool, length_m: Optional[float],
+        cls, ib_a: float, protection_in_a: float, is_adjustable_prot: bool, length_m: float | None,
         cos_phi: float, voltage_v: float, phases: int, ambient_temp_c: float, grouping_k2: float,
         max_vdrop_pct: float, load_type: LoadType, user_specified_mm2: Optional[float] = None,
         conductor: str = "CU", insulation: str = "PVC", installation_method: str = "C",
         fire_resistant: bool = False, thdi_pct: Optional[float] = None,
         fault_current_ka: Optional[float] = None, clear_time_s: Optional[float] = None
-    ) -> Tuple[float, float, Optional[float], Optional[float], Optional[float], str]:
+    ) -> tuple[float, float, float | None, float | None, float | None, str]:
         k1, k2, total_k = cls.get_derating_summary(ambient_temp_c, grouping_k2, conductor, insulation, installation_method)
         required_iz = max(ib_a, protection_in_a)
         min_allowed_section = 1.5 if load_type == LoadType.LIGHTING_SOCKET else 2.5
@@ -186,6 +188,7 @@ class EngineeringEngine:
     def __init__(self, catalog: List[CatalogDevice]):
         self._full_catalog = list(catalog)
         self.catalog = list(catalog)
+        self._catalog_file_hash = catalog_file_hash(catalog_repo.db_path)
 
     @staticmethod
     def _resolve_cos_phi_eff(load_type: LoadType, cos_phi: Optional[float],
@@ -238,7 +241,7 @@ class EngineeringEngine:
         return int(digits[:2]) if len(digits) >= 2 else None
 
     @staticmethod
-    def _estimate_trip_time(prot: Optional[CatalogDevice], ik_ka: Optional[float]) -> AuditTripTimeEstimate:
+    def _estimate_trip_time(prot: CatalogDevice | None, ik_ka: float | None) -> AuditTripTimeEstimate:
         if prot is None or ik_ka is None or not math.isfinite(ik_ka) or ik_ka <= 0:
             return AuditTripTimeEstimate(None, True, False, ValidationStatus.INSUFFICIENT_DATA,
                                          tr("audit_trip_missing"))
@@ -259,7 +262,7 @@ class EngineeringEngine:
                                          TripCurveRepository.thermal_time_s, True)
 
     @staticmethod
-    def _estimate_clear_time_s(prot: CatalogDevice, ik_ka: Optional[float]) -> Optional[float]:
+    def _estimate_clear_time_s(prot: CatalogDevice, ik_ka: float | None) -> float | None:
         """Compatibility scalar; no cap, hidden time fallback, or policy flag."""
         return EngineeringEngine._estimate_trip_time(prot, ik_ka).time_s
 
@@ -346,6 +349,19 @@ class EngineeringEngine:
         return total_ka, parts
 
     def process_project(self, project: ProjectSpec, feeders: List[FeederInput]):
+        try:
+            return self._process_project(project, feeders)
+        except (OverflowError, ZeroDivisionError) as error:
+            raise ValueError(tr("audit_input_invalid")) from error
+
+    def _process_project(self, project: ProjectSpec, feeders: list[FeederInput]):
+        if catalog_file_hash(catalog_repo.db_path) != self._catalog_file_hash:
+            raise ValueError(tr("audit_source_gap"))
+        # Revalidate mutable API/UI models before doing arithmetic.
+        project = ProjectSpec.model_validate(project.model_dump())
+        feeders = [FeederInput.model_validate(feeder.model_dump()) for feeder in feeders]
+        if not feeders or len({feeder.feeder_id for feeder in feeders}) != len(feeders):
+            raise ValueError(tr("audit_input_invalid"))
         self.catalog = list(self._full_catalog)
         if project.preferred_manufacturer != "ANY":
             filtered = [d for d in self.catalog if d.manufacturer == project.preferred_manufacturer]
@@ -390,6 +406,14 @@ class EngineeringEngine:
             output.status = worst_status(v.status for v in validations
                                          if v.feeder_id in (output.feeder_id, "NETWORK", "PANEL"))
         summary.status = worst_status(v.status for v in validations)
+        metadata = create_run_metadata(project, feeders, catalog_repo.db_path, project.project_revision,
+                                       [assumption for output in feeder_outputs for assumption in output.assumptions_used]
+                                       + ["Engineering evidence/reviewer not recorded; results remain preliminary."], self.catalog)
+        if metadata.catalog_version != self._catalog_file_hash:
+            raise ValueError(tr("audit_source_gap"))
+        summary.run_metadata = metadata
+        for output in feeder_outputs:
+            output.run_metadata = metadata
         return feeder_outputs, summary, validations
 
     def _process_single_feeder(self, project: ProjectSpec, f: FeederInput, ik_ka: Optional[float],
@@ -436,14 +460,13 @@ class EngineeringEngine:
                 ctrl_pull_in_surge_w = max(0.0, sel_cont_main.coil_pull_in_24v_w - sel_cont_main.coil_holding_24v_w)
                 reason_parts.append(f"Contactor {sel_cont_main.part_number}")
             if sel_prot and sel_cont_main:
-                coord_ok = sel_cont_main.rated_current_in_a >= ib_a and self._icu_ok(sel_prot, project, ik_total_ka)
                 vals.append(ValidationResult(
                     rule_id="RULE-COORD-002", feeder_id=f.feeder_id, standard_ref="IEC 60947-4-1",
-                    status=ValidationStatus.COMPLETED if coord_ok else ValidationStatus.WARNING,
+                    status=ValidationStatus.INSUFFICIENT_DATA,
                     description=tr("val_coord_desc"),
                     supporting_evidence=tr("val_coord_ev", a=sel_prot.part_number, b=sel_cont_main.part_number, c=round(ib_a, 1)),
                     consequence=tr("val_coord_cons"),
-                    recommended_action=tr("val_no_action" if coord_ok else "val_coord_action")
+                    recommended_action=tr("val_coord_action")
                 ))
 
         elif f.load_type == LoadType.MOTOR_STAR_DELTA:
@@ -567,6 +590,19 @@ class EngineeringEngine:
         profile.scope_status = ValidationStatus.INSUFFICIENT_DATA
         profile.scope_warning_note = tr("audit_pe_missing")
 
+        ir_a = (f.protection_ir_a if is_adj_prot else
+                sel_prot.rated_current_in_a if sel_prot else None)
+        overload = verify_overload_coordination(ib_a, ir_a, iz_derated, f.protection_i2_a)
+        overload.title = tr("audit_overload_title")
+        overload.cause = tr("audit_overload_basis")
+        overload.recommended_action = tr("audit_overload_action")
+        if sel_prot is not None and ir_a is not None:
+            upper = sel_prot.setting_max_a or sel_prot.rated_current_in_a
+            lower = sel_prot.setting_min_a
+            if not lower <= ir_a <= upper:
+                overload.status = ValidationStatus.ERROR
+        vals.append(ValidationResult.from_check(overload, rule_id="RULE-CABLE-OVERLOAD",
+                    subject_id=f.feeder_id, standard_ref="IEC 60364-4-43"))
         req_iz_ref = prot_in
         if iz_derated is None:
             vals.append(ValidationResult(rule_id="RULE-CABLE-010", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52",
@@ -574,7 +610,7 @@ class EngineeringEngine:
                 supporting_evidence=tr("val_cable_nontable_ev", a=f"{s_ph:g}"), consequence=tr("val_cable_nontable_cons"),
                 recommended_action=tr("val_cable_nontable_action")))
         elif iz_derated >= req_iz_ref:
-            vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52", status=ValidationStatus.COMPLETED, description=tr("val_cable_ok_desc"), supporting_evidence=tr("val_cable_ok_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("val_cable_ok_cons"), recommended_action=tr("val_no_action")))
+            vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52", status=overload.status, description=tr("audit_overload_title"), supporting_evidence=tr("val_cable_ok_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("audit_overload_basis"), recommended_action=tr("audit_overload_action")))
         else:
             vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-4-43", status=ValidationStatus.ERROR, description=tr("val_cable_err_desc"), supporting_evidence=tr("val_cable_err_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("val_cable_err_cons"), recommended_action=tr("val_cable_err_action")))
 
@@ -862,6 +898,18 @@ class EngineeringEngine:
         main_candidates.sort(key=lambda x: x.rated_current_in_a)
         main_breaker = main_candidates[0] if main_candidates else None
 
+        main_check = (self._icu_check(main_breaker, project, ik_total_ka, is_preliminary=True)
+                      if main_breaker else audit_verify_breaking_capacity_icu(None, ik_total_ka))
+        main_check.title = tr("audit_icu_title")
+        main_check.recommended_action = tr("audit_icu_action")
+        main_check.scope = "PANEL"
+        main_check.input_values = {"icu_ka": self._device_icu_ka(main_breaker, project) if main_breaker else None,
+                                    "ik_at_device_ka": ik_total_ka, "voltage_v": project.nominal_voltage_v}
+        main_check.unit = "kA"
+        main_check.method = "Icu >= Ik; exact manufacturer evidence required"
+        vals.append(ValidationResult.from_check(main_check, rule_id="RULE-MAIN-SC-001",
+                    subject_id="PANEL", standard_ref="IEC 60947-2"))
+
         if main_breaker and selected_spd and selected_spd.spd_backup_fuse_a > 0:
             fuse_a = selected_spd.spd_backup_fuse_a
             if main_breaker.rated_current_in_a <= fuse_a:
@@ -911,7 +959,9 @@ class EngineeringEngine:
                     f.selectivity_ref_doc = tr("sel_ref_no_ik")
                     vals.append(ValidationResult(rule_id="RULE-SEL-005", feeder_id=f.feeder_id, standard_ref="IEC 60947-2", status=ValidationStatus.WARNING, description=tr("val_sel_noik_desc"), supporting_evidence=tr("sel_ref_no_ik"), consequence=tr("val_sel_noik_cons"), recommended_action=tr("val_sel_noik_action")))
                     continue
-                sel_state, is_limit, ref_doc = SiemensSelectivityRepository.evaluate_pair(main_breaker, f.selected_protection, ik_ka)
+                sel_state, is_limit, ref_doc = SiemensSelectivityRepository.evaluate_pair(
+                    main_breaker, f.selected_protection, ik_total_ka,
+                    operating_voltage_v=project.nominal_voltage_v)
                 f.selectivity_state = sel_state; f.selectivity_limit_is_ka = is_limit; f.selectivity_ref_doc = ref_doc
 
                 if sel_state == SelectivityEvalState.VERIFIED_TOTAL:
@@ -1311,18 +1361,6 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
     else:
         c_status, c_text = VerificationStatus.PASS, tr("dv_concl_pass", a=n_pass, b=n_warn, c=n_fail, d=n_nv)
     return DesignVerificationReport(items=items, conclusion_status=c_status, conclusion_text=c_text)
-
-
-# --- [AUDIT SAFE HELPERS] ---
-def _audit_status_to_models_status(audit_status):
-    """
-    Convert audit ValidationStatus to models.ValidationStatus.
-
-    Safe because inspect_audit.py confirmed:
-    ENUM_MATCH True
-    values = COMPLETED / WARNING / INSUFFICIENT_DATA / ERROR
-    """
-    return ValidationStatus(audit_status.value)
 
 
 def _audit_verify_icu_status(device_icu_ka, ik_ka, is_preliminary=False):

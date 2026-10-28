@@ -90,3 +90,44 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   not a validated selected cable. k=143 in the standalone helper is inherited,
   unreviewed and never used to verify a feeder without loop data. Other legacy
   protection, thermal, busbar and property-provenance work remains open.
+
+## Review unit 3 — Evidence, settings, IP and run traceability
+
+- **Observed:** legacy quality labels and series/range selectivity rules could
+  imply verification without an exact reviewed source. Adjustable breakers did
+  not require actual settings. IP was compared as one integer; run identity and
+  external catalog changes were not tracked consistently.
+- **Expected:** unknown evidence remains preliminary; only exact applicable
+  device rules may be considered, real settings are checked, and stale results
+  can be distinguished from the current input/catalog/engine snapshot.
+- **Implementation:** property provenance (document/revision/page/reviewer/date/
+  applicability), evidence-gated quality, exact-voltage Icu, exact-pair/voltage/
+  settings/reviewer selectivity matching, Ir/I2/range checks, and separate IP
+  dimensions. A ratio alone neither proves nor disproves selectivity. Type 2
+  coordination remains INSUFFICIENT_DATA without a tested combination. All
+  undocumented legacy successes are WARNING, not COMPLETED. Input models reject
+  unsupported 2P, blank IDs, duplicates/empty feeder sets and mutated invalid
+  values. Packaged catalog connections are read-only. No database bytes changed.
+  Added immutable run metadata with canonical input snapshot/fingerprint,
+  UTC timestamp, project revision, engine/source hash, actual catalog selection
+  hash, catalog file hash and registry hash. HTML/XLSX carry this metadata;
+  long XLSX snapshots are split rather than silently truncated. GUI exports check
+  input/catalog/source freshness. TCC SVG has an explicit preliminary watermark.
+- **Tests:** synthetic policy and evidence-matching cases; integrated settings
+  check; exact-voltage/IP comparisons; metadata immutability, cross-report
+  fingerprints, changed input/catalog/version, read-only DB, and long snapshot.
+  Rendering fixtures explicitly identify themselves as synthetic; none is an
+  independently approved engineering reference. No original test was skipped to
+  hide a regression; unsafe expected statuses were corrected explicitly.
+- **Evidence:** final logs/screenshot under `evidence/`; see
+  [final validation](final-validation.md) and
+  [engineering verification matrix](../engineering/verification_matrix.md).
+- **Remaining risks:** P0 is OPEN. The user confirmed that independent sources
+  and reviewer are unavailable, so no sensitive result is certified. There is
+  no fully migrated property catalog, validated L-PE/ADS solver, Ics/backup
+  coordination, or independent numerical reference pack. API-wide immutable
+  ExportContext, all-format manifest parity and project persistence remain for
+  subsequent gated work. GUI freshness does not replace that future API contract.
+  Existing thermal/busbar formula applicability remains unreviewed and their
+  legacy checks are now explicitly warnings. Global lint/type debt, PDF printing,
+  Windows/DPI/RTL acceptance, EPLAN 2024 import and human trials remain open.

@@ -1,0 +1,38 @@
+lv_assist/field_wizard_engine.py:209: error: Module "lv_assist.iec_ladder_svg" has no attribute "render_control_circuit_ladder"  [attr-defined]
+lv_assist/busbar.py:121: error: Unsupported operand types for >= ("float" and "None")  [operator]
+lv_assist/busbar.py:121: note: Right operand is of type "float | None"
+lv_assist/busbar.py:135: error: Unsupported operand types for >= ("float" and "None")  [operator]
+lv_assist/busbar.py:135: note: Right operand is of type "float | None"
+lv_assist/busbar.py:136: error: Unsupported operand types for >= ("float" and "None")  [operator]
+lv_assist/busbar.py:136: note: Right operand is of type "float | None"
+lv_assist/busbar.py:139: error: Unsupported operand types for >= ("float" and "None")  [operator]
+lv_assist/busbar.py:139: note: Right operand is of type "float | None"
+lv_assist/busbar.py:142: error: Argument 1 to "_max_support_spacing_mm" of "BusbarEngine" has incompatible type "float | None"; expected "float"  [arg-type]
+lv_assist/eplan_macro_files.py:92: error: Argument 3 to "_sub" has incompatible type "dict[str, str]"; expected "dict[str, object]"  [arg-type]
+lv_assist/eplan_macro_files.py:92: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+lv_assist/eplan_macro_files.py:92: note: Consider using "Mapping" instead, which is covariant in the value type
+lv_assist/eplan_macro_files.py:109: error: Argument 3 to "_sub" has incompatible type "dict[str, str]"; expected "dict[str, object]"  [arg-type]
+lv_assist/eplan_macro_files.py:109: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+lv_assist/eplan_macro_files.py:109: note: Consider using "Mapping" instead, which is covariant in the value type
+lv_assist/eplan_macro_files.py:361: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+lv_assist/eplan_macro_files.py:367: error: Argument 3 to "_sub" has incompatible type "dict[str, str]"; expected "dict[str, object]"  [arg-type]
+lv_assist/eplan_macro_files.py:367: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+lv_assist/eplan_macro_files.py:367: note: Consider using "Mapping" instead, which is covariant in the value type
+lv_assist/eplan_macro_files.py:423: error: Argument 3 to "_sub" has incompatible type "dict[str, str]"; expected "dict[str, object]"  [arg-type]
+lv_assist/eplan_macro_files.py:423: note: "dict" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+lv_assist/eplan_macro_files.py:423: note: Consider using "Mapping" instead, which is covariant in the value type
+lv_assist/outputs.py:204: error: Item "None" of "CatalogDevice | None" has no attribute "part_number"  [union-attr]
+lv_assist/engine.py:219: error: Need type annotation for "steps" (hint: "steps: list[<type>] = ...")  [var-annotated]
+lv_assist/engine.py:291: error: Unsupported operand types for / ("None" and "float")  [operator]
+lv_assist/engine.py:291: note: Left operand is of type "float | None"
+lv_assist/engine.py:749: error: Unsupported operand types for <= ("float" and "None")  [operator]
+lv_assist/engine.py:749: note: Left operand is of type "float | None"
+lv_assist/eplan_field_test.py:212: error: Argument 1 to "len" has incompatible type "object"; expected "Sized"  [arg-type]
+lv_assist/eplan_field_test.py:213: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+lv_assist/eplan_field_test.py:215: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+lv_assist/exporters.py:469: error: Incompatible types in assignment (expression has type "TextIOWrapper[_WrappedBuffer]", variable has type "FeederCalcOutput")  [assignment]
+lv_assist/exporters.py:470: error: "FeederCalcOutput" has no attribute "write"  [attr-defined]
+lv_assist/gui.py:173: error: Incompatible types in assignment (expression has type "tuple[str, str, str, str, str, str]", variable has type "tuple[str, object, Any]")  [assignment]
+lv_assist/gui.py:380: error: Need type annotation for "_entries" (hint: "_entries: dict[<type>, <type>] = ...")  [var-annotated]
+lv_assist/gui.py:450: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+Found 22 errors in 8 files (checked 26 source files)
