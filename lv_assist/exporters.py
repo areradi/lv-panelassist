@@ -20,15 +20,12 @@ def _h(val) -> str:
     return html.escape(str(val), quote=True)
 
 
-def _xl_safe(val):
-    """F-011: جلوگیری از Formula Injection در سلول‌های Excel."""
-    if isinstance(val, str) and val and val[0] in "=+-@":
-        return "'" + val
-    return val
-
-
 def _append_safe(ws, row):
-    ws.append([_xl_safe(v) for v in row])
+    """Persist report strings literally, including engineering tags starting '='."""
+    ws.append(row)
+    for cell in ws[ws.max_row]:
+        if isinstance(cell.value, str):
+            cell.data_type = "s"
 
 class ExcelExporter:
     @staticmethod
@@ -147,7 +144,7 @@ class ExcelExporter:
             if f.selected_vfd: add_bom(f.func_tag, f.loc_tag, f"-U{idx}", tr("bom_vfd"), f.selected_vfd)
             if f.selected_soft_starter: add_bom(f.func_tag, f.loc_tag, f"-G{idx}", tr("bom_soft_starter"), f.selected_soft_starter)
             if f.selected_rcd: add_bom(f.func_tag, f.loc_tag, f"-F{idx}R", tr("bom_rcd"), f.selected_rcd)
-            ws4.append([f"{f.func_tag}{f.loc_tag}-W{idx}", f.func_tag, f.loc_tag, f"-W{idx}", tr("bom_cable"), "IEC 60502-1", f.cable_designation_str, f"Iz={'?' if f.cable_derated_iz_a is None else f.cable_derated_iz_a}A", f.cable_length_m, "M", 0.0, DataQuality.ESTIMATED.value])
+            _append_safe(ws4, [f"{f.func_tag}{f.loc_tag}-W{idx}", f.func_tag, f.loc_tag, f"-W{idx}", tr("bom_cable"), "IEC 60502-1", f.cable_designation_str, f"Iz={'?' if f.cable_derated_iz_a is None else f.cable_derated_iz_a}A", f.cable_length_m, "M", 0.0, DataQuality.ESTIMATED.value])
             if f.suggested_spec_str:
                 _append_safe(ws4, [f"{f.func_tag}{f.loc_tag}-SUG{idx}", f.func_tag, f.loc_tag, f"-SUG{idx}", tr("bom_suggested"), "To be purchased", f.suggested_spec_str, tr("bom_suggested"), 1, "PCS", 0.0, DataQuality.ESTIMATED.value])
 

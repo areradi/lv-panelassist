@@ -1356,9 +1356,12 @@ class TestPhase7AuditFixes:
         wb = openpyxl.load_workbook(str(path))
         ws = wb["02_Feeder_Cable_Schedule"]
         row = [c.value for c in ws[2]]
-        assert str(row[0]).startswith("'=")
-        assert str(row[1]).startswith("'+")
-        assert str(row[3]).startswith("'@")
+        assert row[0] == "=A1"
+        assert ws.cell(2, 1).data_type == "s"
+        assert row[1] == "+EVIL"
+        assert ws.cell(2, 2).data_type == "s"
+        assert row[3] == "@cmd"
+        assert ws.cell(2, 4).data_type == "s"
 
     def test_f004_cap_contactors_small_steps_in_catalog(self):
         small = [d for d in CATALOG if d.device_type == "CAP_CONTACTOR" and d.cap_kvar_400v <= 10.0]

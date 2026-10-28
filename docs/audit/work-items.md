@@ -263,3 +263,16 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [PDF integrity policy](../engineering/pdf_export_integrity_policy.md).
 - **Remaining risks:** real PDF rendering and Windows/RTL acceptance unresolved;
   the existing PDF roundtrip test stays enabled. P0 remains OPEN.
+
+## Review unit 13 — Literal XLSX report text
+
+- **Observed:** a cable BOM row bypassed text handling; other rows changed stored
+  engineering tags with apostrophe prefixes.
+- **Expected:** all report text stays literal, numbers stay numeric, no formula
+  cell is generated from user input or engineering tags.
+- **Implementation:** shared writer explicitly sets string cell types; cable row
+  uses it. Existing regression asserts original values plus persisted text type.
+- **Tests:** 23 engine/report/reopen/XML and direct-boundary cases in FA/EN/DE.
+- **Evidence:** [XLSX text policy](../engineering/xlsx_literal_text_policy.md).
+- **Remaining risks:** CSV machine-import vs spreadsheet-safe mode remains open;
+  no Excel field acceptance or engineering sign-off. P0 remains OPEN.
