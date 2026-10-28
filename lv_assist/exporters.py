@@ -13,6 +13,7 @@ from lv_assist.catalog import StandardsRegistry
 from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.engine import build_design_verification
 from lv_assist.i18n import tr, i18n
+from lv_assist.xlsx_export import save_workbook_atomic
 
 
 def _h(val) -> str:
@@ -211,7 +212,7 @@ class ExcelExporter:
                         _append_safe(manifest, [f"{key}[{part:04d}]", text_value[start:start + 30000]])
                 else:
                     _append_safe(manifest, [key, text_value])
-        wb.save(filename)
+        save_workbook_atomic(wb, filename)
 
 class PrintableReportExporter:
     SEL_BADGE = {

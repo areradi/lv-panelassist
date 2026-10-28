@@ -810,7 +810,11 @@ class LVAssistApp(ctk.CTk):
         path = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile="LV_Panel_Design_Output.xlsx", filetypes=[("Excel", "*.xlsx")])
         if path:
             f_outs, summary, validations = self.last_results
-            ExcelExporter.export_to_excel(path, self.current_project, f_outs, summary, validations)
+            try:
+                ExcelExporter.export_to_excel(path, self.current_project, f_outs, summary, validations)
+            except (OSError, zipfile.BadZipFile):
+                messagebox.showerror(tr("msg_error"), tr("xlsx_write_failed"))
+                return
             messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 
     def action_open_printable_report(self):

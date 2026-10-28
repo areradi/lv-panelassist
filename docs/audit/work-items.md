@@ -302,3 +302,16 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [CSV publication policy](../engineering/csv_atomic_write_policy.md).
 - **Remaining risks:** power loss, network filesystems, concurrent write conflicts,
   other formats and Windows field acceptance remain open; P0 stays OPEN.
+
+## Review unit 16 — Main XLSX report publication
+
+- **Observed:** direct workbook saving could truncate a prior report; GUI did not
+  handle file-write failure.
+- **Expected:** failed attempts preserve an old report or leave no new file;
+  GUI reports failure, not success.
+- **Implementation:** private same-directory temporary file, ZIP validation,
+  flush/fsync/close, atomic replacement and cleanup; localized GUI errors.
+- **Tests:** 11 new actual export/GUI boundary cases plus 23 literal-text cases.
+- **Evidence:** [XLSX publication policy](../engineering/xlsx_atomic_write_policy.md).
+- **Remaining risks:** Windows field tests, other formats and power-loss/concurrent
+  write behavior remain open; P0 remains OPEN.
