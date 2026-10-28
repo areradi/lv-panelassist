@@ -3,7 +3,7 @@
 import openpyxl
 import pytest
 
-from lv_assist.catalog import CatalogRepository, catalog_repo
+from lv_assist.catalog import CatalogRepository
 from lv_assist.engine import EngineeringEngine
 from lv_assist.exporters import ExcelExporter, PrintableReportExporter
 from lv_assist.i18n import i18n, tr
@@ -28,7 +28,7 @@ def test_ceiling_requires_exact_known_dimensions(ratings, expected):
     ('IP43', 'IP45', 'IP43'), ('IP65', 'IP66', 'IP65'),
     ('IP65', '', '?'),
 ])
-def test_actual_fan_rating_bounds_engine_and_reports(monkeypatch, tmp_path, locale, target, fan_ip, expected):
+def test_actual_fan_rating_bounds_engine_and_reports(tmp_path, locale, target, fan_ip, expected):
     previous = i18n.get_language()
     try:
         i18n.set_language(locale)
@@ -39,7 +39,7 @@ def test_actual_fan_rating_bounds_engine_and_reports(monkeypatch, tmp_path, loca
         enclosure = next(device for device in devices if device.device_type == 'ENCLOSURE')
         enclosure = enclosure.model_copy(update={'ip_rating': 'IP66', 'width_mm': 800,
                                                 'height_mm': 2000, 'depth_mm': 600})
-        monkeypatch.setattr(catalog_repo, 'get_compatible_enclosures', lambda target: [enclosure])
+        devices = [device for device in devices if device.device_type != 'ENCLOSURE'] + [enclosure]
         project = ProjectSpec(project_name='Synthetic IP test', target_ip=target,
                               ambient_temp_c=40, max_internal_temp_c=50)
         inputs = [FeederInput(feeder_id=f'F{i}', description='Synthetic motor',
@@ -69,12 +69,12 @@ def test_actual_fan_rating_bounds_engine_and_reports(monkeypatch, tmp_path, loca
 
 
 @pytest.mark.parametrize('enclosure_ip,expected', [('IP66', 'IP54'), ('', '?')])
-def test_natural_ventilation_does_not_invent_missing_enclosure_ip(monkeypatch, enclosure_ip, expected):
+def test_natural_ventilation_does_not_invent_missing_enclosure_ip(enclosure_ip, expected):
     devices = CatalogRepository.get_default_catalog()
     enclosure = next(device for device in devices if device.device_type == 'ENCLOSURE')
     enclosure = enclosure.model_copy(update={'ip_rating': enclosure_ip, 'width_mm': 800,
                                             'height_mm': 2000, 'depth_mm': 600})
-    monkeypatch.setattr(catalog_repo, 'get_compatible_enclosures', lambda target: [enclosure])
+    devices = [device for device in devices if device.device_type != 'ENCLOSURE'] + [enclosure]
     project = ProjectSpec(project_name='Natural ventilation IP test')
     inputs = [FeederInput(feeder_id='F1', description='Small load',
                           load_type=LoadType.SUB_FEEDER, power_kw=1)]

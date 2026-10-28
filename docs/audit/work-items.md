@@ -235,3 +235,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [catalog IP policy](../engineering/ip_catalog_applicability_policy.md).
 - **Remaining risks:** manufacturer evidence and assembly verification absent;
   special water/combined markings need separate review. P0 stays OPEN.
+
+## Review unit 11 — Enclosure selection uses the run catalog
+
+- **Observed:** body selection bypassed the validated run catalog/manufacturer
+  filter via the global repository; downstream BOM and geometry inherited it.
+- **Expected:** an enclosure is in the recorded selection catalog or is an
+  explicitly hypothetical EST-PANEL with missing IP data.
+- **Implementation:** body candidates use the validated, filtered run catalog
+  and the shared conservative IP comparison.
+- **Tests:** eight new catalog/body/BOM/report/hash/repeated-run cases; previous
+  ceiling fixtures now supply real catalog inputs without changing assertions.
+- **Evidence:** [scope policy](../engineering/enclosure_catalog_scope_policy.md).
+- **Remaining risks:** auxiliary repository data and all-format immutable export
+  context remain open; no engineering approval and P0 stays OPEN.

@@ -8,7 +8,7 @@ from lv_assist.models import (
 )
 from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository, catalog_repo
 from lv_assist.busbar import BusbarEngine
-from lv_assist.ip_rating import ip_upper_bound
+from lv_assist.ip_rating import ip_meets, ip_upper_bound
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 from lv_assist.run_metadata import create_run_metadata, catalog_file_hash
@@ -1126,7 +1126,8 @@ class EngineeringEngine:
         total_loss_w = round(feeder_losses + main_loss + psu_and_sel_loss + cap_loss_w, 1)
 
         has_vfd_or_yd = any(f.load_type in (LoadType.MOTOR_VFD, LoadType.MOTOR_STAR_DELTA) for f in feeders)
-        enclosures = catalog_repo.get_compatible_enclosures(project.target_ip)
+        enclosures = [device for device in self.catalog
+                      if device.device_type == "ENCLOSURE" and ip_meets(device.ip_rating, project.target_ip)]
         enclosures.sort(key=lambda d: (d.width_mm, d.height_mm))
         if enclosures:
             idx = 2 if (i_main_req_a > 160 or len(feeders) >= 5) else (1 if (has_vfd_or_yd or len(feeders) >= 3) else 0)
