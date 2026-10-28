@@ -40,7 +40,7 @@ class ExcelClipboardParser:
         "power_kw": ["kw", "power", "power_kw", "p_kw", "توان", "توان (kw)", "leistung"],
         "length_m": ["length", "len", "length_m", "l_m", "طول", "طول کابل", "طول (m)", "länge"],
         "starter_type": ["starter", "type", "drive", "راه انداز", "نوع راه انداز", "راه‌انداز", "شروع"],
-        "cos_phi": ["cosphi", "cos_phi", "pf", "ضریب توان"],
+        "cos_phi": ["cosphi", "cos_phi", "cos phi", "pf", "ضریب توان"],
         "efficiency": ["eff", "efficiency", "eta", "راندمان", "بازده"],
     }
 
@@ -134,6 +134,38 @@ class ExcelClipboardParser:
                 )
                 continue
 
+            raw_cos = get_cell("cos_phi", "").replace(",", ".")
+            cos_phi = 0.85
+            if raw_cos:
+                try:
+                    cos_phi = float(raw_cos)
+                    if not (0.1 <= cos_phi <= 1.0):
+                        result.errors.append(
+                            RowValidationError(human_row, "cos_phi", raw_cos, "ضریب توان باید بین 0.1 و 1.0 باشد.")
+                        )
+                        continue
+                except ValueError:
+                    result.errors.append(
+                        RowValidationError(human_row, "cos_phi", raw_cos, "فرمت عدد ضریب توان نامعتبر است.")
+                    )
+                    continue
+
+            raw_eff = get_cell("efficiency", "").replace(",", ".")
+            efficiency = 0.9
+            if raw_eff:
+                try:
+                    efficiency = float(raw_eff)
+                    if not (0.1 <= efficiency <= 1.0):
+                        result.errors.append(
+                            RowValidationError(human_row, "efficiency", raw_eff, "بازده باید بین 0.1 و 1.0 باشد.")
+                        )
+                        continue
+                except ValueError:
+                    result.errors.append(
+                        RowValidationError(human_row, "efficiency", raw_eff, "فرمت عدد بازده نامعتبر است.")
+                    )
+                    continue
+
             result.valid_rows.append(
                 ParsedFeederRow(
                     row_index=human_row,
@@ -142,6 +174,8 @@ class ExcelClipboardParser:
                     power_kw=power_kw,
                     length_m=length_m,
                     starter_type=raw_starter,
+                    cos_phi=cos_phi,
+                    efficiency=efficiency,
                 )
             )
 
