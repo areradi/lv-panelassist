@@ -875,5 +875,7 @@
   "audit_ik_feeder_start_3p": "Ik feeder start at panel bus, 3P",
   "audit_ik_feeder_end_max_3p": "Ik max at feeder end, 3P",
   "audit_ik_feeder_end_min_lpe": "Ik min at feeder end, L-PE",
-  "audit_ik_bus_total_source": "Panel-bus total used for comparison includes the separate preliminary motor contribution; no independent verification."
+  "audit_ik_bus_total_source": "Panel-bus total used for comparison includes the separate preliminary motor contribution; no independent verification.",
+  "audit_overload_invalid": "The stated setting/device range or cable/current inequalities are inconsistent. Review the actual device and settings.",
+  "audit_ir_frame_proposal": "Actual Ir is unknown. Frame {frame} A is used only for a conservative cable proposal, not overload verification."
 }

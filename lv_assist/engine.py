@@ -103,10 +103,16 @@ class CableSizingEngine:
         max_vdrop_pct: float, load_type: LoadType, user_specified_mm2: Optional[float] = None,
         conductor: str = "CU", insulation: str = "PVC", installation_method: str = "C",
         fire_resistant: bool = False, thdi_pct: Optional[float] = None,
-        fault_current_ka: Optional[float] = None, clear_time_s: Optional[float] = None
+        fault_current_ka: Optional[float] = None, clear_time_s: Optional[float] = None,
+        protection_ir_a: float | None = None,
     ) -> tuple[float, float, float | None, float | None, float | None, str]:
         k1, k2, total_k = cls.get_derating_summary(ambient_temp_c, grouping_k2, conductor, insulation, installation_method)
-        required_iz = max(ib_a, protection_in_a)
+        if protection_ir_a is not None and (not math.isfinite(protection_ir_a) or protection_ir_a <= 0):
+            raise ValueError(tr("audit_input_invalid"))
+        # Frame rating is a conservative geometry proposal when Ir is unknown;
+        # it is never a substitute for the actual setting in the verdict.
+        required_iz = max(ib_a, protection_ir_a if is_adjustable_prot and protection_ir_a is not None
+                          else protection_in_a)
         min_allowed_section = 1.5 if load_type == LoadType.LIGHTING_SOCKET else 2.5
 
         table = catalog_repo.get_cable_iz0_table(conductor, insulation, installation_method,
@@ -570,6 +576,8 @@ class EngineeringEngine:
         max_vd = 3.0 if f.load_type == LoadType.LIGHTING_SOCKET else 5.0
         prot_in = sel_prot.rated_current_in_a if sel_prot else ib_a * 1.25
         is_adj_prot = (sel_prot.device_type in ("MPCB", "MCCB")) if sel_prot else True
+        if sel_prot is not None and is_adj_prot and f.protection_ir_a is None:
+            assumptions.append(tr("audit_ir_frame_proposal", frame=prot_in))
 
         # No L-PE loop model/settings are present in ProjectSpec. Bus 3P current
         # cannot substitute for the earth fault at the end of the feeder.
@@ -585,7 +593,7 @@ class EngineeringEngine:
             user_specified_mm2=f.cable_section_mm2, conductor=f.conductor_material.value,
             insulation=f.insulation.value, installation_method=f.installation_method.value,
             fire_resistant=f.fire_resistant, thdi_pct=f.thdi_pct,
-            fault_current_ka=fault_ka, clear_time_s=clear_t
+            fault_current_ka=fault_ka, clear_time_s=clear_t, protection_ir_a=f.protection_ir_a,
         )
 
         # F-008: ضرایب تصحیح دقیق و روش نصب مرجع برای گزارش
@@ -616,25 +624,52 @@ class EngineeringEngine:
                 sel_prot.rated_current_in_a if sel_prot else None)
         overload = verify_overload_coordination(ib_a, ir_a, iz_derated, f.protection_i2_a)
         overload.title = tr("audit_overload_title")
-        overload.cause = tr("audit_overload_basis")
         overload.recommended_action = tr("audit_overload_action")
-        if sel_prot is not None and ir_a is not None:
-            upper = sel_prot.setting_max_a or sel_prot.rated_current_in_a
-            lower = sel_prot.setting_min_a
-            if not lower <= ir_a <= upper:
+        overload.input_values.update({
+            "requested_ir_a": f.protection_ir_a,
+            "frame_in_a": sel_prot.rated_current_in_a if sel_prot else None,
+            "setting_min_a": sel_prot.setting_min_a if sel_prot and sel_prot.setting_min_a != 0 else None,
+            "setting_max_a": sel_prot.setting_max_a if sel_prot and sel_prot.setting_max_a != 0 else None,
+            "device_selected": sel_prot is not None,
+            "adjustable": is_adj_prot,
+        })
+        if sel_prot is not None and is_adj_prot:
+            lower, upper = sel_prot.setting_min_a, sel_prot.setting_max_a
+            if lower < 0 or upper < 0 or (lower > 0 and upper > 0 and lower > upper):
                 overload.status = ValidationStatus.ERROR
+        if sel_prot is not None and ir_a is not None:
+            upper = sel_prot.setting_max_a
+            lower = sel_prot.setting_min_a
+            if (ir_a > sel_prot.rated_current_in_a or
+                    (is_adj_prot and ((lower > 0 and ir_a < lower) or (upper > 0 and ir_a > upper))) or
+                    (not is_adj_prot and f.protection_ir_a is not None and f.protection_ir_a != ir_a)):
+                overload.status = ValidationStatus.ERROR
+            elif is_adj_prot and (lower <= 0 or upper <= 0) and overload.status != ValidationStatus.ERROR:
+                overload.status = ValidationStatus.INSUFFICIENT_DATA
+        if sel_prot is None and overload.status != ValidationStatus.ERROR:
+            overload.status = ValidationStatus.INSUFFICIENT_DATA
+        overload.cause = (tr("audit_overload_invalid") if overload.status == ValidationStatus.ERROR else
+                          tr("audit_overload_basis") if overload.status == ValidationStatus.INSUFFICIENT_DATA else
+                          tr("audit_source_gap"))
+        def _amp(value):
+            return "?" if value is None else f"{value:g}"
+        overload.measured_or_calc_value = (
+            f"Ib={_amp(ib_a)} A; Ir={_amp(ir_a)} A; Iz={_amp(iz_derated)} A; "
+            f"I2={_amp(f.protection_i2_a)} A; requested Ir={_amp(f.protection_ir_a)} A; "
+            f"frame In={_amp(sel_prot.rated_current_in_a if sel_prot else None)} A; "
+            f"setting range={_amp(overload.input_values['setting_min_a'])}.."
+            f"{_amp(overload.input_values['setting_max_a'])} A"
+        )
         vals.append(ValidationResult.from_check(overload, rule_id="RULE-CABLE-OVERLOAD",
                     subject_id=f.feeder_id, standard_ref="IEC 60364-4-43"))
-        req_iz_ref = prot_in
         if iz_derated is None:
             vals.append(ValidationResult(rule_id="RULE-CABLE-010", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52",
                 status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_cable_nontable_desc", a=f"{s_ph:g}"),
                 supporting_evidence=tr("val_cable_nontable_ev", a=f"{s_ph:g}"), consequence=tr("val_cable_nontable_cons"),
                 recommended_action=tr("val_cable_nontable_action")))
-        elif iz_derated >= req_iz_ref:
-            vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52", status=overload.status, description=tr("audit_overload_title"), supporting_evidence=tr("val_cable_ok_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("audit_overload_basis"), recommended_action=tr("audit_overload_action")))
         else:
-            vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-4-43", status=ValidationStatus.ERROR, description=tr("val_cable_err_desc"), supporting_evidence=tr("val_cable_err_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("val_cable_err_cons"), recommended_action=tr("val_cable_err_action")))
+            vals.append(ValidationResult.from_check(overload, rule_id="RULE-CABLE-009",
+                        subject_id=f.feeder_id, standard_ref="IEC 60364-4-43"))
 
         vals.append(ValidationResult(rule_id="RULE-VDROP-003", feeder_id=f.feeder_id,
             standard_ref="IEC 60364-5-52",

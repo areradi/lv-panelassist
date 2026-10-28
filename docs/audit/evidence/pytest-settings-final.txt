@@ -1,0 +1,18 @@
+..........................................................F............. [ 17%]
+........................................................................ [ 35%]
+.......................s................................................ [ 52%]
+........................................................................ [ 70%]
+........................................................................ [ 87%]
+...................................................                      [100%]
+=================================== FAILURES ===================================
+___________________ TestPhase3Pdf.test_html_to_pdf_roundtrip ___________________
+test_lv_assist.py:603: in test_html_to_pdf_roundtrip
+    assert PdfExporter.export_html_to_pdf(str(html_path), str(pdf_path))
+E   AssertionError: assert False
+E    +  where False = export_html_to_pdf('/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.html', '/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.pdf')
+E    +    where export_html_to_pdf = PdfExporter.export_html_to_pdf
+E    +    and   '/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.html' = str(PosixPath('/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.html'))
+E    +    and   '/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.pdf' = str(PosixPath('/tmp/pytest-of-agent/pytest-30/test_html_to_pdf_roundtrip0/report.pdf'))
+=========================== short test summary info ============================
+SKIPPED [1] test_lv_assist.py:1843: csc.exe (C# 5 compiler) not available
+1 failed, 409 passed, 1 skipped in 15.91s

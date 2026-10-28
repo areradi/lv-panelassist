@@ -1,0 +1,870 @@
+_recovery_backup_20261026_120849/busbar.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/busbar.py:5:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+_recovery_backup_20261026_120849/busbar.py:5:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/busbar.py:5:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+_recovery_backup_20261026_120849/busbar.py:23:27: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/busbar.py:23:32: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/busbar.py:23:72: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/busbar.py:39:27: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/busbar.py:39:37: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/busbar.py:39:60: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/busbar.py:59:95: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/busbar.py:102:13: S110 `try`-`except`-`pass` detected, consider logging the exception
+_recovery_backup_20261026_120849/busbar.py:102:20: BLE001 Do not catch blind exception: `Exception`
+_recovery_backup_20261026_120849/dxf_export.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/dxf_export.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+_recovery_backup_20261026_120849/dxf_export.py:4:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/dxf_export.py:4:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+_recovery_backup_20261026_120849/dxf_export.py:17:14: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/dxf_export.py:27:19: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/dxf_export.py:30:21: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:30:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:32:21: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:32:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:33:23: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:33:28: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:34:21: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:34:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:34:37: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:34:42: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:54:14: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:55:13: ISC004 Unparenthesized implicit string concatenation in collection
+_recovery_backup_20261026_120849/dxf_export.py:127:17: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/dxf_export.py:146:86: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:186:54: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:231:48: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:231:53: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/dxf_export.py:260:72: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/eplan_macro.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+_recovery_backup_20261026_120849/eplan_macro.py:5:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/eplan_macro.py:5:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+_recovery_backup_20261026_120849/eplan_macro.py:41:24: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:56:18: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:58:29: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:61:19: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:62:30: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:74:18: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/eplan_macro.py:93:16: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:97:54: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:98:50: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:98:55: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:103:15: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:103:20: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:118:31: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:120:17: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:153:20: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:159:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:160:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:161:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:162:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:163:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:166:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:167:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:168:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:169:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:170:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:171:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:172:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:173:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:176:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:177:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:178:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:179:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:180:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:183:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:184:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:185:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:186:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:187:36: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:193:61: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:195:16: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:195:21: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/eplan_macro.py:201:31: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:201:46: UP031 Use format specifiers instead of percent format
+_recovery_backup_20261026_120849/eplan_macro.py:232:30: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/eplan_macro_files.py:4:1: I001 [*] Import block is un-sorted or un-formatted
+_recovery_backup_20261026_120849/eplan_macro_files.py:7:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+_recovery_backup_20261026_120849/eplan_macro_files.py:7:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/eplan_macro_files.py:7:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+_recovery_backup_20261026_120849/eplan_macro_files.py:7:32: F401 [*] `typing.Optional` imported but unused
+_recovery_backup_20261026_120849/eplan_macro_files.py:52:101: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:67:45: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:68:10: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:68:15: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:73:19: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:73:24: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:194:45: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:217:16: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:219:13: ISC004 Unparenthesized implicit string concatenation in collection
+_recovery_backup_20261026_120849/eplan_macro_files.py:222:13: ISC004 Unparenthesized implicit string concatenation in collection
+_recovery_backup_20261026_120849/eplan_macro_files.py:256:20: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:256:25: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:256:44: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:256:49: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:281:18: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:282:10: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:285:22: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/eplan_macro_files.py:296:5: PIE790 [*] Unnecessary `pass` statement
+_recovery_backup_20261026_120849/eplan_macro_files.py:301:5: PIE790 [*] Unnecessary `pass` statement
+_recovery_backup_20261026_120849/exporters.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/exporters.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+_recovery_backup_20261026_120849/exporters.py:3:8: F401 [*] `os` imported but unused
+_recovery_backup_20261026_120849/exporters.py:5:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/exporters.py:9:34: F401 [*] `lv_assist.dxf_export.ControlLadderDxfExporter` imported but unused
+_recovery_backup_20261026_120849/exporters.py:16:72: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/exporters.py:43:59: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/exporters.py:79:72: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/exporters.py:88:72: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/exporters.py:91:13: F541 [*] f-string without any placeholders
+_recovery_backup_20261026_120849/exporters.py:94:13: F541 [*] f-string without any placeholders
+_recovery_backup_20261026_120849/exporters.py:98:13: F541 [*] f-string without any placeholders
+_recovery_backup_20261026_120849/layout.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+_recovery_backup_20261026_120849/layout.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+_recovery_backup_20261026_120849/layout.py:4:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+_recovery_backup_20261026_120849/layout.py:4:1: UP035 `typing.List` is deprecated, use `list` instead
+_recovery_backup_20261026_120849/layout.py:4:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+_recovery_backup_20261026_120849/layout.py:29:18: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/layout.py:32:32: UP006 [*] Use `dict` instead of `Dict` for type annotation
+_recovery_backup_20261026_120849/layout.py:32:51: RUF012 Mutable default value for class attribute
+_recovery_backup_20261026_120849/layout.py:55:34: UP045 [*] Use `X | None` for type annotations
+_recovery_backup_20261026_120849/layout.py:56:58: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:73:62: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:74:58: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:75:15: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:103:54: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:117:15: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:125:23: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:165:37: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:165:63: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:167:51: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:168:15: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:244:36: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/layout.py:253:67: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:254:63: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:255:15: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:267:46: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/layout.py:278:16: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:302:58: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:323:24: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:323:29: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+_recovery_backup_20261026_120849/layout.py:341:16: UP006 [*] Use `list` instead of `List` for type annotation
+_recovery_backup_20261026_120849/layout.py:344:13: ISC004 Unparenthesized implicit string concatenation in collection
+_recovery_backup_20261026_120849/layout.py:387:20: UP045 [*] Use `X | None` for type annotations
+_recovery_backup_20261026_120849/layout.py:489:36: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/__init__.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/busbar.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/busbar.py:5:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/busbar.py:6:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/busbar.py:6:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/busbar.py:15:17: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/busbar.py:15:22: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/busbar.py:15:52: RUF012 Mutable default value for class attribute
+lv_assist/busbar.py:48:66: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/busbar.py:66:58: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:67:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:67:50: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/busbar.py:67:56: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/busbar.py:81:53: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:83:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:83:66: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:88:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/busbar.py:110:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/busbar.py:121:13: F841 Local variable `sc_ok` is assigned to but never used
+lv_assist/catalog.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/catalog.py:8:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/catalog.py:16:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/catalog.py:16:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/catalog.py:45:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:45:39: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:47:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:47:37: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:48:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:48:38: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:49:32: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:49:41: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:49:51: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:50:26: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:50:35: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:51:25: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:51:34: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:62:31: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:63:17: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:77:26: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:94:10: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:112:85: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:136:52: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:136:77: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:147:75: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:167:10: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:196:43: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:206:66: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:223:41: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:231:36: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:237:30: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:245:28: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:245:38: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:256:34: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:260:36: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:282:47: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog.py:282:56: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:298:26: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog.py:301:35: RUF007 Prefer `itertools.pairwise()` over `zip()` when iterating over successive pairs
+lv_assist/catalog.py:335:23: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:335:33: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:338:18: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:338:28: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/catalog.py:370:39: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/catalog_provenance.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/catalog_provenance.py:23:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog_provenance.py:24:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog_provenance.py:37:20: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog_provenance.py:38:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog_provenance.py:40:34: UP045 [*] Use `X | None` for type annotations
+lv_assist/catalog_provenance.py:41:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/control_circuits.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/control_circuits.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/control_circuits.py:5:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/control_circuits.py:5:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/control_circuits.py:5:26: F401 [*] `typing.Optional` imported but unused
+lv_assist/control_circuits.py:38:90: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:39:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:40:9: F841 Local variable `tag` is assigned to but never used
+lv_assist/control_circuits.py:54:85: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:55:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:128:61: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:128:117: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:138:82: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:158:39: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:158:44: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/control_circuits.py:158:96: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:169:56: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:169:83: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:174:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:207:58: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:212:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:240:78: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/control_circuits.py:245:20: RUF012 Mutable default value for class attribute
+lv_assist/control_circuits.py:250:41: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/core_verification.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/core_verification.py:2:1: UP035 [*] Import from `collections.abc` instead: `Callable`
+lv_assist/core_verification.py:2:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/core_verification.py:2:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/core_verification.py:14:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:15:25: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:34:31: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/core_verification.py:40:13: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:49:21: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:50:50: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:100:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:103:6: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/core_verification.py:103:12: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:153:27: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:154:27: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:155:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:156:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:157:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:165:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:166:17: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:168:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:169:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:170:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:171:23: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:172:20: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:254:20: UP045 [*] Use `X | None` for type annotations
+lv_assist/core_verification.py:255:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/dxf_export.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/dxf_export.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/dxf_export.py:4:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/dxf_export.py:4:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/dxf_export.py:18:14: RUF012 Mutable default value for class attribute
+lv_assist/dxf_export.py:27:19: RUF012 Mutable default value for class attribute
+lv_assist/dxf_export.py:30:21: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:30:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:31:21: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:31:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:32:23: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:32:28: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:33:21: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:33:26: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:33:37: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:33:42: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:52:14: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:87:17: RUF012 Mutable default value for class attribute
+lv_assist/dxf_export.py:105:54: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:149:48: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/dxf_export.py:149:53: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/dxf_export.py:172:72: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/engine.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/engine.py:3:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/engine.py:3:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/engine.py:3:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/engine.py:25:25: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:25:44: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:26:27: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:26:46: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:27:23: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:27:42: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:28:29: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:28:48: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:30:21: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:30:40: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:33:59: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:49:65: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/engine.py:103:72: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:105:49: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:106:27: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:106:65: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:109:9: RUF059 Unpacked variable `k1` is never used
+lv_assist/engine.py:109:13: RUF059 Unpacked variable `k2` is never used
+lv_assist/engine.py:177:21: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:177:45: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:185:24: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/engine.py:185:48: RUF012 Mutable default value for class attribute
+lv_assist/engine.py:194:33: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:200:60: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:201:35: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:201:55: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/engine.py:232:15: RUF046 Value being cast to `int` is already an integer
+lv_assist/engine.py:245:37: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:275:75: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:279:72: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:289:75: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:342:66: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:342:88: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/engine.py:342:101: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:360:62: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:389:19: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:451:83: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:452:45: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:589:15: RUF059 Unpacked variable `s_neutral` is never used
+lv_assist/engine.py:770:69: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:771:39: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:772:45: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:773:45: UP045 [*] Use `X | None` for type annotations
+lv_assist/engine.py:1244:62: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:1246:44: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/engine.py:1253:12: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/eplan_field_test.py:15:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/eplan_field_test.py:15:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/eplan_field_test.py:15:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/eplan_field_test.py:40:60: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:41:56: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:41:61: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_field_test.py:41:77: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:43:14: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:43:19: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_field_test.py:43:35: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:53:60: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:54:56: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:55:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:69:29: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:70:52: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:82:51: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:82:70: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:94:39: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_field_test.py:138:65: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:181:47: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/eplan_field_test.py:186:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:187:19: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_field_test.py:206:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/eplan_macro.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/eplan_macro.py:5:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/eplan_macro.py:5:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/eplan_macro.py:41:24: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:56:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:58:29: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:61:19: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:62:30: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:74:18: RUF012 Mutable default value for class attribute
+lv_assist/eplan_macro.py:93:16: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:97:54: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:98:50: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:98:55: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro.py:103:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:103:20: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro.py:118:31: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:120:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:153:20: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:159:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:160:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:161:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:162:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:163:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:166:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:167:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:168:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:169:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:170:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:171:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:172:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:173:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:176:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:177:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:178:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:179:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:180:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:183:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:184:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:185:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:186:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:187:36: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:193:61: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:195:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro.py:195:21: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro.py:201:31: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:201:46: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro.py:232:30: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/eplan_macro_files.py:17:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/eplan_macro_files.py:20:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/eplan_macro_files.py:20:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/eplan_macro_files.py:20:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/eplan_macro_files.py:25:7: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro_files.py:50:16: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:54:26: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/eplan_macro_files.py:58:47: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/eplan_macro_files.py:76:5: RUF059 Unpacked variable `page` is never used
+lv_assist/eplan_macro_files.py:76:16: RUF059 Unpacked variable `kind` is never used
+lv_assist/eplan_macro_files.py:84:42: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:124:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:125:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:141:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:142:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:146:34: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:146:50: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro_files.py:147:16: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro_files.py:162:28: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:175:64: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:176:24: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:192:11: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:193:11: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:205:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:210:9: PLR1704 Redefining argument with the local name `name`
+lv_assist/eplan_macro_files.py:211:9: SIM113 Use `enumerate()` for index variable `n30` in `for` loop
+lv_assist/eplan_macro_files.py:212:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:213:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:214:9: SIM113 Use `enumerate()` for index variable `n31` in `for` loop
+lv_assist/eplan_macro_files.py:215:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:216:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:220:9: SIM113 Use `enumerate()` for index variable `n70` in `for` loop
+lv_assist/eplan_macro_files.py:221:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:222:26: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:225:22: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:242:22: RUF012 Mutable default value for class attribute
+lv_assist/eplan_macro_files.py:243:26: RUF012 Mutable default value for class attribute
+lv_assist/eplan_macro_files.py:246:60: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:249:20: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/eplan_macro_files.py:252:27: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:254:17: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:254:22: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro_files.py:254:33: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:254:44: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:264:20: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/eplan_macro_files.py:265:26: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:277:33: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:278:56: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:281:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:286:23: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:364:17: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:393:19: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:402:50: UP045 [*] Use `X | None` for type annotations
+lv_assist/eplan_macro_files.py:412:42: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:427:54: UP045 [*] Use `X | None` for type annotations
+lv_assist/eplan_macro_files.py:439:42: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:450:30: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:450:35: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/eplan_macro_files.py:450:46: UP045 [*] Use `X | None` for type annotations
+lv_assist/eplan_macro_files.py:451:29: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:481:44: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:490:21: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:494:41: UP031 Use format specifiers instead of percent format
+lv_assist/eplan_macro_files.py:511:53: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:524:33: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:526:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/eplan_macro_files.py:526:53: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:531:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/eplan_macro_files.py:534:23: UP031 Use format specifiers instead of percent format
+lv_assist/excel_clipboard.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/excel_clipboard.py:2:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/excel_clipboard.py:2:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/excel_clipboard.py:2:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/excel_clipboard.py:11:15: UP045 [*] Use `X | None` for type annotations
+lv_assist/excel_clipboard.py:27:17: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/excel_clipboard.py:28:13: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/excel_clipboard.py:29:23: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/excel_clipboard.py:37:22: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/excel_clipboard.py:37:32: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/excel_clipboard.py:37:45: RUF012 Mutable default value for class attribute
+lv_assist/excel_clipboard.py:47:22: RUF012 Mutable default value for class attribute
+lv_assist/excel_clipboard.py:50:54: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/excel_clipboard.py:50:68: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/excel_clipboard.py:50:80: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/excel_clipboard.py:51:18: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/excel_clipboard.py:56:17: SIM102 Use a single `if` statement instead of nested `if` statements
+lv_assist/excel_clipboard.py:93:54: B023 Function definition does not bind loop variable `cells`
+lv_assist/excel_clipboard.py:94:28: B023 Function definition does not bind loop variable `cells`
+lv_assist/excel_clipboard.py:115:23: UP045 [*] Use `X | None` for type annotations
+lv_assist/exporters.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/exporters.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/exporters.py:4:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/exporters.py:35:71: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/exporters.py:35:137: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/exporters.py:220:17: RUF012 Mutable default value for class attribute
+lv_assist/exporters.py:229:76: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/exporters.py:229:142: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/exporters.py:475:13: RUF012 Mutable default value for class attribute
+lv_assist/field_wizard_engine.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/field_wizard_engine.py:12:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/field_wizard_engine.py:14:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/field_wizard_engine.py:14:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/field_wizard_engine.py:14:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/field_wizard_engine.py:14:36: F401 [*] `typing.Dict` imported but unused
+lv_assist/field_wizard_engine.py:33:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/field_wizard_engine.py:89:22: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/field_wizard_engine.py:91:10: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/field_wizard_engine.py:91:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/field_wizard_engine.py:97:23: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/gui.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/gui.py:8:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/gui.py:8:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/gui.py:232:17: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui.py:249:20: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:286:24: B023 Function definition does not bind loop variable `row`
+lv_assist/gui.py:286:34: B023 Function definition does not bind loop variable `row`
+lv_assist/gui.py:292:24: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:294:81: B023 Function definition does not bind loop variable `row_no`
+lv_assist/gui.py:339:29: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/gui.py:339:48: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui.py:431:16: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:450:31: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui.py:564:9: F841 Local variable `style` is assigned to but never used
+lv_assist/gui.py:686:20: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:720:13: S110 `try`-`except`-`pass` detected, consider logging the exception
+lv_assist/gui.py:720:20: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:756:16: BLE001 Do not catch blind exception: `Exception`
+lv_assist/gui.py:778:9: SIM117 Use a single `with` statement with multiple contexts instead of nested `with` statements
+lv_assist/gui.py:1010:45: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/gui_output_bridge.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/gui_output_bridge.py:11:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/gui_output_bridge.py:13:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/gui_output_bridge.py:13:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/gui_output_bridge.py:13:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/gui_output_bridge.py:13:37: F401 [*] `typing.Optional` imported but unused
+lv_assist/gui_output_bridge.py:39:52: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:41:22: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:46:13: F841 Local variable `cont_delta` is assigned to but never used
+lv_assist/gui_output_bridge.py:187:58: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:202:41: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:203:10: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/gui_output_bridge.py:205:17: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/gui_output_bridge.py:213:41: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:214:10: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/gui_output_bridge.py:214:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:214:28: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:216:20: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:217:24: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:227:59: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:228:10: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:231:22: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/gui_output_bridge.py:249:61: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/i18n.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/iec_ladder_svg.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/iec_ladder_svg.py:12:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/iec_ladder_svg.py:13:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/iec_ladder_svg.py:13:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/iec_ladder_svg.py:78:10: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/iec_ladder_svg.py:78:20: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/iec_ladder_svg.py:219:13: F841 Local variable `coil_2_part` is assigned to but never used
+lv_assist/iec_ladder_svg.py:221:13: F841 Local variable `coil_3_part` is assigned to but never used
+lv_assist/iec_sld_svg.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/iec_sld_svg.py:8:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/iec_sld_svg.py:9:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/iec_sld_svg.py:9:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/iec_sld_svg.py:9:26: F401 [*] `typing.Dict` imported but unused
+lv_assist/iec_sld_svg.py:9:32: F401 [*] `typing.Any` imported but unused
+lv_assist/iec_sld_svg.py:9:37: F401 [*] `typing.Optional` imported but unused
+lv_assist/iec_sld_svg.py:56:14: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/layout.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/layout.py:4:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/layout.py:4:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/layout.py:4:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/layout.py:29:18: RUF012 Mutable default value for class attribute
+lv_assist/layout.py:32:32: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/layout.py:32:51: RUF012 Mutable default value for class attribute
+lv_assist/layout.py:55:34: UP045 [*] Use `X | None` for type annotations
+lv_assist/layout.py:56:58: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:73:62: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:74:58: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:75:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:103:54: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:117:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:125:23: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:165:37: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:165:63: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:167:51: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:168:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:244:36: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/layout.py:253:67: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:254:63: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:255:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:267:46: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/layout.py:278:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:302:58: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:323:24: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:323:29: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/layout.py:341:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/layout.py:344:13: ISC004 Unparenthesized implicit string concatenation in collection
+lv_assist/layout.py:387:20: UP045 [*] Use `X | None` for type annotations
+lv_assist/layout.py:489:36: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/models.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/models.py:3:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/models.py:119:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:123:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:136:20: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:150:14: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:151:17: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:153:21: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:154:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:161:15: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:199:16: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:321:14: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:330:11: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:336:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:346:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:347:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:354:18: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:368:27: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:369:21: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:374:25: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:382:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:390:23: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:391:26: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:392:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:393:31: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:394:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:395:23: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:396:24: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:397:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:398:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:399:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:403:30: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:409:23: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:411:15: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:423:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:429:29: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:430:36: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:439:23: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:440:34: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:441:31: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:445:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:446:25: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:450:17: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:452:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:453:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:454:22: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:463:33: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:465:21: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:468:21: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:471:25: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:472:26: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:473:27: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:474:26: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:475:31: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:477:19: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:479:32: UP045 [*] Use `X | None` for type annotations
+lv_assist/models.py:506:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/models.py:517:12: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/outputs.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/outputs.py:9:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/outputs.py:9:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+lv_assist/outputs.py:32:74: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:41:99: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:42:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:70:66: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:89:81: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:107:77: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:108:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:134:53: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:149:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:222:73: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:234:15: RUF012 Mutable default value for class attribute
+lv_assist/outputs.py:245:51: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:245:56: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/outputs.py:267:29: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:267:34: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+lv_assist/outputs.py:273:53: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:274:16: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:308:28: UP045 [*] Use `X | None` for type annotations
+lv_assist/outputs.py:360:73: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:368:23: RUF012 Mutable default value for class attribute
+lv_assist/outputs.py:382:31: UP045 [*] Use `X | None` for type annotations
+lv_assist/outputs.py:411:49: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:411:105: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:413:14: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:469:15: RUF012 Mutable default value for class attribute
+lv_assist/outputs.py:476:71: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:477:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:494:15: RUF012 Mutable default value for class attribute
+lv_assist/outputs.py:498:17: RUF012 Mutable default value for class attribute
+lv_assist/outputs.py:510:71: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/outputs.py:520:15: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/schematic_generator.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+lv_assist/schematic_generator.py:10:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+lv_assist/schematic_generator.py:10:1: UP035 `typing.List` is deprecated, use `list` instead
+lv_assist/schematic_generator.py:10:1: I001 [*] Import block is un-sorted or un-formatted
+lv_assist/schematic_generator.py:48:9: F841 Local variable `idx` is assigned to but never used
+lv_assist/schematic_generator.py:123:65: UP006 [*] Use `dict` instead of `Dict` for type annotation
+lv_assist/schematic_generator.py:123:75: UP006 [*] Use `list` instead of `List` for type annotation
+lv_assist/schematic_generator.py:126:135: F541 [*] f-string without any placeholders
+main.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+migrate_to_sqlite.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+migrate_to_sqlite.py:589:27: UP017 [*] Use `datetime.UTC` alias
+scripts/extend_catalog_phase13.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+scripts/extend_catalog_phase5.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+scripts/extend_catalog_phase5.py:13:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:17:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:21:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:25:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:29:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:33:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:37:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:41:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:45:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:50:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:54:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:58:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:62:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:66:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:70:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:74:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:79:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:83:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:87:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:91:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:95:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:105:21: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:107:21: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:109:18: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:111:17: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:113:25: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:115:25: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:117:24: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:119:29: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:121:19: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:123:18: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:125:20: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:133:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:137:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:141:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:145:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase5.py:149:5: C408 Unnecessary `dict()` call (rewrite as a literal)
+scripts/extend_catalog_phase6.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+scripts/extend_catalog_phase7.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+tcc_analyzer.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+tcc_analyzer.py:7:1: I001 [*] Import block is un-sorted or un-formatted
+tcc_analyzer.py:9:1: UP035 `typing.Dict` is deprecated, use `dict` instead
+tcc_analyzer.py:9:1: UP035 `typing.List` is deprecated, use `list` instead
+tcc_analyzer.py:9:1: UP035 `typing.Tuple` is deprecated, use `tuple` instead
+tcc_analyzer.py:9:20: F401 [*] `typing.Dict` imported but unused
+tcc_analyzer.py:9:26: F401 [*] `typing.List` imported but unused
+tcc_analyzer.py:9:32: F401 [*] `typing.Optional` imported but unused
+tcc_analyzer.py:19:13: S110 `try`-`except`-`pass` detected, consider logging the exception
+tcc_analyzer.py:19:20: BLE001 Do not catch blind exception: `Exception`
+tcc_analyzer.py:55:10: UP006 [*] Use `tuple` instead of `Tuple` for type annotation
+test_lv_assist.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+test_lv_assist.py:2:1: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:29:14: C408 Unnecessary `dict()` call (rewrite as a literal)
+test_lv_assist.py:35:14: C408 Unnecessary `dict()` call (rewrite as a literal)
+test_lv_assist.py:77:15: RUF059 Unpacked variable `s_n` is never used
+test_lv_assist.py:605:16: SIM115 Use a context manager for opening files
+test_lv_assist.py:774:16: RUF059 Unpacked variable `limit` is never used
+test_lv_assist.py:895:23: RUF059 Unpacked variable `ref` is never used
+test_lv_assist.py:1323:17: RUF015 Prefer `next(...)` over single element slice
+test_lv_assist.py:1375:9: RUF059 Unpacked variable `project` is never used
+test_lv_assist.py:1385:14: B017 Do not assert blind exception: `Exception`
+test_lv_assist.py:1387:14: B017 Do not assert blind exception: `Exception`
+test_lv_assist.py:1389:14: B017 Do not assert blind exception: `Exception`
+test_lv_assist.py:1398:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1489:21: RUF015 Prefer `next(...)` over single element slice
+test_lv_assist.py:1490:19: RUF015 Prefer `next(...)` over single element slice
+test_lv_assist.py:1685:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1729:25: RUF015 Prefer `next(r for r in rows if r and r[0] == "load_type")` over single element slice
+test_lv_assist.py:1745:26: RUF059 Unpacked variable `validations` is never used
+test_lv_assist.py:1771:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1806:20: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1807:19: RUF015 Prefer `next(r for r in sld if r[1] == "-Q%d" % i)` over single element slice
+test_lv_assist.py:1807:46: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1812:44: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1814:19: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1814:33: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1814:48: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1814:63: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1814:77: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1816:17: RUF015 Prefer `next(r for r in ctrl if r[1] == "-K%d" % idx)` over single element slice
+test_lv_assist.py:1816:45: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1822:28: UP031 Use format specifiers instead of percent format
+test_lv_assist.py:1837:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1868:16: PLW1510 `subprocess.run` without explicit `check` argument
+test_lv_assist.py:1883:26: RUF059 Unpacked variable `validations` is never used
+test_lv_assist.py:1887:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1898:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1898:16: F401 [*] `os` imported but unused
+test_lv_assist.py:1940:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1975:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:1994:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2004:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2015:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2046:26: RUF059 Unpacked variable `validations` is never used
+test_lv_assist.py:2050:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2061:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2061:16: F401 [*] `os` imported but unused
+test_lv_assist.py:2068:20: SIM115 Use a context manager for opening files
+test_lv_assist.py:2094:20: RUF015 Prefer `next(c for c in variant if c.tag == "O4")` over single element slice
+test_lv_assist.py:2105:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2119:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2154:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2189:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2221:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2227:26: RUF059 Unpacked variable `validations` is never used
+test_lv_assist.py:2233:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2233:16: F401 [*] `os` imported but unused
+test_lv_assist.py:2239:27: SIM115 Use a context manager for opening files
+test_lv_assist.py:2241:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2247:17: RUF015 Prefer `next(...)` over single element slice
+test_lv_assist.py:2253:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2338:9: RUF059 Unpacked variable `outs` is never used
+test_lv_assist.py:2347:9: RUF059 Unpacked variable `outs` is never used
+test_lv_assist.py:2362:9: RUF059 Unpacked variable `project` is never used
+test_lv_assist.py:2362:18: RUF059 Unpacked variable `outs` is never used
+test_lv_assist.py:2435:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2477:19: SIM115 Use a context manager for opening files
+test_lv_assist.py:2497:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2620:19: SIM115 Use a context manager for opening files
+test_lv_assist.py:2635:19: RUF015 Prefer `next(...)` over single element slice
+test_lv_assist.py:2726:19: SIM115 Use a context manager for opening files
+test_lv_assist.py:2780:9: I001 [*] Import block is un-sorted or un-formatted
+test_lv_assist.py:2812:18: UP031 Use format specifiers instead of percent format
+tests/test_audit_fixes.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+tests/test_audit_p0_policy.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+tests/test_audit_p0_policy.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+tests/test_excel_clipboard_cos_eff.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+tests/test_excel_clipboard_parser.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+tests/test_excel_clipboard_parser.py:4:1: I001 [*] Import block is un-sorted or un-formatted
+wizard_app.py:1:1: UP009 [*] UTF-8 encoding declaration is unnecessary
+wizard_app.py:12:1: I001 [*] Import block is un-sorted or un-formatted
+wizard_app.py:13:8: F401 [*] `sqlite3` imported but unused
+wizard_app.py:15:1: UP035 `typing.List` is deprecated, use `list` instead
+wizard_app.py:19:82: F401 [*] `lv_assist.models.ValidationStatus` imported but unused
+wizard_app.py:42:28: UP006 [*] Use `list` instead of `List` for type annotation
+wizard_app.py:43:32: UP006 [*] Use `list` instead of `List` for type annotation
+Found 868 errors.
+[*] 558 fixable with `--fix` (106 unsafe fixes available with `--fix --unsafe-fixes`).

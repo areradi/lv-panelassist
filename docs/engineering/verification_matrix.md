@@ -13,7 +13,7 @@ not currently available and requested that unverified status be retained.
 | Icu/Ics | Exact voltage lookup; unknowns not passed, main and feeder checks; device remains proposed | Synthetic comparison cases; exact property/manufacturer and Ics policy incomplete |
 | Clause 10 checklist | 13 evidence rows including continuity; no unevidenced assembly PASS | Demo + HTML/XLSX integration; actual test evidence/reviewer absent |
 | Cable ampacity | Exact combination lookup; unsupported Al/XLPE/method/1P table -> None | Synthetic scope tests; authenticated ampacity sources not supplied |
-| Cable/protection coordination | Actual Ir/I2 required; inequality/range violation -> ERROR | Integrated Ir case + synthetic boundaries; no automatic settings verification |
+| Cable/protection coordination | Actual Ir/I2 required; one verdict replaces the contradictory frame-rating comparison; Ib > Iz remains ERROR with unknown Ir; missing range/device cannot pass | `test_protection_setting_coordination.py`; [setting policy](protection_setting_policy.md); manufacturer/applicability evidence and installed-setting verification still open |
 | Earthing systems | Unsupported loop/ADS scope explicitly unverified for TN-S/TN-C-S/TT/IT | Validated TN/TT/IT modelling and independent references still required |
 | Trip/motor coordination | Missing curve unknown; known approximate curve/20 ms explicitly estimated | Type 1/2, VFD/soft starter, exact settings/evidence remain open |
 | Selectivity / cascading | Exact parts/voltage/settings/review required; ratio never definite proof/disproof | Synthetic matching tests; no real manufacturer tables reviewed; backup separate and unimplemented |

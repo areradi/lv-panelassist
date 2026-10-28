@@ -298,7 +298,8 @@ def verify_overload_coordination(ib_a: float, ir_a: float | None, iz_a: float | 
     values = {"ib_a": ib_a, "ir_a": ir_a, "iz_a": iz_a, "i2_a": i2_a}
     present = [value for value in values.values() if value is not None]
     invalid = any(not math.isfinite(value) or value <= 0 for value in present)
-    violated = ((ir_a is not None and ir_a < ib_a)
+    violated = ((iz_a is not None and ib_a > iz_a)
+                or (ir_a is not None and ir_a < ib_a)
                 or (ir_a is not None and iz_a is not None and ir_a > iz_a)
                 or (i2_a is not None and iz_a is not None and i2_a > 1.45 * iz_a))
     status = (ValidationStatus.ERROR if invalid or violated else

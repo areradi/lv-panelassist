@@ -147,3 +147,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [fault scope policy](../engineering/fault_scope_policy.md).
 - **Remaining risks:** physical network/loop solver, independent references and
   reviewer remain unavailable; motor/source topology remains preliminary.
+
+## Review unit 5 — Real Ir vs frame rating
+
+- **Observed:** 100 A frame / 50 A setting / 57 A Iz returned both WARNING and
+  ERROR because the legacy cable rule still compared the frame to ampacity.
+- **Expected:** one actual-setting verdict; missing data cannot pass and cannot
+  hide a known inequality violation.
+- **Implementation:** reuse CheckResult for both cable rules; validate stated
+  range/fixed-device settings, preserve unknown bounds/device, show actual A
+  values and use supplied Ir for geometry proposals. Unknown settings use an
+  explicitly preliminary frame-based proposal only. No catalog mutation.
+- **Tests:** synthetic integrated inequalities/ranges, unknown device/data,
+  geometry, fixed device, invalid settings, and HTML/XLSX consistency.
+- **Evidence:** [setting policy](../engineering/protection_setting_policy.md) and
+  `*settings*` validation outputs.
+- **Remaining risks:** manufacturer data/applicability and actual installed
+  device/settings require engineering evidence. P0 remains open.
