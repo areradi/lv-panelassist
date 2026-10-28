@@ -893,5 +893,6 @@
   "csv_saved_machine": "Maschinen-CSV mit unveränderten Kennzeichen gespeichert. Nur maschinell importieren, nicht in Tabellenkalkulation öffnen.",
   "csv_bundle_note": "CSV-Dateien in diesem Paket sind Maschinen-/EPLAN-Austauschdateien mit unveränderten Kennzeichen. Nicht in Excel oder anderen Tabellenkalkulationen öffnen. Dafür CSV separat mit Ja exportieren oder 01_Design_Output.xlsx nutzen. EPLAN-Importkompatibilität erfordert weiterhin Feldtests.",
   "csv_write_failed": "CSV konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Freien Speicher, Schreibrechte und eine mögliche Dateisperre durch andere Programme prüfen.",
-  "xlsx_write_failed": "Der Excel-Bericht konnte nicht vollständig gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre durch Excel prüfen."
+  "xlsx_write_failed": "Der Excel-Bericht konnte nicht vollständig gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre durch Excel prüfen.",
+  "bundle_write_failed": "Das Dokumentenpaket konnte nicht vollständig gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Schreibrechte und eine mögliche Dateisperre prüfen."
 }

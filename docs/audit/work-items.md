@@ -315,3 +315,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [XLSX publication policy](../engineering/xlsx_atomic_write_policy.md).
 - **Remaining risks:** Windows field tests, other formats and power-loss/concurrent
   write behavior remain open; P0 remains OPEN.
+
+## Review unit 17 — Atomic document-bundle publication
+
+- **Observed:** opening the target ZIP before generating assets could destroy an
+  old bundle when an early/late generator or ZIP finalization failed.
+- **Expected:** failed attempts preserve the old archive or leave no new file;
+  success requires a closed, structurally intact, count-consistent archive.
+- **Implementation:** private same-directory staging, ZIP/count checks, fsync,
+  atomic replacement/cleanup; localized OS/invalid-ZIP GUI errors.
+- **Tests:** 13 actual generation/publication/archive/GUI boundary cases; existing
+  demo asset checks and optional-PDF behavior remain unchanged.
+- **Evidence:** [bundle publication policy](../engineering/bundle_atomic_write_policy.md).
+- **Remaining risks:** omitted-format manifest, PDF printing, all-format parity,
+  Windows field tests and engineering verification remain open. P0 stays OPEN.

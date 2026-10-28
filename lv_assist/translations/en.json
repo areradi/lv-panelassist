@@ -893,5 +893,6 @@
   "csv_saved_machine": "Machine CSV saved with unchanged tags. Use only for machine import, not spreadsheet viewing.",
   "csv_bundle_note": "CSV files in this bundle are MACHINE/EPLAN interchange files with literal, unchanged tags. Do not open them in Excel or another spreadsheet. For spreadsheet use, export CSV separately and choose Yes for spreadsheet protection, or use 01_Design_Output.xlsx. Actual EPLAN import compatibility still requires field testing.",
   "csv_write_failed": "CSV could not be saved. The previous destination was preserved. Check free disk space, write permissions and whether the file is open in another application.",
-  "xlsx_write_failed": "The Excel report could not be saved completely. The previous destination was preserved. Check disk space, folder permissions and whether the file is open in Excel."
+  "xlsx_write_failed": "The Excel report could not be saved completely. The previous destination was preserved. Check disk space, folder permissions and whether the file is open in Excel.",
+  "bundle_write_failed": "The document bundle could not be saved completely. The previous destination was preserved. Check disk space, write permissions and whether the ZIP is open in another application."
 }

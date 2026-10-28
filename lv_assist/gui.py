@@ -22,6 +22,7 @@ from lv_assist.catalog import CatalogRepository
 from lv_assist.engine import EngineeringEngine, build_design_verification
 from lv_assist.exporters import ExcelExporter, PrintableReportExporter, DesignVerificationExporter
 from lv_assist.csv_export import CsvMode
+from lv_assist.bundle_export import build_bundle_atomic
 from lv_assist.outputs import SldGenerator, TccGenerator, PdfExporter, EplanExporter, EplanPartsExporter
 from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.dxf_export import ControlLadderDxfExporter
@@ -755,12 +756,19 @@ class LVAssistApp(ctk.CTk):
         try:
             n = LVAssistApp.build_document_bundle(path, self.current_project, f_outs, summary, validations)
             messagebox.showinfo(tr("msg_success"), tr("msg_export_all_done", n=n))
+        except (OSError, zipfile.BadZipFile):
+            messagebox.showerror(tr("msg_error"), tr("bundle_write_failed"))
         except Exception as ex:
             messagebox.showerror(tr("msg_error"), str(ex))
 
     @staticmethod
     def build_document_bundle(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> int:
-        """UI/UX #5: بسته کامل مدارک پروژه در یک فایل ZIP."""
+        """Publish only a complete ZIP; keep the old bundle on failure."""
+        return build_bundle_atomic(zip_path, lambda path: LVAssistApp._build_document_bundle(
+            path, project, f_outs, summary, validations, include_pdf))
+
+    @staticmethod
+    def _build_document_bundle(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool) -> int:
         dv_report = build_design_verification(project, f_outs, summary, validations)
         files = {
             "01_Design_Output.xlsx": lambda p: ExcelExporter.export_to_excel(p, project, f_outs, summary, validations),
