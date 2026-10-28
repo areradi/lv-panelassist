@@ -38,3 +38,26 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** none; no completion claimed.
 - **Remaining risks:** technical gate open; hardware/software and human review are
   unavailable in this Linux task. Sprint labels are not delivery-time commitments.
+
+## Review unit 1 — Result contract and unevidenced design verification
+
+- **Observed:** two status enums, WARNING taking precedence over missing data in
+  the design checklist, duplicate exporter classes, and demo claims of passed
+  physical checks without test documents.
+- **Expected:** shared severity, complete check field names, and no assembly PASS
+  inferred from calculated recommendations or device-level quality labels.
+- **Implementation:** one status enum and mapping; backward-compatible structured
+  ValidationResult fields; CheckResult adapter; unknown catalog records default to
+  ESTIMATED. The preliminary checklist includes separate physical PE continuity
+  evidence (13 rows), retains failures, and marks absent assembly evidence
+  NOT_VERIFIED. Removed the shadowed duplicate exporter. FA/EN/DE retained.
+- **Tests:** 16 status combinations, actual demo-to-checklist/export integration,
+  unknown-device default, and existing design checklist regression tests. Existing
+  assertions that expected an unevidenced PASS now require NOT_VERIFIED; locale
+  tests compare exact key sets instead of a hardcoded key count.
+- **Evidence:** `tests/test_result_contract.py`, `pytest-contracts.txt`. New modules
+  pass Ruff. No catalog/DB modification.
+- **Remaining risks:** legacy checks explicitly retain method LEGACY_UNDOCUMENTED
+  and missing structured numeric/source fields; this is visibility, not a claim
+  that every legacy calculation is migrated. No physical evidence ingestion or
+  engineer sign-off workflow yet. This unit does not close the P0 gate.

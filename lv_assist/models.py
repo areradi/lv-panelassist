@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
+from lv_assist.result_contract import ValidationStatus
 
 class EarthingSystem(str, Enum):
     TN_S = "TN-S"
@@ -46,12 +47,6 @@ class InstallationMethod(str, Enum):
     B1 = "B1"
     E = "E"
     F = "F"
-
-class ValidationStatus(str, Enum):
-    COMPLETED = "COMPLETED"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
 
 class SelectivityEvalState(str, Enum):
     VERIFIED_TOTAL = "VERIFIED_TOTAL"
@@ -148,7 +143,7 @@ class CatalogDevice(BaseModel):
     depth_mm: float = 0.0
     airflow_m3h: float = 0.0
     ip_rating: str = "IP20"
-    data_quality: DataQuality = DataQuality.REAL_VERIFIED
+    data_quality: DataQuality = DataQuality.ESTIMATED
     spd_class: Optional[str] = None
     spd_uc_v: float = 0.0
     spd_up_kv: float = 0.0
@@ -180,6 +175,38 @@ class ValidationResult(BaseModel):
     supporting_evidence: str
     consequence: str
     recommended_action: str
+    check_id: str = ""
+    scope: str = "CHECK"
+    subject_id: str = ""
+    input_values: dict = Field(default_factory=dict)
+    result_value: Optional[float] = None
+    unit: Optional[str] = None
+    limit: Optional[float] = None
+    method: str = "LEGACY_UNDOCUMENTED"
+    source_ref: Optional[str] = None
+    assumptions: List[str] = Field(default_factory=list)
+    reason: str = ""
+
+    @model_validator(mode="after")
+    def preserve_legacy_identity(self):
+        self.check_id = self.check_id or self.rule_id
+        self.subject_id = self.subject_id or self.feeder_id
+        self.reason = self.reason or self.description
+        return self
+
+    @classmethod
+    def from_check(cls, check, *, rule_id: str, subject_id: str, standard_ref: str):
+        return cls(
+            rule_id=rule_id, feeder_id=subject_id, standard_ref=standard_ref,
+            status=check.status, description=check.title,
+            supporting_evidence=check.measured_or_calc_value or check.cause or "-",
+            consequence=check.effect, recommended_action=check.recommended_action,
+            check_id=check.check_id, scope=check.scope, subject_id=subject_id,
+            input_values=check.input_values, result_value=check.result_value,
+            unit=check.unit, limit=check.limit, method=check.method,
+            source_ref=check.source_ref, assumptions=check.assumptions,
+            reason=check.reason,
+        )
 
 class ControlWire(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
@@ -389,6 +416,10 @@ class DesignVerificationItem(BaseModel):
     computed_value: str
     evidence: str
     rule_ids: List[str] = []
+    evidence_document: Optional[str] = None
+    reviewer: Optional[str] = None
+    reviewed_at: Optional[str] = None
+    source_ref: str = "IEC 61439-1 Clause 10 — applicability/revision requires review"
 
 class DesignVerificationReport(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
