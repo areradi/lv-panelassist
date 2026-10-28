@@ -8,7 +8,7 @@ from lv_assist.models import (
 )
 from lv_assist.i18n import tr
 from lv_assist.csv_export import CsvMode, write_csv
-from lv_assist.report_export import export_current_report
+from lv_assist.report_export import export_current_report, export_current_text
 
 
 def _esc(s: str) -> str:
@@ -238,9 +238,8 @@ class ControlCircuitGenerator:
         return "\n".join(parts)
 
     @classmethod
-    def generate_svg_file(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
-        with open(filepath, "w", encoding="utf-8") as fh:
-            fh.write(cls.generate_svg(project, feeders, summary))
+    def generate_svg_file(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_text(filepath, project, feeders, summary, validations, cls.generate_svg)
 
     # ---------------------------------------------------------------- EPLAN CSV
     CONN_HEADERS = ["Connection", "From device", "From pin", "To device", "To pin",

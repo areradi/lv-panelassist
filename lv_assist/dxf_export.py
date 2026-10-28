@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 from lv_assist.models import ProjectSpec, FeederCalcOutput, PanelSummaryOutput
 from lv_assist.control_circuits import ControlCircuitGenerator
+from lv_assist.report_export import export_current_text
 
 
 def _ascii(s: str) -> str:
@@ -169,6 +170,6 @@ class ControlLadderDxfExporter:
                     doc.text("LV_TEXT_TAGS", x, dy(y + 17.0 + 10.0), 3.0, mark)
 
     @classmethod
-    def export_file(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
-        with open(filepath, "w", encoding="ascii", errors="replace") as fh:
-            fh.write(cls.generate(project, feeders, summary))
+    def export_file(cls, filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_text(filepath, project, feeders, summary, validations, cls.generate,
+                                   encoding="ascii", errors="replace")

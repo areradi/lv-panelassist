@@ -401,3 +401,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [standalone CSV policy](../engineering/standalone_csv_preflight_policy.md).
 - **Remaining risks:** diagrams/macros, immutable context, real field acceptance
   and independent engineering verification remain open. P0 stays OPEN.
+
+## Review unit 23 — Accepted-run SVG/DXF file exports
+
+- **Observed:** five drawing file APIs bypassed complete accepted-run checks and
+  wrote directly to the chosen destination.
+- **Expected:** stale/changed/missing-context runs cannot overwrite an existing
+  drawing; successful publication uses one captured calculation.
+- **Implementation:** complete checks keyword, shared guarded text publication,
+  GUI forwarding/stale/IO messages, bundle context forwarding.
+- **Tests:** 63 new five-format/API/render/structure/GUI cases; prior file fixtures
+  retain checks and the cap SLD now uses one run without changing content assertions.
+- **Evidence:** [drawing publication policy](../engineering/standalone_drawing_preflight_policy.md).
+- **Remaining risks:** macros/scripts, CAD/EPLAN field acceptance, immutable context
+  and engineering verification remain open. P0 stays OPEN.

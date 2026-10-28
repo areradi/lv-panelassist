@@ -466,9 +466,9 @@ def _phase3_project():
 class TestPhase3Sld:
     def test_sld_generates_valid_svg(self, tmp_path):
         import xml.etree.ElementTree as ET
-        project, outs, summary, _ = _phase3_project()
+        project, outs, summary, checks = _phase3_project()
         path = tmp_path / "sld.svg"
-        SldGenerator.generate_svg_file(str(path), project, outs, summary)
+        SldGenerator.generate_svg_file(str(path), project, outs, summary, validations=checks)
         root = ET.parse(str(path)).getroot()
         assert root.tag.endswith("svg")
         content = path.read_text(encoding="utf-8")
@@ -487,9 +487,9 @@ class TestPhase3Sld:
 class TestPhase3Tcc:
     def test_tcc_generates_valid_svg(self, tmp_path):
         import xml.etree.ElementTree as ET
-        project, outs, summary, _ = _phase3_project()
+        project, outs, summary, checks = _phase3_project()
         path = tmp_path / "tcc.svg"
-        TccGenerator.generate_svg_file(str(path), project, outs, summary)
+        TccGenerator.generate_svg_file(str(path), project, outs, summary, validations=checks)
         root = ET.parse(str(path)).getroot()
         assert root.tag.endswith("svg")
         content = path.read_text(encoding="utf-8")
@@ -817,11 +817,9 @@ class TestPhase4TccManufacturerData:
 
 class TestPhase4Exports:
     def test_sld_cap_branch_drawn(self, tmp_path):
-        project, _, summary, _ = _phase4_cap_project()
-        outs = EngineeringEngine(CATALOG).process_project(
-            project, [make_feeder("F01", load_type=LoadType.MOTOR_DOL, power_kw=60.0, cos_phi=0.80, efficiency=0.90)])[0]
+        project, outs, summary, checks = _phase4_cap_project()
         path = tmp_path / "sld.svg"
-        SldGenerator.generate_svg_file(str(path), project, outs, summary)
+        SldGenerator.generate_svg_file(str(path), project, outs, summary, validations=checks)
         content = path.read_text(encoding="utf-8")
         assert "-Qcap" in content and "kvar" in content
 
@@ -1177,20 +1175,20 @@ class TestPhase6Busbar:
 
 
 class TestPhase6Dxf:
-    def _dxf_project(self):
+    def _dxf_project(self, include_checks=False):
         project = make_project()
         feeders = [
             make_feeder("F01", load_type=LoadType.MOTOR_DOL, power_kw=15.0, cos_phi=0.85, efficiency=0.91),
             make_feeder("F02", load_type=LoadType.MOTOR_STAR_DELTA, power_kw=30.0, cos_phi=0.86, efficiency=0.93),
             make_feeder("F03", load_type=LoadType.MOTOR_VFD, power_kw=18.5, cos_phi=0.95, efficiency=0.90),
         ]
-        outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, feeders)
-        return project, outs, summary
+        outs, summary, checks = EngineeringEngine(CATALOG).process_project(project, feeders)
+        return (project, outs, summary, checks) if include_checks else (project, outs, summary)
 
     def test_dxf_r12_structure(self, tmp_path):
-        project, outs, summary = self._dxf_project()
+        project, outs, summary, checks = self._dxf_project(include_checks=True)
         path = tmp_path / "ctrl.dxf"
-        ControlLadderDxfExporter.export_file(str(path), project, outs, summary)
+        ControlLadderDxfExporter.export_file(str(path), project, outs, summary, validations=checks)
         content = path.read_text(encoding="ascii")
         assert content.startswith("0\nSECTION")
         for section in ("HEADER", "TABLES", "ENTITIES", "EOF"):
@@ -1199,18 +1197,18 @@ class TestPhase6Dxf:
         assert "LAYER" in content
 
     def test_dxf_contains_device_tags_and_rungs(self, tmp_path):
-        project, outs, summary = self._dxf_project()
+        project, outs, summary, checks = self._dxf_project(include_checks=True)
         path = tmp_path / "ctrl.dxf"
-        ControlLadderDxfExporter.export_file(str(path), project, outs, summary)
+        ControlLadderDxfExporter.export_file(str(path), project, outs, summary, validations=checks)
         content = path.read_text(encoding="ascii")
         for tag in ("-Q1", "-K1", "-S10", "-S11", "-K2Y", "-K2D", "-K2T", "-U3", "W01"):
             assert tag in content
         assert "LINE" in content and "POLYLINE" in content and "TEXT" in content
 
     def test_dxf_ascii_only_no_unicode(self, tmp_path):
-        project, outs, summary = self._dxf_project()
+        project, outs, summary, checks = self._dxf_project(include_checks=True)
         path = tmp_path / "ctrl.dxf"
-        ControlLadderDxfExporter.export_file(str(path), project, outs, summary)
+        ControlLadderDxfExporter.export_file(str(path), project, outs, summary, validations=checks)
         raw = path.read_bytes()
         assert all(b < 128 for b in raw)
 
@@ -1219,9 +1217,9 @@ class TestPhase7DxfLayers:
     def _dxf(self, tmp_path):
         project = make_project()
         feeders = [make_feeder("F01", load_type=LoadType.MOTOR_DOL, power_kw=15.0, cos_phi=0.85, efficiency=0.91)]
-        outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, feeders)
+        outs, summary, checks = EngineeringEngine(CATALOG).process_project(project, feeders)
         path = tmp_path / "ctrl.dxf"
-        ControlLadderDxfExporter.export_file(str(path), project, outs, summary)
+        ControlLadderDxfExporter.export_file(str(path), project, outs, summary, validations=checks)
         return path.read_text(encoding="ascii")
 
     def test_dxf_standard_layers_and_style(self, tmp_path):

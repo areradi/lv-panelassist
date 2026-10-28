@@ -899,5 +899,6 @@
   "bundle_status_scope": "Export status only; generated files are preliminary and are not engineering approval. See 00_Export_Manifest.json for file inventory and run metadata.",
   "bundle_pdf_generated": "PDF: generated.",
   "bundle_pdf_not_requested": "PDF: not requested.",
-  "bundle_pdf_failed_status": "PDF: failed; not included."
+  "bundle_pdf_failed_status": "PDF: failed; not included.",
+  "drawing_write_failed": "The drawing could not be saved. The previous destination was preserved. Check free disk space, folder permissions and whether the file is open elsewhere."
 }

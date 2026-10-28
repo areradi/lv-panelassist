@@ -800,12 +800,12 @@ class LVAssistApp(ctk.CTk):
             "01_Design_Output.xlsx": lambda p: ExcelExporter.export_to_excel(p, project, f_outs, summary, validations),
             "02_Engineering_Report.html": lambda p: PrintableReportExporter.generate_html_report(p, project, f_outs, summary, validations),
             "02_Design_Verification_Report.html": lambda p: DesignVerificationExporter.generate_html(p, project, summary, dv_report),
-            "03_Single_Line_Diagram.svg": lambda p: SldGenerator.generate_svg_file(p, project, f_outs, summary),
-            "04_Time_Current_Curves.svg": lambda p: TccGenerator.generate_svg_file(p, project, f_outs, summary),
-            "05_Control_Circuits.svg": lambda p: ControlCircuitGenerator.generate_svg_file(p, project, f_outs, summary),
+            "03_Single_Line_Diagram.svg": lambda p: SldGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
+            "04_Time_Current_Curves.svg": lambda p: TccGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
+            "05_Control_Circuits.svg": lambda p: ControlCircuitGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "06_Control_Connections_EPLAN.csv": lambda p: ControlCircuitGenerator.export_connections_csv(p, project, f_outs, summary, validations=validations),
-            "07_Panel_Layout.svg": lambda p: PanelLayoutGenerator.generate_svg_file(p, project, f_outs, summary),
-            "08_Control_Circuits.dxf": lambda p: ControlLadderDxfExporter.export_file(p, project, f_outs, summary),
+            "07_Panel_Layout.svg": lambda p: PanelLayoutGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
+            "08_Control_Circuits.dxf": lambda p: ControlLadderDxfExporter.export_file(p, project, f_outs, summary, validations=validations),
             "09_EPLAN_Parts_Import.csv": lambda p: EplanExporter.export_csv(p, project, f_outs, summary, validations=validations),
             "10_EPLAN_Parts_Management.csv": lambda p: EplanPartsExporter.export_csv(p, project, f_outs, summary, validations=validations),
             "11_EPLAN_Generate_Pages.cs": lambda p: EplanMacroExporter.export_file(p, project, f_outs, summary),
@@ -892,23 +892,29 @@ class LVAssistApp(ctk.CTk):
         f_outs, summary, validations = self.last_results
         return f_outs, summary, validations
 
-    def action_export_sld(self):
+    def _export_drawing(self, exporter, filename, extension, open_after=True):
         res = self._get_results()
         if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile="Single_Line_Diagram.svg", filetypes=[("SVG", "*.svg")])
-        if path:
-            SldGenerator.generate_svg_file(path, self.current_project, res[0], res[1])
+        path = filedialog.asksaveasfilename(defaultextension=extension, initialfile=filename,
+                                          filetypes=[(extension[1:].upper(), "*" + extension)])
+        if not path: return
+        try:
+            exporter(path, self.current_project, res[0], res[1], validations=res[2])
+        except ExportSnapshotError:
+            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+            return
+        except (OSError, UnicodeError):
+            messagebox.showerror(tr("msg_error"), tr("drawing_write_failed"))
+            return
+        if open_after:
             webbrowser.open(f"file://{path}")
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+
+    def action_export_sld(self):
+        self._export_drawing(SldGenerator.generate_svg_file, "Single_Line_Diagram.svg", ".svg")
 
     def action_export_tcc(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile="Time_Current_Curves.svg", filetypes=[("SVG", "*.svg")])
-        if path:
-            TccGenerator.generate_svg_file(path, self.current_project, res[0], res[1])
-            webbrowser.open(f"file://{path}")
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_drawing(TccGenerator.generate_svg_file, "Time_Current_Curves.svg", ".svg")
 
     def action_export_pdf(self):
         res = self._get_results()
@@ -999,33 +1005,16 @@ class LVAssistApp(ctk.CTk):
         self._run_calculations_and_refresh()
 
     def action_export_ctrl_svg(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile="Control_Circuits.svg", filetypes=[("SVG", "*.svg")])
-        if path:
-            ControlCircuitGenerator.generate_svg_file(path, self.current_project, res[0], res[1])
-            webbrowser.open(f"file://{path}")
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_drawing(ControlCircuitGenerator.generate_svg_file, "Control_Circuits.svg", ".svg")
 
     def action_export_connections(self):
         self._export_csv_for_target(ControlCircuitGenerator.export_connections_csv, "Control_Connections.csv")
 
     def action_export_layout(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile="Panel_Layout.svg", filetypes=[("SVG", "*.svg")])
-        if path:
-            PanelLayoutGenerator.generate_svg_file(path, self.current_project, res[0], res[1])
-            webbrowser.open(f"file://{path}")
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_drawing(PanelLayoutGenerator.generate_svg_file, "Panel_Layout.svg", ".svg")
 
     def action_export_dxf(self):
-        res = self._get_results()
-        if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".dxf", initialfile="Control_Circuits.dxf", filetypes=[("DXF", "*.dxf")])
-        if path:
-            ControlLadderDxfExporter.export_file(path, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        self._export_drawing(ControlLadderDxfExporter.export_file, "Control_Circuits.dxf", ".dxf", open_after=False)
 
     def action_export_parts(self):
         self._export_csv_for_target(EplanPartsExporter.export_csv, "Parts_Management.csv")

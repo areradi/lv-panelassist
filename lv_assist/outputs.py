@@ -15,7 +15,7 @@ from lv_assist.models import (
 from lv_assist.catalog import TripCurveRepository
 from lv_assist.i18n import tr
 from lv_assist.csv_export import CsvMode, write_csv
-from lv_assist.report_export import export_current_report
+from lv_assist.report_export import export_current_report, export_current_text
 
 
 def _esc(s: str) -> str:
@@ -222,9 +222,8 @@ class SldGenerator:
         return "\n".join(parts)
 
     @staticmethod
-    def generate_svg_file(filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(SldGenerator.generate_svg(project, feeders, summary))
+    def generate_svg_file(filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_text(filepath, project, feeders, summary, validations, SldGenerator.generate_svg)
 
 
 class TccGenerator:
@@ -360,9 +359,8 @@ class TccGenerator:
         return "\n".join(parts)
 
     @staticmethod
-    def generate_svg_file(filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(TccGenerator.generate_svg(project, feeders, summary))
+    def generate_svg_file(filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_text(filepath, project, feeders, summary, validations, TccGenerator.generate_svg)
 
 
 @dataclass(frozen=True)

@@ -8,6 +8,7 @@ from lv_assist.models import (
     LoadType, LayoutDevice, LayoutRow, PanelLayoutResult, ValidationResult, ValidationStatus,
 )
 from lv_assist.i18n import tr
+from lv_assist.report_export import export_current_text
 
 
 def _esc(s: str) -> str:
@@ -486,6 +487,5 @@ class PanelLayoutGenerator:
 
     @classmethod
     def generate_svg_file(cls, filepath: str, project: ProjectSpec,
-                          feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
-        with open(filepath, "w", encoding="utf-8") as fh:
-            fh.write(cls.generate_svg(project, feeders, summary))
+                          feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_text(filepath, project, feeders, summary, validations, cls.generate_svg)

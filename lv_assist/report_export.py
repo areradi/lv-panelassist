@@ -28,3 +28,10 @@ def export_current_report(filename, project, outputs, summary, checks, render):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def export_current_text(filename, project, outputs, summary, checks, render_text,
+                        *, encoding='utf-8', errors='strict'):
+    def render(path, p, f, s, validations):
+        Path(path).write_text(render_text(p, f, s), encoding=encoding, errors=errors)
+    return export_current_report(filename, project, outputs, summary, checks, render)

@@ -899,5 +899,6 @@
   "bundle_status_scope": "Nur Exportstatus; erzeugte Dateien sind vorläufig und keine technische Freigabe. Dateiliste und Berechnungsmetadaten stehen in 00_Export_Manifest.json.",
   "bundle_pdf_generated": "PDF: erzeugt.",
   "bundle_pdf_not_requested": "PDF: nicht angefordert.",
-  "bundle_pdf_failed_status": "PDF: fehlgeschlagen; nicht enthalten."
+  "bundle_pdf_failed_status": "PDF: fehlgeschlagen; nicht enthalten.",
+  "drawing_write_failed": "Die Zeichnung konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre prüfen."
 }
