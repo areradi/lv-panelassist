@@ -344,3 +344,16 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [bundle status policy](../engineering/bundle_export_status_policy.md).
 - **Remaining risks:** real printing, full expected-format manifest, content hashes,
   all-format parity and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 19 — Bundle API run-identity preflight
+
+- **Observed:** direct bundle calls bypassed GUI freshness and could combine a
+  changed project with old or mixed feeder run identities; render inputs mutable.
+- **Expected:** stale/missing/mixed runs cannot be published as current bundles;
+  all files render from one private accepted snapshot.
+- **Implementation:** deep copy, recorded project/revision/feeder/run/hash checks
+  before staging and after rendering; typed stale error and localized GUI warning.
+- **Tests:** 16 public API/late-change/isolation/GUI cases plus 28 bundle cases.
+- **Evidence:** [bundle preflight policy](../engineering/bundle_snapshot_preflight_policy.md).
+- **Remaining risks:** derived-output hashes, current in-memory/raw input API
+  context, all-format guards and engineering verification remain open. P0 stays OPEN.

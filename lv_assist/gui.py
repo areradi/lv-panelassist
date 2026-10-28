@@ -2,6 +2,7 @@
 import os
 import csv
 import json
+import copy
 import sys
 import webbrowser
 import zipfile
@@ -23,6 +24,7 @@ from lv_assist.catalog import CatalogRepository
 from lv_assist.engine import EngineeringEngine, build_design_verification
 from lv_assist.exporters import ExcelExporter, PrintableReportExporter, DesignVerificationExporter
 from lv_assist.csv_export import CsvMode
+from lv_assist.export_preflight import ExportSnapshotError, require_current_bundle
 from lv_assist.bundle_export import BundleExportResult, build_bundle_atomic, export_manifest
 from lv_assist.outputs import SldGenerator, TccGenerator, PdfExporter, EplanExporter, EplanPartsExporter
 from lv_assist.control_circuits import ControlCircuitGenerator
@@ -760,6 +762,8 @@ class LVAssistApp(ctk.CTk):
                 messagebox.showwarning(tr("msg_warning"), tr("bundle_pdf_failed", reason=tr("msg_pdf_" + result.pdf_reason)))
             else:
                 messagebox.showinfo(tr("msg_success"), tr("msg_export_all_done", n=result.file_count))
+        except ExportSnapshotError:
+            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
         except (OSError, zipfile.BadZipFile):
             messagebox.showerror(tr("msg_error"), tr("bundle_write_failed"))
         except Exception as ex:
@@ -773,10 +777,15 @@ class LVAssistApp(ctk.CTk):
 
     @staticmethod
     def build_document_bundle_result(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> BundleExportResult:
-        result = None
+        # Render every file from a private copy of one accepted run.
+        project, f_outs, summary, validations = copy.deepcopy((project, f_outs, summary, validations))
+        require_current_bundle(project, f_outs, summary, catalog_repo.db_path)
+        result: BundleExportResult | None = None
         def build(path):
             nonlocal result
             result = LVAssistApp._build_document_bundle(path, project, f_outs, summary, validations, include_pdf)
+            # A source/catalog change during rendering must abort publication.
+            require_current_bundle(project, f_outs, summary, catalog_repo.db_path)
             return result.file_count
         build_bundle_atomic(zip_path, build)
         assert result is not None
