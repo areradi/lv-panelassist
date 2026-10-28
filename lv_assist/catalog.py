@@ -11,6 +11,8 @@ import json
 import math
 import sqlite3
 from pathlib import Path
+from lv_assist.ip_rating import ip_meets
+from lv_assist.run_metadata import catalog_file_hash
 from typing import Any, Dict, List, Optional
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState, DataQuality
@@ -41,6 +43,7 @@ class CatalogRepository:
     def __init__(self, db_path: Path = DB_PATH) -> None:
         self.db_path = _ensure_database(db_path)
         self._devices_cache: Optional[List[CatalogDevice]] = None
+        self._devices_file_hash: str | None = None
         self._rules_cache: Optional[List[SelectivityRuleRecord]] = None
         self._curves_cache: Optional[Dict[str, dict]] = None
         self._standards_cache: Optional[Dict[str, Dict[str, Any]]] = None
@@ -48,7 +51,8 @@ class CatalogRepository:
         self._pe_cache: Optional[List[float]] = None
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        # Packaged engineering data is never a project store or migration target.
+        conn = sqlite3.connect(self.db_path.resolve().as_uri() + "?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -71,8 +75,12 @@ class CatalogRepository:
 
     @property
     def devices(self) -> List[CatalogDevice]:
-        if self._devices_cache is None:
+        current_hash = catalog_file_hash(self.db_path)
+        if self._devices_cache is None or self._devices_file_hash != current_hash:
             self._devices_cache = self.load_devices()
+            self._devices_file_hash = current_hash
+            self._rules_cache = self._curves_cache = self._standards_cache = None
+            self._iz0_cache = self._pe_cache = None
         return self._devices_cache
 
     # ------------------------------------------------------------------
@@ -82,18 +90,19 @@ class CatalogRepository:
         self,
         device_id: str,
         nominal_voltage_v: float,
-        tolerance_v: float = 20.0,
+        tolerance_v: float = 0.0,
     ) -> Optional[float]:
         """بازیابی Icu متناسب با ولتاژ نامی؛ در نبود داده دیتاشیت برای آن ولتاژ، None برمی‌گردد."""
+        if tolerance_v != 0:
+            raise ValueError("Nearby-voltage Icu lookup requires explicit manufacturer applicability; unsupported.")
         with self._connect() as conn:
             row = conn.execute(
                 """
                 SELECT icu_ka FROM device_breaking_capacities
-                WHERE device_id = ? AND ABS(voltage_v - ?) <= ?
-                ORDER BY ABS(voltage_v - ?) ASC
+                WHERE device_id = ? AND voltage_v = ?
                 LIMIT 1
                 """,
-                (device_id, nominal_voltage_v, tolerance_v, nominal_voltage_v),
+                (device_id, nominal_voltage_v),
             ).fetchone()
             return float(row["icu_ka"]) if row else None
 
@@ -130,17 +139,7 @@ class CatalogRepository:
         if not target_ip:
             return enclosures
 
-        req_digits = "".join(ch for ch in str(target_ip) if ch.isdigit())
-        if len(req_digits) < 2:
-            return enclosures
-        req_ip_num = int(req_digits[:2])
-
-        compatible = []
-        for enc in enclosures:
-            enc_digits = "".join(ch for ch in str(enc.ip_rating or "") if ch.isdigit())
-            if len(enc_digits) >= 2 and int(enc_digits[:2]) >= req_ip_num:
-                compatible.append(enc)
-        return compatible
+        return [enc for enc in enclosures if ip_meets(enc.ip_rating, target_ip)]
 
     # ------------------------------------------------------------------
     # ۵. جداول مرجع کابل و مقاطع استاندارد PE (رفع F-001, F-005, F-008)
@@ -184,7 +183,7 @@ class CatalogRepository:
             return None
 
     def get_cable_iz0_table(self, material: str, insulation: str,
-                            installation_method: str, loaded_conductors: int) -> Dict[float, float]:
+                            installation_method: str, loaded_conductors: int) -> dict[float, float]:
         """Exact combination only. An absent table is not a scaled Cu/PVC/C table."""
         with self._connect() as conn:
             rows = conn.execute(
@@ -372,21 +371,24 @@ class SiemensSelectivityRepository:
         return CatalogRepository.get_selectivity_rules()
 
     @classmethod
-    def evaluate_pair(cls, upstream: CatalogDevice, downstream: CatalogDevice, prospective_ik_ka: float):
+    def evaluate_pair(cls, upstream: CatalogDevice, downstream: CatalogDevice,
+                      prospective_ik_ka: float | None, operating_voltage_v: float | None = None,
+                      upstream_setting_a: float | None = None,
+                      downstream_setting_a: float | None = None):
         ratio = upstream.rated_current_in_a / max(1.0, downstream.rated_current_in_a)
-        if ratio < 1.25:
-            return (SelectivityEvalState.VIOLATION, 0.0, tr("sel_ref_violation", up=upstream.rated_current_in_a, down=downstream.rated_current_in_a, ratio=f"{ratio:.2f}"))
 
         matching_rules = [
             r for r in cls.get_selectivity_rules()
-            if r.upstream_series == upstream.series
-            and upstream.rated_current_in_a >= r.upstream_min_in_a
-            and r.downstream_series == downstream.series
-            and downstream.rated_current_in_a <= r.downstream_max_in_a
-            and ratio >= 1.6
+            if r.upstream_part_number == upstream.part_number
+            and r.downstream_part_number == downstream.part_number
+            and operating_voltage_v is not None and r.operating_voltage_v == operating_voltage_v
+            and upstream_setting_a is not None and r.upstream_setting_a == upstream_setting_a
+            and downstream_setting_a is not None and r.downstream_setting_a == downstream_setting_a
+            and r.source is not None and r.source.has_reviewed_evidence()
+            and r.source.value == r.selectivity_limit_is_ka and r.source.unit == "kA"
         ]
 
-        if matching_rules:
+        if matching_rules and prospective_ik_ka is not None:
             best_rule = max(matching_rules, key=lambda x: x.selectivity_limit_is_ka)
             if best_rule.selectivity_limit_is_ka >= prospective_ik_ka:
                 return (SelectivityEvalState.VERIFIED_TOTAL, best_rule.selectivity_limit_is_ka, best_rule.catalog_reference)
@@ -400,4 +402,4 @@ class SiemensSelectivityRepository:
                 return (SelectivityEvalState.PRELIMINARY, curve_limit_ka, tr("sel_ref_curve_prelim", a=curve_limit_ka))
             return (SelectivityEvalState.PRELIMINARY_RATIO_ONLY, None, tr("sel_ref_ratio_only", ratio=f"{ratio:.2f}"))
 
-        return (SelectivityEvalState.VIOLATION, 0.0, tr("sel_ref_violation16", ratio=f"{ratio:.2f}"))
+        return (SelectivityEvalState.PRELIMINARY_RATIO_ONLY, None, tr("sel_ref_ratio_only", ratio=f"{ratio:.2f}"))

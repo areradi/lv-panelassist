@@ -80,6 +80,7 @@ class TestCableSizing:
             max_vdrop_pct=5.0, load_type=LoadType.SUB_FEEDER)
         assert iz >= 45.0
         assert vd <= 5.0
+        assert s_ph > 0
         assert s_pe is None  # No L-PE fault/time input was supplied.
 
     def test_user_specified_section_respected(self):
@@ -91,21 +92,21 @@ class TestCableSizing:
 
 
 class TestSelectivity:
-    def test_3va2_3rv20_total_selectivity(self):
+    def test_series_only_3va2_3rv20_rule_is_preliminary(self):
         upstream = next(d for d in CATALOG if d.part_number == "3VA2216-5HL32-0AA0")
         downstream = next(d for d in CATALOG if d.part_number == "3RV2021-4EA10")
         state, limit, ref = SiemensSelectivityRepository.evaluate_pair(upstream, downstream, 22.0)
-        assert state == SelectivityEvalState.VERIFIED_TOTAL
-        assert limit == 55.0
+        assert state in (SelectivityEvalState.PRELIMINARY, SelectivityEvalState.PRELIMINARY_RATIO_ONLY)
+        assert limit != 55.0  # Legacy range/series rules are not exact-pair evidence.
         assert ref
 
-    def test_ratio_below_1_25_is_violation(self):
+    def test_ratio_below_1_25_is_only_preliminary(self):
         upstream = CatalogDevice(part_number="X", manufacturer="T", series="S1",
                                  device_type="MCCB", rated_current_in_a=25.0)
         downstream = CatalogDevice(part_number="Y", manufacturer="T", series="S2",
                                    device_type="MCCB", rated_current_in_a=40.0)
         state, _, _ = SiemensSelectivityRepository.evaluate_pair(upstream, downstream, 22.0)
-        assert state == SelectivityEvalState.VIOLATION
+        assert state == SelectivityEvalState.PRELIMINARY_RATIO_ONLY
 
 
 class TestEngine:
@@ -192,7 +193,7 @@ class TestExcelIO:
         wb = openpyxl.load_workbook(str(out_path))
         assert wb.sheetnames == ["01_Project_Summary", "02_Feeder_Cable_Schedule",
                                  "03_Validation_Log", "04_BOM_and_EPLAN", "05_Control_Circuits",
-                                 "06_Design_Verification"]
+                                 "06_Design_Verification", "07_Run_Manifest"]
 
     def test_altitude_loaded_from_excel(self, tmp_path):
         path = tmp_path / "input.xlsx"
@@ -399,7 +400,7 @@ class TestPhase2SoftStarterAndScenarios:
             make_project(),
             [make_feeder(load_type=LoadType.MOTOR_DOL, power_kw=15.0, cos_phi=0.85, efficiency=0.91)])
         coord = next(v for v in validations if v.rule_id == "RULE-COORD-002")
-        assert coord.status in (ValidationStatus.COMPLETED, ValidationStatus.WARNING)
+        assert coord.status == ValidationStatus.INSUFFICIENT_DATA
 
     def test_fire_pump_scenario_main_upsized(self):
         project = make_project(special_scenario="FIRE_PUMP")
@@ -688,7 +689,7 @@ class TestPhase4CapBank:
         _, _, summary, validations = _phase4_cap_project()
         res = [v for v in validations if v.rule_id == "RULE-CAP-016"]
         assert summary.cap_bank_resonance_order is not None
-        assert res and res[0].status == ValidationStatus.COMPLETED
+        assert res and res[0].status == ValidationStatus.WARNING
 
 
 class TestPhase4Thermal:
@@ -713,7 +714,7 @@ class TestPhase4Thermal:
         assert summary.estimated_internal_temp_c is not None
         assert summary.estimated_internal_temp_c <= 50.0
         tint = [v for v in validations if v.rule_id == "RULE-THERM-016"]
-        assert tint and tint[0].status == ValidationStatus.COMPLETED
+        assert tint and tint[0].status == ValidationStatus.WARNING
 
 
 class TestPhase4Scenarios:
@@ -741,7 +742,7 @@ class TestPhase4Scenarios:
         feeders = [make_feeder("F01", load_type=LoadType.LIGHTING_SOCKET, power_kw=5.0, has_socket_outlets=False, fire_resistant=True)]
         _, _, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         eml = [v for v in validations if v.rule_id == "RULE-SCEN-EML-027"]
-        assert eml and eml[0].status == ValidationStatus.COMPLETED
+        assert eml and eml[0].status == ValidationStatus.WARNING
 
 
 class TestPhase4CurveSelectivity:
@@ -767,10 +768,10 @@ class TestPhase4CurveSelectivity:
         assert state == SelectivityEvalState.PRELIMINARY
         assert limit == 2.0
 
-    def test_no_selectivity_when_ratio_low(self):
+    def test_low_ratio_alone_cannot_prove_selectivity_violation(self):
         up, down = self._pair(up_in=250.0, down_in=200.0)
         state, limit, _ = SiemensSelectivityRepository.evaluate_pair(up, down, 22.0)
-        assert state == SelectivityEvalState.VIOLATION
+        assert state == SelectivityEvalState.PRELIMINARY_RATIO_ONLY
 
     def test_ratio_only_when_down_band_reaches_up_band(self):
         up = CatalogDevice(part_number="U", manufacturer="X", series="SENTRON 3VA1", device_type="MCCB",
@@ -1160,11 +1161,11 @@ class TestPhase6Busbar:
     def test_busbar_without_ik_is_insufficient_data(self):
         res = BusbarEngine.select(130.0, None, 800.0)
         statuses = {v.rule_id: v.status for v in res.validations}
-        assert statuses["RULE-BUS-024"] == ValidationStatus.COMPLETED
+        assert statuses["RULE-BUS-024"] == ValidationStatus.WARNING
         assert statuses["RULE-BUS-025"] == ValidationStatus.INSUFFICIENT_DATA
         assert statuses["RULE-BUS-026"] == ValidationStatus.INSUFFICIENT_DATA
         assert statuses["RULE-BUS-027"] == ValidationStatus.INSUFFICIENT_DATA
-        assert statuses["RULE-BUS-028"] == ValidationStatus.COMPLETED
+        assert statuses["RULE-BUS-028"] == ValidationStatus.WARNING
         assert res.required_ipk_ka is None
         assert res.spec
 
@@ -1540,7 +1541,7 @@ class TestPhase7AuditFixes:
         v11 = [v for v in validations if v.rule_id == "RULE-CTRL-24V-011"]
         assert v11 and v11[0].standard_ref == "IEC 60204-1"
         if summary.selected_psu_24v:
-            assert v11[0].status == ValidationStatus.COMPLETED
+            assert v11[0].status == ValidationStatus.WARNING
             assert summary.selected_psu_24v.boost_current_peak_a >= summary.ctrl_24v_peak_inrush_current_a
 
 
@@ -1645,7 +1646,8 @@ class TestPhase7HtmlReport:
                              consequence="c", recommended_action="a"),
             ValidationResult(rule_id="R-X3", feeder_id="F01", standard_ref="IEC 3",
                              status=ValidationStatus.COMPLETED, description="d", supporting_evidence="e",
-                             consequence="c", recommended_action="a"),
+                             consequence="c", recommended_action="a", method="SYNTHETIC_RENDER_TEST",
+                             source_ref="synthetic-rendering-fixture-only"),
             ValidationResult(rule_id="R-X4", feeder_id="F01", standard_ref="IEC 4",
                              status=ValidationStatus.INSUFFICIENT_DATA, description="d", supporting_evidence="e",
                              consequence="c", recommended_action="a"),
@@ -2220,7 +2222,7 @@ class TestPhase10EplanPageMacros:
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
         from lv_assist.models import LoadType
         project, feeders = build_demo_project()
-        feeders = [f for f in feeders if f.load_type == LoadType.SUB_FEEDER]
+        feeders = [make_feeder("F-NON-MOTOR", load_type=LoadType.SUB_FEEDER)]
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         paths = EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1)
         names = [os.path.basename(p) for p in paths]
@@ -2301,7 +2303,7 @@ class TestPhase11BusbarAndMotorIk:
         assert abs(res.voltage_drop_v - du_v_expected) < 0.01
         assert res.voltage_drop_pct < 0.1
         statuses = {v.rule_id: v.status for v in res.validations}
-        assert statuses["RULE-BUS-028"] == ValidationStatus.COMPLETED
+        assert statuses["RULE-BUS-028"] == ValidationStatus.WARNING
 
     def test_busbar_du_warning_for_long_runs(self):
         res = BusbarEngine.select(1000.0, 50.0, 40000.0, voltage_v=400.0, cos_phi=0.7)
@@ -2325,7 +2327,7 @@ class TestPhase11BusbarAndMotorIk:
         assert abs(summary.ip_bus_total_ka - 63.2) < 0.2
         mot_rule = [v for v in validations if v.rule_id == "RULE-MOT-029"]
         assert len(mot_rule) == 1
-        assert mot_rule[0].status == ValidationStatus.COMPLETED
+        assert mot_rule[0].status == ValidationStatus.WARNING
         assert mot_rule[0].standard_ref == "IEC 60909-0"
 
     def test_vfd_only_project_no_contribution(self):
@@ -2544,10 +2546,10 @@ class TestPhase13Spd:
         assert spd.spd_uc_v >= 1.1 * 400.0 / math.sqrt(3.0)
         assert spd.spd_up_kv <= 2.5
         statuses = {v.rule_id: v.status for v in validations if v.rule_id.startswith("RULE-SPD")}
-        assert statuses["RULE-SPD-030"] == ValidationStatus.COMPLETED
-        assert statuses["RULE-SPD-031"] == ValidationStatus.COMPLETED
-        assert statuses["RULE-SPD-032"] == ValidationStatus.COMPLETED
-        assert statuses["RULE-SPD-033"] == ValidationStatus.COMPLETED
+        assert statuses["RULE-SPD-030"] == ValidationStatus.WARNING
+        assert statuses["RULE-SPD-031"] == ValidationStatus.WARNING
+        assert statuses["RULE-SPD-032"] == ValidationStatus.WARNING
+        assert statuses["RULE-SPD-033"] == ValidationStatus.WARNING
         assert "RULE-SPD-034" not in statuses
 
     def test_t1_selection_and_coordination(self):
@@ -2557,13 +2559,13 @@ class TestPhase13Spd:
         assert spd.spd_iimp_ka > 0
         assert spd.spd_backup_fuse_a == 315.0
         statuses = {v.rule_id: v.status for v in validations if v.rule_id.startswith("RULE-SPD")}
-        assert statuses["RULE-SPD-034"] == ValidationStatus.COMPLETED
+        assert statuses["RULE-SPD-034"] == ValidationStatus.WARNING
 
     def test_t1_t2_combined_selection(self):
         _, _, summary, validations = self._run(spd_class=SpdClass.T1_T2)
         assert summary.selected_spd.part_number == "OVR T1-T2 4L 25-440s P TS QS"
         assert summary.selected_spd.spd_uc_v == 440.0
-        assert any(v.rule_id == "RULE-SPD-034" and v.status == ValidationStatus.COMPLETED
+        assert any(v.rule_id == "RULE-SPD-034" and v.status == ValidationStatus.WARNING
                    for v in validations)
 
     def test_none_class_warns_and_suggests(self):
@@ -2591,10 +2593,11 @@ class TestPhase13Spd:
         # fa locale digits are transliterated, so accept both Latin and Persian "2"
         assert "T2" in summary.spd_suggested_str or "T۲" in summary.spd_suggested_str
 
-    def test_spd_devices_are_verified_data_quality(self):
+    def test_spd_devices_without_reviewed_sources_are_estimated(self):
         spds = [d for d in CATALOG if d.device_type == "SPD"]
         assert len(spds) == 8
-        assert all(d.data_quality == DataQuality.REAL_VERIFIED for d in spds)
+        assert all(d.data_quality == DataQuality.ESTIMATED for d in spds)
+        assert all(not d.property_sources for d in spds)
         assert {d.spd_class for d in spds} == {"T1", "T2", "T1_T2"}
 
     def test_excel_contains_spd_rows(self, tmp_path):
@@ -2829,7 +2832,7 @@ class TestPhase15SpdInstallation:
     def test_default_lead_completed(self):
         _, _, _, validations = self._run()
         rule = self._spd_rule(validations, "RULE-SPD-032")
-        assert rule.status == ValidationStatus.COMPLETED
+        assert rule.status == ValidationStatus.WARNING
 
     def test_lead_warning_between_half_and_one_meter(self):
         _, _, _, validations = self._run(spd_connection_length_m=0.8)
@@ -2847,7 +2850,7 @@ class TestPhase15SpdInstallation:
         rule = self._spd_rule(validations, "RULE-SPD-035")
         fuse = summary.selected_spd.spd_backup_fuse_a
         if summary.main_breaker.rated_current_in_a <= fuse:
-            assert rule.status == ValidationStatus.COMPLETED
+            assert rule.status == ValidationStatus.WARNING
         else:
             assert rule.status == ValidationStatus.WARNING
             assert summary.main_breaker.rated_current_in_a > fuse
@@ -2858,7 +2861,7 @@ class TestPhase15SpdInstallation:
         _, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         rule = self._spd_rule(validations, "RULE-SPD-035")
         assert summary.main_breaker.rated_current_in_a <= summary.selected_spd.spd_backup_fuse_a
-        assert rule.status == ValidationStatus.COMPLETED
+        assert rule.status == ValidationStatus.WARNING
 
     def test_none_class_has_no_coordination_rule(self):
         _, _, _, validations = self._run(spd_class=SpdClass.NONE)

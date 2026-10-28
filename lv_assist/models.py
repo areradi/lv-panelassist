@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
 from lv_assist.result_contract import ValidationStatus
 from lv_assist.core_verification import CheckResult, ShortCircuitProfile, TripTimeEstimate
+from lv_assist.run_metadata import RunMetadata
+from lv_assist.i18n import tr
 
 class EarthingSystem(str, Enum):
     TN_S = "TN-S"
@@ -60,6 +62,42 @@ class DataQuality(str, Enum):
     REAL_VERIFIED = "REAL_VERIFIED"
     ESTIMATED = "ESTIMATED"
 
+
+class SourceType(str, Enum):
+    USER = "USER"
+    MANUFACTURER = "MANUFACTURER"
+    STANDARD = "STANDARD"
+    CALCULATED = "CALCULATED"
+    ASSUMED = "ASSUMED"
+
+
+class PropertySource(BaseModel):
+    """Recorded provenance; a label alone never constitutes reviewed evidence."""
+
+    model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
+    value: float | str | None = None
+    unit: str
+    source_type: SourceType
+    source_document: str | None = None
+    revision: str | None = None
+    page_or_table: str | None = None
+    verified_at: str | None = None
+    verified_by: str | None = None
+    applicability: dict[str, str] = Field(default_factory=dict)
+    quality: DataQuality = DataQuality.ESTIMATED
+
+    def has_reviewed_evidence(self) -> bool:
+        return bool(self.quality == DataQuality.REAL_VERIFIED
+                    and self.source_type in (SourceType.MANUFACTURER, SourceType.STANDARD)
+                    and self.source_document and self.revision and self.page_or_table
+                    and self.verified_at and self.verified_by and self.applicability)
+
+    @model_validator(mode="after")
+    def incomplete_source_is_estimated(self):
+        if not self.has_reviewed_evidence():
+            self.quality = DataQuality.ESTIMATED
+        return self
+
 class SpdClass(str, Enum):
     NONE = "NONE"
     T1 = "T1"
@@ -67,10 +105,11 @@ class SpdClass(str, Enum):
     T1_T2 = "T1_T2"
 
 class ProjectSpec(BaseModel):
-    model_config = ConfigDict(allow_inf_nan=False)
+    model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     project_name: str = Field(..., min_length=2)
-    panel_tag: str = Field(default="+MCC1")
+    project_revision: int = Field(default=1, ge=1)
+    panel_tag: str = Field(default="+MCC1", min_length=1)
     standard_ref: str = Field(default="IEC 61439-2 / IEC 60204-1")
     nominal_voltage_v: float = Field(default=400.0, gt=0)
     frequency_hz: float = Field(default=50.0, gt=0)
@@ -83,7 +122,7 @@ class ProjectSpec(BaseModel):
     ambient_temp_c: float = Field(default=40.0, ge=-20.0, le=60.0)
     max_internal_temp_c: float = Field(default=50.0, ge=35.0, le=70.0)
     altitude_m: float = Field(default=1000.0, ge=0.0, le=4000.0)
-    target_ip: str = Field(default="IP54")
+    target_ip: str = Field(default="IP54", pattern=r"^IP[0-6][0-9]$")
     internal_separation_form: str = Field(default="Form 2b")
     simultaneity_factor_ks: float = Field(default=0.85, gt=0.1, le=1.0)
     spare_factor: float = Field(default=0.20, ge=0.0, le=1.0)
@@ -96,12 +135,12 @@ class ProjectSpec(BaseModel):
     spd_connection_length_m: float = Field(default=0.5, ge=0.0, le=10.0)
 
 class FeederInput(BaseModel):
-    model_config = ConfigDict(allow_inf_nan=False)
+    model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     feeder_id: str = Field(..., min_length=1)
     func_tag: str = Field(default="=PWR")
     loc_tag: str = Field(default="+MCC1")
-    description: str
+    description: str = Field(min_length=1)
     load_type: LoadType
     power_kw: float = Field(..., gt=0)
     phases: int = Field(default=3, ge=1, le=3)
@@ -117,6 +156,15 @@ class FeederInput(BaseModel):
     installation_method: InstallationMethod = InstallationMethod.C
     fire_resistant: bool = Field(default=False)
     thdi_pct: Optional[float] = Field(default=None, ge=0.0, le=200.0)
+    protection_ir_a: float | None = Field(default=None, gt=0)
+    protection_i2_a: float | None = Field(default=None, gt=0)
+
+    @field_validator("phases")
+    @classmethod
+    def supported_phase_count(cls, value: int) -> int:
+        if value not in (1, 3):
+            raise ValueError("Only 1P and 3P loads are supported; 2P needs an explicit voltage model.")
+        return value
 
 class CatalogDevice(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
@@ -153,6 +201,18 @@ class CatalogDevice(BaseModel):
     spd_iimp_ka: float = 0.0
     spd_poles: str = "4P"
     spd_backup_fuse_a: float = 0.0
+    property_sources: dict[str, PropertySource] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def unsupported_quality_is_estimated(self):
+        # Whole-device quality cannot be inferred from one reviewed property.
+        critical = {"power_loss_w", "dimensions", "thermal", "ip"}
+        if self.device_type in ("MCB", "MCCB", "MPCB"):
+            critical |= {"icu_ka", "trip_curve"}
+        if not critical <= self.property_sources.keys() or not all(
+                source.has_reviewed_evidence() for source in self.property_sources.values()):
+            self.data_quality = DataQuality.ESTIMATED
+        return self
 
 class SelectivityRuleRecord(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
@@ -164,6 +224,12 @@ class SelectivityRuleRecord(BaseModel):
     selectivity_limit_is_ka: float
     is_total_up_to_icu: bool = False
     catalog_reference: str
+    upstream_part_number: str | None = None
+    downstream_part_number: str | None = None
+    operating_voltage_v: float | None = None
+    upstream_setting_a: float | None = None
+    downstream_setting_a: float | None = None
+    source: PropertySource | None = None
 
 class ValidationResult(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
@@ -180,12 +246,12 @@ class ValidationResult(BaseModel):
     scope: str = "CHECK"
     subject_id: str = ""
     input_values: dict = Field(default_factory=dict)
-    result_value: Optional[float] = None
-    unit: Optional[str] = None
-    limit: Optional[float] = None
+    result_value: float | None = None
+    unit: str | None = None
+    limit: float | None = None
     method: str = "LEGACY_UNDOCUMENTED"
-    source_ref: Optional[str] = None
-    assumptions: List[str] = Field(default_factory=list)
+    source_ref: str | None = None
+    assumptions: list[str] = Field(default_factory=list)
     reason: str = ""
 
     @model_validator(mode="after")
@@ -193,6 +259,15 @@ class ValidationResult(BaseModel):
         self.check_id = self.check_id or self.rule_id
         self.subject_id = self.subject_id or self.feeder_id
         self.reason = self.reason or self.description
+        if self.scope == "CHECK":
+            self.scope = self.feeder_id if self.feeder_id in ("PANEL", "NETWORK") else "FEEDER"
+        if (self.status == ValidationStatus.COMPLETED
+                and self.method == "LEGACY_UNDOCUMENTED" and self.source_ref is None):
+            self.status = ValidationStatus.WARNING
+            note = "Legacy calculation; no reviewed source metadata recorded."
+            if note not in self.assumptions:
+                self.assumptions.append(note)
+            self.recommended_action = tr("audit_source_gap")
         return self
 
     @classmethod
@@ -290,9 +365,9 @@ class FeederCalcOutput(BaseModel):
     delta_loop_current_a: Optional[float] = None
     star_current_a: Optional[float] = None
     required_in_after_derating_a: float
-    cable_length_m: Optional[float] = None
+    cable_length_m: float | None = None
     selected_phase_mm2: float = 2.5
-    selected_pe_mm2: Optional[float] = None
+    selected_pe_mm2: float | None = None
     cable_derated_iz_a: Optional[float] = 0.0
     cable_Auto_sized: bool = True
     cable_designation_str: str = ""
@@ -302,12 +377,13 @@ class FeederCalcOutput(BaseModel):
     cable_method_ref_str: str = ""
     pe_basis_str: str = ""
     protection_icu_ka: Optional[float] = None
-    voltage_drop_percent: Optional[float] = None
+    voltage_drop_percent: float | None = None
     status: ValidationStatus = ValidationStatus.INSUFFICIENT_DATA
     selection_status: str = "PROPOSED"
-    short_circuit_profile: Optional[ShortCircuitProfile] = None
-    trip_time_estimate: Optional[TripTimeEstimate] = None
-    pe_check: Optional[CheckResult] = None
+    short_circuit_profile: ShortCircuitProfile | None = None
+    trip_time_estimate: TripTimeEstimate | None = None
+    pe_check: CheckResult | None = None
+    run_metadata: RunMetadata | None = None
     assumptions_used: List[str] = []
     selected_protection: Optional[CatalogDevice] = None
     selected_contactor_main: Optional[CatalogDevice] = None
@@ -374,7 +450,7 @@ class PanelSummaryOutput(BaseModel):
     ip_bus_total_ka: Optional[float] = None
     busbar_du_v: float = 0.0
     busbar_du_pct: float = 0.0
-    max_total_du_pct: Optional[float] = None
+    max_total_du_pct: float | None = None
     ik_source_str: str = ""
     effective_ip_str: str = ""
     suggested_main_breaker_str: str = ""
@@ -399,6 +475,7 @@ class PanelSummaryOutput(BaseModel):
     estimated_internal_temp_c: Optional[float] = None
     altitude_derating_factor: float = 1.0
     status: ValidationStatus = ValidationStatus.INSUFFICIENT_DATA
+    run_metadata: RunMetadata | None = None
 
 class VerificationMethod(str, Enum):
     CALCULATION = "CALCULATION"
@@ -423,9 +500,9 @@ class DesignVerificationItem(BaseModel):
     computed_value: str
     evidence: str
     rule_ids: List[str] = []
-    evidence_document: Optional[str] = None
-    reviewer: Optional[str] = None
-    reviewed_at: Optional[str] = None
+    evidence_document: str | None = None
+    reviewer: str | None = None
+    reviewed_at: str | None = None
     source_ref: str = "IEC 61439-1 Clause 10 — applicability/revision requires review"
 
 class DesignVerificationReport(BaseModel):

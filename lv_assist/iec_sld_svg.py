@@ -21,15 +21,15 @@ class SLDFeederDTO(BaseModel):
     protection_tag: str
     protection_part: str
     protection_in_a: float
-    protection_icu_ka: Optional[float]
+    protection_icu_ka: float | None
     switching_tag: str = ""
     switching_part: str = ""
     overload_tag: str = ""
     overload_part: str = ""
     overload_range: str = ""
     cable_designation: str
-    cable_length_m: Optional[float]
-    voltage_drop_pct: Optional[float]
+    cable_length_m: float | None
+    voltage_drop_pct: float | None
     selectivity_status: str
 
 

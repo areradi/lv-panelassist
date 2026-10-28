@@ -261,7 +261,7 @@
   "val_harm_mit_desc": "THDi={a}% über 50% — Oberschwingungsreduzierung nötig.",
   "val_harm_mit_cons": "Gefahr der Überhitzung von Kabel und Neutralleiter.",
   "val_harm_mit_action": "DC-Drossel, Aktivfilter oder 12-Puls-Gleichrichter.",
-  "val_coord_desc": "Koordinationsart 2 (keine Beschädigung, sofort wieder betriebsbereit).",
+  "val_coord_desc": "Typ-2-Koordination ist nicht verifiziert: ein vorgeschlagenes Gerätepaar ist keine herstellergeprüfte Kombination.",
   "val_coord_ev": "{a} + {b} für {c}A",
   "val_coord_cons": "Lebensdauer und Zuverlässigkeit des Starters.",
   "val_coord_action": "Geprüfte Kombinationstabelle des Herstellers beachten.",
@@ -591,7 +591,7 @@
   "html_kpi_warn": "Warnungen",
   "html_kpi_ok": "Bestanden",
   "html_kpi_ins": "Unzureichend",
-  "html_badge_completed": "BESTANDEN ✓",
+  "html_badge_completed": "PRÜFUNG ABGESCHLOSSEN ✓",
   "html_badge_warning": "WARNUNG !",
   "html_badge_error": "FEHLER ✗",
   "html_badge_insufficient": "UNZUREICHEND ?",
@@ -860,5 +860,10 @@
   "audit_icu_action": "Exaktes Modell, Betriebsspannung, Einstellungen und Herstellerbeleg prüfen; Gerät bleibt vorgeschlagen.",
   "audit_cable_unknown": "VORLÄUFIG: genaue Strombelastbarkeitstabelle fehlt",
   "audit_status_counts": "Abgeschlossene Prüfungen: {ok} | Warnung: {warn} | Fehlende Daten: {missing} | Fehler: {err}",
-  "audit_preliminary": "VORLÄUFIG — NICHT ZUR AUSFÜHRUNG"
+  "audit_preliminary": "VORLÄUFIG — NICHT ZUR AUSFÜHRUNG",
+  "audit_input_invalid": "Ungültige Projekteingaben: mindestens ein eindeutiger Abgang und endliche Zahlen im Berechnungsbereich sind erforderlich.",
+  "audit_overload_title": "Koordination von Kabel und Schutzeinstellungen",
+  "audit_overload_basis": "Tatsächliches Ir, I2 und anwendbares Iz sind erforderlich; Einstellbarkeit ist keine Einstellung.",
+  "audit_overload_action": "Tatsächliches Ir und dokumentiertes I2 eingeben sowie Kabel- und Gerätenachweise ergänzen.",
+  "audit_source_gap": "Quelle, Version, Anwendbarkeit und fachliche Prüfung sind nicht dokumentiert; diese Prüfung bleibt vorläufig."
 }

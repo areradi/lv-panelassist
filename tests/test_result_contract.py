@@ -9,6 +9,7 @@ from lv_assist.gui import build_demo_project
 from lv_assist.models import (
     CatalogDevice,
     DataQuality,
+    ValidationResult,
     ValidationStatus,
     VerificationStatus,
 )
@@ -25,6 +26,14 @@ def test_missing_data_outweighs_warning_in_every_aggregation(left, right):
 def test_unknown_device_never_defaults_to_verified():
     device = CatalogDevice(part_number="unknown", manufacturer="unknown", series="unknown", device_type="MCB")
     assert device.data_quality == DataQuality.ESTIMATED
+
+
+def test_legacy_check_without_documented_method_cannot_claim_completed():
+    result = ValidationResult(rule_id="legacy", feeder_id="F1", standard_ref="standard name alone",
+                              status="COMPLETED", description="calculated", supporting_evidence="number",
+                              consequence="unknown", recommended_action="none")
+    assert result.status == ValidationStatus.WARNING
+    assert result.assumptions and result.recommended_action != "none"
 
 
 def test_actual_demo_checks_have_auditable_contract_and_no_assembly_pass(tmp_path):

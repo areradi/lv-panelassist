@@ -203,6 +203,17 @@ class ExcelExporter:
         for row in range(2, ws4.max_row + 1):
             ws4.cell(row, 13, "PROPOSED")
             ws4.cell(row, 14, summary.status.value)
+        if summary.run_metadata:
+            manifest = wb.create_sheet("07_Run_Manifest")
+            _append_safe(manifest, ["Field", "Value"])
+            for key, value in summary.run_metadata.model_dump(mode="json").items():
+                import json
+                text_value = json.dumps(value, ensure_ascii=False) if isinstance(value, (list, dict)) else value
+                if isinstance(text_value, str) and len(text_value) > 30000:
+                    for part, start in enumerate(range(0, len(text_value), 30000), 1):
+                        _append_safe(manifest, [f"{key}[{part:04d}]", text_value[start:start + 30000]])
+                else:
+                    _append_safe(manifest, [key, text_value])
         wb.save(filename)
 
 class PrintableReportExporter:
@@ -415,6 +426,7 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 </style></head>
 <body><div class="container">
 <p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
+<details><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
 <div class="header-box"><div><h1>{_h(tr("html_title"))}</h1><p>{_h(tr("html_project"))} <b>{_h(project.project_name)}</b> | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>
 {kpi_html}
@@ -529,6 +541,7 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 </style></head>
 <body><div class="container">
 <p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
+<details><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
 <div class="header-box"><div><h1>{_h(tr("dv_title"))}</h1>
 <p>{_h(tr("dv_subtitle"))} — {_h(report.standard_ref)} / {_h(report.clause_ref)} | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>

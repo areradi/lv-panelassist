@@ -19,12 +19,12 @@ class CheckResult:
     scope: str = "CHECK"
     subject_id: str = ""
     input_values: dict = field(default_factory=dict)
-    result_value: Optional[float] = None
-    unit: Optional[str] = None
-    limit: Optional[float] = None
+    result_value: float | None = None
+    unit: str | None = None
+    limit: float | None = None
     method: str = "UNSPECIFIED"
-    source_ref: Optional[str] = None
-    assumptions: List[str] = field(default_factory=list)
+    source_ref: str | None = None
+    assumptions: list[str] = field(default_factory=list)
 
     @property
     def reason(self) -> str:
@@ -140,8 +140,8 @@ def calculate_adiabatic_pe_mm2(
         limit_or_reference=f"k = {k_factor} (IEC 60364-5-54)",
         cause=trip_estimate.note if trip_estimate.is_curve_estimated else "",
         effect="حداقل سطح مقطع حرارتی PE محاسبه شد.",
-        recommended_action="در صورت تخمینی بودن منحنی، زمان قطع را با دیتاشیت کلید کنترل کنید."
-        , input_values={"fault_current_a": fault_current_a, "time_s": trip_estimate.time_s,
+        recommended_action="در صورت تخمینی بودن منحنی، زمان قطع را با دیتاشیت کلید کنترل کنید.",
+        input_values={"fault_current_a": fault_current_a, "time_s": trip_estimate.time_s,
                         "k_factor": k_factor}, result_value=round(s_min_mm2, 2), unit="mm²",
         method="I*sqrt(t)/k", source_ref="IEC 60364-5-54; applicability requires review",
         assumptions=[trip_estimate.note, "k factor applicability must be documented"]
@@ -278,4 +278,27 @@ def verify_breaking_capacity_icu(
         measured_or_calc_value=f"Icu = {device_icu_ka:.1f} kA >= Ik = {prospective_ik_ka:.2f} kA",
         limit_or_reference="Icu >= Ik",
         effect="قدرت قطع کلید بالاتر از جریان اتصال کوتاه محاسبه شده است."
+    )
+
+
+def verify_overload_coordination(ib_a: float, ir_a: float | None, iz_a: float | None,
+                                 i2_a: float | None) -> CheckResult:
+    """Check the requested inequalities only, without inventing device settings."""
+    values = {"ib_a": ib_a, "ir_a": ir_a, "iz_a": iz_a, "i2_a": i2_a}
+    present = [value for value in values.values() if value is not None]
+    invalid = any(not math.isfinite(value) or value <= 0 for value in present)
+    violated = ((ir_a is not None and ir_a < ib_a)
+                or (ir_a is not None and iz_a is not None and ir_a > iz_a)
+                or (i2_a is not None and iz_a is not None and i2_a > 1.45 * iz_a))
+    status = (ValidationStatus.ERROR if invalid or violated else
+              ValidationStatus.INSUFFICIENT_DATA if None in (ir_a, iz_a, i2_a) else
+              ValidationStatus.WARNING)
+    return CheckResult(
+        check_id="OVERLOAD_COORDINATION", title="Ib <= Ir <= Iz; I2 <= 1.45 Iz",
+        status=status, input_values=values, unit="A", result_value=ir_a, limit=iz_a,
+        method="Ib <= Ir <= Iz AND I2 <= 1.45 Iz",
+        source_ref="IEC 60364-4-43; device-specific applicability requires review",
+        cause="Actual settings/ampacity/I2 required; inequalities alone do not verify equipment.",
+        recommended_action="Obtain documented protection settings, I2 and applicable cable data.",
+        assumptions=["No manufacturer setting/standard applicability sign-off recorded"],
     )

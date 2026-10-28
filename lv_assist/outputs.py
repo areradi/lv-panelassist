@@ -275,6 +275,7 @@ class TccGenerator:
             '<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" font-family="Tahoma, Segoe UI, sans-serif">',
             '<rect width="1180" height="720" fill="white"/>',
             f'<text x="20" y="30" font-size="17" font-weight="bold" fill="#1F4E78">{_esc(tr("tcc_title"))} — {_esc(project.project_name)}</text>',
+            '<text x="590" y="375" text-anchor="middle" font-size="38" fill="#B7950B" opacity="0.22" transform="rotate(-20 590 375)">PRELIMINARY — NOT FOR CONSTRUCTION</text>',
         ]
         # Grid
         for i_a in (1, 10, 100, 1000, 10000, 100000):
