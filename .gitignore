@@ -20,3 +20,31 @@ github_*.py
 /lv_assist/*.bak_v* 
 /lv_assist/Input_Load_List_Template.xlsx 
 /lv_assist/LV_Panel_Engineering_Report.html 
+
+# --- Audit/patch/probe temporary artifacts ---
+strict_plugin.py
+probe_*.py
+fix_*.py
+enable_*.py
+patch_*.py
+inspect_audit.py
+setup_audit_files.py
+test_gui_output_bridge.py
+test_sld_*.py
+_head_gui.py
+_bridge_reference.py
+gui_github.py
+github_*.py
+*.bak
+*.pre_*.bak
+*.audit_*.bak
+*.narrow_*.bak
+/lv_assist/_preview_*.svg.html
+/*_preview*.svg
+/output/previews/
+
+# --- Generated preview HTML/SVG artifacts ---
+/_preview*.svg
+/_preview*.svg.html
+/lv_assist/_preview*.svg
+/lv_assist/_preview*.svg.html

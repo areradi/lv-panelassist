@@ -28,6 +28,7 @@ from lv_assist.eplan_macro import EplanMacroExporter
 from lv_assist.eplan_macro_files import EplanMacroFileExporter, EplanPageMacroExporter
 from lv_assist.eplan_field_test import EplanFieldTestKit
 from lv_assist.i18n import tr, i18n
+from lv_assist.gui_output_bridge import GuiOutputBridge
 
 LANG_SEGMENT_TO_CODE = {"FA": "fa", "EN": "en", "DE": "de"}
 
@@ -573,6 +574,8 @@ class LVAssistApp(ctk.CTk):
         self.tree_rules.pack(fill="both", expand=True, padx=6, pady=6)
 
         self._apply_status()
+        tab_schematics = self.tabs.add("۵. پیش‌نمایش SLD و مدار فرمان (IEC SVG)")
+        self._build_schematics_preview_tab(tab_schematics)
 
     def _apply_tree_style(self, font_family: str):
         style = ttk.Style(); style.theme_use("default")
@@ -935,3 +938,121 @@ class LVAssistApp(ctk.CTk):
         if path:
             EplanPartsExporter.export_csv(path, self.current_project, res[0], res[1])
             messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+
+
+    # --- [GUI ADDITIVE: IEC SLD/Ladder bridge methods] ---
+    def _build_schematics_preview_tab(self, parent):
+        ctrl_bar = ctk.CTkFrame(parent, height=55)
+        ctrl_bar.pack(fill="x", padx=8, pady=6)
+
+        ctk.CTkLabel(ctrl_bar, text="انتخاب نقشه برای پیش‌نمایش یا ذخیره:", font=ctk.CTkFont(size=12, weight="bold")).pack(side="right", padx=8)
+        self.cmb_sheet_selector = ctk.CTkComboBox(
+            ctrl_bar, values=["SLD: نقشه تک‌خطی کل تابلو"], width=320,
+            command=lambda _: self.action_refresh_schematic_preview()
+        )
+        self.cmb_sheet_selector.pack(side="right", padx=8, pady=8)
+
+        ctk.CTkButton(
+            ctrl_bar, text="👁️ باز کردن پیش‌نمایش گرافیکی نقشه در مرورگر",
+            fg_color="#1F618D", command=self.action_preview_selected_svg_in_browser
+        ).pack(side="left", padx=6, pady=8)
+
+        ctk.CTkButton(
+            ctrl_bar, text="💾 ذخیره همین نقشه (.svg)",
+            fg_color="#1E8449", command=self.action_save_single_svg
+        ).pack(side="left", padx=6, pady=8)
+
+        ctk.CTkButton(
+            ctrl_bar, text="📁 ذخیره تمام نقشه‌های SLD و فرمان در پوشه",
+            fg_color="#B7950B", command=self.action_save_all_svgs_folder
+        ).pack(side="left", padx=6, pady=8)
+
+        # Split view: Top = Wire/Terminal Schedule of selected sheet, Bottom = Live SVG Source & Summary
+        lbl_w = ctk.CTkLabel(parent, text="جدول پویا شماره‌گذاری سیم‌ها (From-To Wire Schedule) و ترمینال‌های نقشه انتخابی:", font=ctk.CTkFont(size=12))
+        lbl_w.pack(anchor="e", padx=10, pady=(4, 2))
+
+        self.tree_wires_preview = ttk.Treeview(
+            parent, columns=("wire", "feeder", "role", "from_pin", "to_pin", "spec"), show="headings", height=8
+        )
+        for col, txt, w in [
+            ("wire", "شماره سیم (بیضی آبی)", 130), ("feeder", "فیدر", 75),
+            ("role", "نقش پتانسیل الکتریکی", 250), ("from_pin", "مبدأ اتصال (Device:Pin)", 230),
+            ("to_pin", "مقصد اتصال (Device:Pin)", 260), ("spec", "مشخصات سیم", 180)
+        ]:
+            self.tree_wires_preview.heading(col, text=txt)
+            self.tree_wires_preview.column(col, width=w, anchor="center")
+        self.tree_wires_preview.pack(fill="x", padx=8, pady=4)
+
+        self.txt_svg_inspector = ctk.CTkTextbox(parent, font=ctk.CTkFont(family="Consolas", size=11), height=180)
+        self.txt_svg_inspector.pack(fill="both", expand=True, padx=8, pady=6)
+
+    def _get_selected_svg_and_name(self) -> Tuple[str, str]:
+        if not self.last_results:
+            return "", "empty.svg"
+        f_outs, summary, _ = self.last_results
+        choice = self.cmb_sheet_selector.get()
+        if choice.startswith("SLD:"):
+            svg_str = GuiOutputBridge.generate_sld_svg(self.current_project, f_outs, summary)
+            return svg_str, f"SLD_{self.current_project.panel_tag.strip('+')}.svg"
+
+        for idx, f in enumerate(f_outs, start=1):
+            if f" {f.feeder_id} " in choice:
+                svg_str = GuiOutputBridge.generate_feeder_ladder_svg(self.current_project, f, summary, feeder_index=idx)
+                return svg_str, f"Ladder_{f.feeder_id}.svg"
+
+        svg_str = GuiOutputBridge.generate_sld_svg(self.current_project, f_outs, summary)
+        return svg_str, "SLD.svg"
+
+    def action_refresh_schematic_preview(self):
+        if not self.last_results:
+            return
+        f_outs, summary, _ = self.last_results
+        svg_str, fname = self._get_selected_svg_and_name()
+
+        wires, _ = GuiOutputBridge.generate_all_wire_and_terminal_schedules(self.current_project, f_outs, summary)
+        choice = self.cmb_sheet_selector.get()
+
+        for item in self.tree_wires_preview.get_children():
+            self.tree_wires_preview.delete(item)
+        for w in wires:
+            if choice.startswith("SLD:") or f" {w['feeder_id']} " in choice:
+                self.tree_wires_preview.insert("", "end", values=(
+                    w["wire_no"], w["feeder_id"], w["potential_role"], w["from_pin"], w["to_pin"], w["wire_spec"]
+                ))
+
+        self.txt_svg_inspector.delete("1.0", "end")
+        self.txt_svg_inspector.insert(
+            "1.0",
+            f"/* پیش‌نمایش کد برداری SVG پویا ({fname}) — تولیدشده توسط GuiOutputBridge بدون داده هاردکد */\n"
+            f"{svg_str}"
+        )
+
+    def action_preview_selected_svg_in_browser(self):
+        svg_str, fname = self._get_selected_svg_and_name()
+        if not svg_str:
+            return
+        preview_path = os.path.join(get_app_working_dir(), f"_preview_{fname}.html")
+        with open(preview_path, "w", encoding="utf-8") as fp:
+            fp.write(f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{fname}</title></head>"
+                     f"<body style='margin:20px;background:#F1F5F9;'>{svg_str}</body></html>")
+        webbrowser.open(f"file://{preview_path}")
+
+    def action_save_single_svg(self):
+        svg_str, fname = self._get_selected_svg_and_name()
+        if not svg_str:
+            return
+        path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile=fname, filetypes=[("SVG Vector", "*.svg")])
+        if path:
+            with open(path, "w", encoding="utf-8") as fp:
+                fp.write(svg_str)
+            messagebox.showinfo("ذخیره شد", f"فایل نقشه برداری SVG ذخیره شد:\n{path}")
+
+    def action_save_all_svgs_folder(self):
+        if not self.last_results:
+            return
+        folder = filedialog.askdirectory(title="انتخاب پوشه برای ذخیره تمام نقشه‌های SLD و مدار فرمان")
+        if folder:
+            f_outs, summary, _ = self.last_results
+            files = GuiOutputBridge.export_all_svgs_to_folder(folder, self.current_project, f_outs, summary)
+            messagebox.showinfo("ذخیره دسته‌ای انجام شد", f"{len(files)} فایل نقشه SVG با موفقیت در پوشه زیر ساخته شد:\n{folder}")
+    # --- end GUI additive ---

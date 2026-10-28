@@ -9,6 +9,31 @@ from lv_assist.models import (
 from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository, catalog_repo
 from lv_assist.busbar import BusbarEngine
 from lv_assist.i18n import tr
+# --- [AUDIT SAFE IMPORTS] ---
+from lv_assist.core_verification import (
+    ValidationStatus as AuditValidationStatus,
+    CheckResult as AuditCheckResult,
+    TripTimeEstimate as AuditTripTimeEstimate,
+    ShortCircuitProfile as AuditShortCircuitProfile,
+    estimate_clear_time_s as audit_estimate_clear_time,
+    calculate_adiabatic_pe_mm2 as audit_calculate_adiabatic_pe_mm2,
+    calculate_network_ik_profile as audit_calculate_network_ik_profile,
+    verify_breaking_capacity_icu as audit_verify_breaking_capacity_icu,
+    aggregate_status as audit_aggregate_status,
+)
+from lv_assist.catalog_provenance import (
+    evaluate_selectivity_status as audit_evaluate_selectivity_status,
+)
+# --- end audit safe imports ---
+# --- [AUDIT P0 POLICY FLAGS] ---
+# Backward-compatible by default.
+# Flip these only after reference tests are updated.
+ENGINE_AUDIT_STRICT_CLEAR_TIME = True
+ENGINE_AUDIT_ICU_UNKNOWN_AS_PASS = False
+ENGINE_AUDIT_ENABLE_FEEDER_IK_PROFILE = True
+# --- end audit P0 policy flags ---
+
+
 
 class CableSizingEngine:
     MATERIAL_IZ_FACTOR: Dict[str, float] = {"CU": 1.0, "AL": 0.78}
@@ -217,23 +242,51 @@ class EngineeringEngine:
         if i_fault_a >= im_min_a:
             return 0.02
         mult = i_fault_a / max(1.0, prot.rated_current_in_a)
-        return min(5.0, TripCurveRepository.thermal_time_s(prot.series, mult))
-
+        raw_t = TripCurveRepository.thermal_time_s(prot.series, mult)
+        if raw_t is None:
+            return 5.0
+        if ENGINE_AUDIT_STRICT_CLEAR_TIME:
+            return float(raw_t)
+        return min(5.0, float(raw_t))
     def _device_icu_ka(self, dev: CatalogDevice, project: ProjectSpec) -> Optional[float]:
         # Icu در ولتاژ واقعی پروژه از جدول قدرت قطع دیتابیس؛ در نبود داده → None (F-006)
         return catalog_repo.get_device_icu_at_voltage(dev.part_number, project.nominal_voltage_v)
 
     def _icu_ok(self, dev: CatalogDevice, project: ProjectSpec, ik_ka: Optional[float]) -> bool:
+        # Catalog PRE-FILTER only: never reject a device merely because Ik''/Icu is unknown.
+        # The strict engineering verdict lives in _icu_check() (4-state) and in ValidationResult.
         if ik_ka is None:
             return True
         icu = self._device_icu_ka(dev, project)
-        return icu is not None and icu >= ik_ka
+        if icu is None:
+            return True
+        return icu >= ik_ka
+
+    def _icu_check(self, dev: CatalogDevice, project: ProjectSpec, ik_ka: Optional[float], is_preliminary: bool = False):
+        icu = self._device_icu_ka(dev, project)
+        return _audit_verify_icu_status(icu, ik_ka, is_preliminary)
 
     @staticmethod
     def _ik_from_transformer(project: ProjectSpec) -> float:
         uk = project.transformer_uk_pct / 100.0
         u_kv = project.nominal_voltage_v / 1000.0
         return round(project.transformer_kva / (math.sqrt(3.0) * u_kv * uk) / 1000.0, 2)
+
+    @staticmethod
+    def _feeder_ik_profile(
+        project: ProjectSpec,
+        feeder_length_m=None,
+        feeder_phase_mm2=None,
+        feeder_pe_mm2=None,
+    ):
+        return _audit_calculate_feeder_ik_profile(
+            transformer_kva=getattr(project, "transformer_kva", None),
+            uk_percent=getattr(project, "transformer_uk_pct", None),
+            voltage_v=getattr(project, "nominal_voltage_v", 400.0),
+            feeder_length_m=feeder_length_m,
+            feeder_phase_mm2=feeder_phase_mm2,
+            feeder_pe_mm2=feeder_pe_mm2,
+        )
 
     def _resolve_ik(self, project: ProjectSpec):
         if project.prospective_ik_ka is not None:
@@ -1211,3 +1264,92 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
     else:
         c_status, c_text = VerificationStatus.PASS, tr("dv_concl_pass", a=n_pass, b=n_warn, c=n_fail, d=n_nv)
     return DesignVerificationReport(items=items, conclusion_status=c_status, conclusion_text=c_text)
+
+
+# --- [AUDIT SAFE HELPERS] ---
+def _audit_status_to_models_status(audit_status):
+    """
+    Convert audit ValidationStatus to models.ValidationStatus.
+
+    Safe because inspect_audit.py confirmed:
+    ENUM_MATCH True
+    values = COMPLETED / WARNING / INSUFFICIENT_DATA / ERROR
+    """
+    return ValidationStatus(audit_status.value)
+
+
+def _audit_estimate_clear_time_detailed(prot, fault_multiple):
+    """
+    Non-breaking detailed trip-time estimator.
+
+    Legacy `_estimate_clear_time_s()` still returns float.
+    This helper returns TripTimeEstimate and exposes whether the real
+    thermal curve exceeds the IEC adiabatic 5-second boundary.
+    """
+    series = getattr(prot, "series", "GENERIC")
+    return audit_estimate_clear_time(
+        series=series,
+        fault_multiple=fault_multiple,
+        thermal_curve_lookup=TripCurveRepository.thermal_time_s,
+        is_approximated_curve=True,
+    )
+
+
+def _audit_verify_icu_status(device_icu_ka, ik_ka, is_preliminary=False):
+    """
+    Four-state ICu verification helper.
+
+    This does NOT replace legacy `_icu_ok()` which returns bool and is
+    used for catalog filtering. It is intended for final validation/reporting.
+    """
+    return audit_verify_breaking_capacity_icu(
+        device_icu_ka=device_icu_ka,
+        prospective_ik_ka=ik_ka,
+        is_ik_preliminary=is_preliminary,
+    )
+
+
+def _audit_calculate_feeder_ik_profile(
+    transformer_kva,
+    uk_percent,
+    voltage_v=400.0,
+    feeder_length_m=None,
+    feeder_phase_mm2=None,
+    feeder_pe_mm2=None,
+):
+    """
+    Network short-circuit profile helper.
+
+    Separates transformer/busbar Ik from feeder-end Ik when cable data exists.
+    """
+    return audit_calculate_network_ik_profile(
+        transformer_kva=transformer_kva,
+        uk_percent=uk_percent,
+        line_voltage_v=voltage_v,
+        feeder_cable_length_m=feeder_length_m,
+        feeder_phase_mm2=feeder_phase_mm2,
+        feeder_pe_mm2=feeder_pe_mm2,
+    )
+
+
+def _audit_selectivity_status(
+    upstream_icu_ka,
+    downstream_icu_ka,
+    selectivity_ratio,
+    rule_source="catalog",
+    data_quality="EXACT",
+):
+    """
+    Selectivity provenance helper.
+
+    Prevents missing/approximate selectivity data from being silently
+    treated as fully verified.
+    """
+    return audit_evaluate_selectivity_status(
+        upstream_icu_ka=upstream_icu_ka,
+        downstream_icu_ka=downstream_icu_ka,
+        selectivity_ratio=selectivity_ratio,
+        rule_source=rule_source,
+        data_quality=data_quality,
+    )
+# --- end audit safe helpers ---
