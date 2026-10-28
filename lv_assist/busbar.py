@@ -65,7 +65,12 @@ class BusbarEngine:
     @classmethod
     def _choose_bar(cls, design_current_a: float, ik_ka: Optional[float],
                     req_ipk: Optional[float]) -> Tuple[Tuple[float, float, float], bool]:
-        """کوچک‌ترین شینه‌ای که جریان (و در صورت معلوم بودن Ik، تحمل Icw/Ipk) را تأمین کند."""
+        """Return a candidate and its continuous-current verdict only.
+
+        Fault withstand guides selection but has separate Icw/Ipk verdicts.
+        Exhausting those candidates must not turn adequate ampacity into an
+        overload error.
+        """
         cands = [(w, t, r) for (w, t, r) in cls.CU_RATINGS if r >= design_current_a]
         if not cands:
             return (100.0, 10.0, 1464.0), False
@@ -75,7 +80,7 @@ class BusbarEngine:
             icw, ipk, _ = cls._bar_withstand(w, t)
             if icw >= ik_ka and ipk >= (req_ipk or 0.0):
                 return (w, t, r), True
-        return cands[-1], False
+        return cands[-1], True
 
     @classmethod
     def select(cls, design_current_a: float, ik_ka: Optional[float], panel_width_mm: float,

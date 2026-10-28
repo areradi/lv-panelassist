@@ -196,3 +196,16 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   `*evidence*` validation logs; 491 passed, inherited PDF failure and Windows skip.
 - **Remaining risks:** record matching cannot authenticate document/reviewer;
   actual independent sources, approval workflow and P0 physical verification remain open.
+
+## Review unit 8 — Separate busbar current and fault verdicts
+
+- **Observed:** exhausted fault candidates caused an adequate current rating to
+  be reported as an overload, including in actual engine reports.
+- **Expected:** current adequacy and Icw/Ipk failures have independent verdicts.
+- **Implementation:** candidate-selection flag describes current capacity only;
+  known fault failures and missing-data statuses remain explicit.
+- **Tests:** 12 synthetic current/fault boundary and integrated FA/EN/DE report
+  cases, including unchanged true overload errors. No independent reference claim.
+- **Evidence:** [busbar verdict policy](../engineering/busbar_verdict_policy.md).
+- **Remaining risks:** physical busbar modelling, constants and manufacturer
+  applicability remain unreviewed; P0 stays OPEN.
