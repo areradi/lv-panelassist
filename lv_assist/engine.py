@@ -8,6 +8,7 @@ from lv_assist.models import (
 )
 from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository, catalog_repo
 from lv_assist.busbar import BusbarEngine
+from lv_assist.ip_rating import ip_upper_bound
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 from lv_assist.run_metadata import create_run_metadata, catalog_file_hash
@@ -241,11 +242,6 @@ class EngineeringEngine:
         if factor is not None:
             return factor
         return dev.derating_40c if internal_temp_c <= 40.0 else dev.derating_50c
-
-    @staticmethod
-    def _ip_numeric(ip_str: str) -> Optional[int]:
-        digits = "".join(ch for ch in str(ip_str) if ch.isdigit())
-        return int(digits[:2]) if len(digits) >= 2 else None
 
     @staticmethod
     def _estimate_trip_time(prot: CatalogDevice | None, ik_ka: float | None) -> AuditTripTimeEstimate:
@@ -1170,16 +1166,20 @@ class EngineeringEngine:
             fans.sort(key=lambda x: x.airflow_m3h)
             if fans: selected_fan = fans[0]
 
-        # F-007: نصب فیلترفن، درجه حفاظت مؤثر تابلو را به حداکثر IP فن محدود می‌کند
-        effective_ip_str = project.target_ip
+        # Component ratings only bound the proposal; installation IP is unverified.
+        ip_inputs = {"target_ip": project.target_ip, "enclosure_ip": selected_enc.ip_rating}
         if selected_fan is not None:
-            ip_num = self._ip_numeric(project.target_ip)
-            if ip_num is not None and ip_num >= 55:
-                effective_ip_str = "IP54"
-                vals.append(ValidationResult(rule_id="RULE-ENC-IP-020", feeder_id="PANEL", standard_ref="IEC 60529",
-                    status=ValidationStatus.WARNING, description=tr("val_enc_fan_ip_desc", a=project.target_ip, b=effective_ip_str),
-                    supporting_evidence=tr("val_enc_fan_ip_ev", a=selected_fan.part_number, b=selected_fan.ip_rating),
-                    consequence=tr("val_enc_fan_ip_cons"), recommended_action=tr("val_enc_fan_ip_action")))
+            ip_inputs["fan_ip"] = selected_fan.ip_rating
+        ip_bound = ip_upper_bound(*ip_inputs.values())
+        effective_ip_str = ip_bound or "?"
+        vals.append(ValidationResult(
+            rule_id="RULE-ENC-IP-020", feeder_id="PANEL", standard_ref="IEC 60529",
+            status=ValidationStatus.WARNING if ip_bound else ValidationStatus.INSUFFICIENT_DATA,
+            description=tr("audit_ip_bound_desc", a=effective_ip_str),
+            supporting_evidence=str(ip_inputs), consequence=tr("audit_ip_bound_action"),
+            recommended_action=tr("audit_ip_bound_action"), input_values=ip_inputs,
+            method="COMPONENT_IP_UPPER_BOUND",
+            assumptions=[tr("audit_ip_bound_action")]))
 
         est_internal_c = project.ambient_temp_c + (delta_t if selected_fan else delta_t * total_loss_w / max(p_diss_natural_w, 1.0))
         est_internal_c = round(est_internal_c, 1)
@@ -1285,7 +1285,7 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
         rule_ids=["RULE-ENC-IP-019"]))
 
     # 10.3 — درجه حفاظت IP
-    eff_ip = summary.effective_ip_str or project.target_ip
+    eff_ip = summary.effective_ip_str or "?"
     items.append(DesignVerificationItem(
         clause_ref="10.3", title=tr("dv_10_3_t"), requirement=tr("dv_10_3_r"),
         method=VerificationMethod.CALCULATION,

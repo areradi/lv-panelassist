@@ -578,7 +578,7 @@
   "val_tint_50_ev": "Geschätzt {a} °C > Referenzgrenze {b} °C",
   "val_tint_50_cons": "Risiko von thermischen Dimensionierungsfehlern und reduzierter Isolationslebensdauer",
   "val_tint_50_action": "Belüftung verbessern oder interne Verluste reduzieren, um die Temperatur unter 50 °C zu senken",
-  "rpt_eff_ip": "Effektive IP",
+  "rpt_eff_ip": "IP-Obergrenze (ungeprüft)",
   "html_tint": "Geschätzte Innentemperatur",
   "kpi_tint_50_warn": "⚠ Temp. > 50°C",
   "val_ctrl_inrush_desc": "Steuerspeisung mit Anzugsleistung (Inrush-VA) des größten Schützes dimensioniert",
@@ -878,5 +878,7 @@
   "audit_ik_bus_total_source": "Der Vergleichswert an der Sammelschiene enthält den separat vorläufig geschätzten Motorbeitrag; nicht unabhängig verifiziert.",
   "audit_overload_invalid": "Angegebene Einstellung/Gerätebereich oder Kabel-/Strombedingungen sind widersprüchlich. Tatsächliches Gerät und Einstellungen prüfen.",
   "audit_ir_frame_proposal": "Tatsächliches Ir unbekannt. Der Bemessungsstrom {frame} A dient nur dem konservativen Kabelvorschlag, nicht dem Überlastnachweis.",
-  "audit_property_evidence_missing": "Keine geprüfte Eigenschaftsquelle stimmt mit exaktem Wert, Einheit, Geräteidentität und Betriebsbedingungen überein; dies bleibt ein rechnerischer Vorschlag."
+  "audit_property_evidence_missing": "Keine geprüfte Eigenschaftsquelle stimmt mit exaktem Wert, Einheit, Geräteidentität und Betriebsbedingungen überein; dies bleibt ein rechnerischer Vorschlag.",
+  "audit_ip_bound_desc": "IP-Obergrenze der Komponenten (ungeprüft): {a}",
+  "audit_ip_bound_action": "Montierte Baugruppe, Öffnungen, Dichtungen und Einbaubedingungen prüfen; Komponenten-Schutzarten belegen keine Baugruppen-Schutzart."
 }

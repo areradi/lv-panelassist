@@ -578,7 +578,7 @@
   "val_tint_50_ev": "Estimated {a} °C > reference limit {b} °C",
   "val_tint_50_cons": "Risk of thermal sizing errors and reduced insulation life",
   "val_tint_50_action": "Improve ventilation or reduce internal losses to bring the temperature below 50 °C",
-  "rpt_eff_ip": "Effective IP",
+  "rpt_eff_ip": "IP upper bound (unverified)",
   "html_tint": "Est. internal temp.",
   "kpi_tint_50_warn": "⚠ temp > 50°C",
   "val_ctrl_inrush_desc": "Control supply sized with the largest contactor pick-up (inrush) VA",
@@ -878,5 +878,7 @@
   "audit_ik_bus_total_source": "Panel-bus total used for comparison includes the separate preliminary motor contribution; no independent verification.",
   "audit_overload_invalid": "The stated setting/device range or cable/current inequalities are inconsistent. Review the actual device and settings.",
   "audit_ir_frame_proposal": "Actual Ir is unknown. Frame {frame} A is used only for a conservative cable proposal, not overload verification.",
-  "audit_property_evidence_missing": "No reviewed property source matches the exact value, unit, device identity and operating conditions; this remains a numerical candidate."
+  "audit_property_evidence_missing": "No reviewed property source matches the exact value, unit, device identity and operating conditions; this remains a numerical candidate.",
+  "audit_ip_bound_desc": "Component IP upper bound (unverified): {a}",
+  "audit_ip_bound_action": "Verify the installed assembly, openings, seals and installation conditions; component IP ratings do not prove assembly IP."
 }

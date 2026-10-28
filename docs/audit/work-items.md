@@ -209,3 +209,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [busbar verdict policy](../engineering/busbar_verdict_policy.md).
 - **Remaining risks:** physical busbar modelling, constants and manufacturer
   applicability remain unreviewed; P0 stays OPEN.
+
+## Review unit 9 — Component IP upper bounds
+
+- **Observed:** installed-fan path fabricated IP54 independently of fan data;
+  natural ventilation copied the target without checking the proposed body.
+- **Expected:** component declarations only bound a proposal; unknown ratings
+  and unsupported water applicability cannot produce an effective assembly IP.
+- **Implementation:** actual body/fan/target dimension ceiling, explicit missing
+  status, unverified labels and installation guidance in FA/EN/DE and reports.
+- **Tests:** synthetic dimensions, fan/body missing data, natural ventilation,
+  special water categories and actual engine -> HTML/XLSX in three languages.
+- **Evidence:** [IP upper-bound policy](../engineering/enclosure_ip_bound_policy.md).
+- **Remaining risks:** assembly verification and independent source/reviewer
+  unavailable; P0 remains OPEN.

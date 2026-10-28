@@ -80,7 +80,7 @@ class ExcelExporter:
             (tr("rpt_thdi"), f"{summary.panel_thdi_pct}%" if summary.panel_thdi_pct is not None else "-", "%", tr("rpt_ref_thdi")),
             (tr("rpt_tint"), f"{summary.estimated_internal_temp_c}°C" if summary.estimated_internal_temp_c is not None else "-", "°C", tr("rpt_ref_alt", a=summary.altitude_derating_factor)),
         ]
-        if summary.effective_ip_str and summary.effective_ip_str != project.target_ip:
+        if summary.effective_ip_str:
             summary_rows.append((tr("rpt_eff_ip"), summary.effective_ip_str, "-", "IEC 60529"))
         cap_ref = ""
         if summary.cap_bank_installed_kvar > 0:
@@ -308,7 +308,7 @@ class PrintableReportExporter:
         if summary.estimated_internal_temp_c is not None and summary.estimated_internal_temp_c > 50.0:
             tint_warn = f" <b style='color:#C0392B;'>{_h(tr('kpi_tint_50_warn'))}</b>"
         ip_note = ""
-        if summary.effective_ip_str and summary.effective_ip_str != project.target_ip:
+        if summary.effective_ip_str:
             ip_note = f" <small style='color:#B7950B;'>{_h(tr('rpt_eff_ip'))}: {_h(summary.effective_ip_str)}</small>"
 
         main_brk = summary.main_breaker
@@ -333,7 +333,7 @@ class PrintableReportExporter:
         airflow_txt = f"{_h(summary.required_airflow_m3h)} m³/h" if summary.required_airflow_m3h is not None else "-"
         therm_sub = f"{_h(tint_cell)} / {_h(project.max_internal_temp_c)}°C{tint_warn}"
         therm_sub += f"<br>{_h(tr('rpt_s_fan'))}: {_h(fan_txt)} ({airflow_txt})"
-        therm_sub += f"<br>IP: {_h(summary.effective_ip_str or project.target_ip)}"
+        therm_sub += f"<br>{_h(tr('rpt_eff_ip'))}: {_h(summary.effective_ip_str or '?')}"
 
         kpi_html = f"""
 <div class="kpi-strip">
