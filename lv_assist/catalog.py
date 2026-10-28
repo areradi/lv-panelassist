@@ -13,9 +13,10 @@ import sqlite3
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
 from lv_assist.run_metadata import catalog_file_hash
+from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules
 from typing import Any, Dict, List, Optional
 
-from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState, DataQuality
+from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState
 from lv_assist.i18n import tr, i18n
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -23,17 +24,9 @@ DB_PATH = DATA_DIR / "lv_assist.db"
 
 
 def _ensure_database(db_path: Path = DB_PATH) -> Path:
-    """ساخت خودکار دیتابیس SQLite و اجرای مهاجرت در اولین بارگذاری."""
-    if not db_path.exists():
-        try:
-            from migrate_to_sqlite import build_or_migrate_database
-        except ImportError:
-            import sys
-            root_dir = Path(__file__).resolve().parent.parent
-            if str(root_dir) not in sys.path:
-                sys.path.insert(0, str(root_dir))
-            from migrate_to_sqlite import build_or_migrate_database
-        build_or_migrate_database(db_path=db_path, data_dir=DATA_DIR)
+    """A missing packaged catalog needs explicit recovery, never implicit migration."""
+    if not db_path.is_file():
+        raise FileNotFoundError(f"Catalog database is missing: {db_path}. Restore a reviewed copy; no database was created.")
     return db_path
 
 
@@ -60,18 +53,9 @@ class CatalogRepository:
     # ۱. تجهیزات کاتالوگ با اعمال صریح کیفیت داده (رفع F-016)
     # ------------------------------------------------------------------
     def load_devices(self) -> List[CatalogDevice]:
-        result: List[CatalogDevice] = []
         with self._connect() as conn:
-            rows = conn.execute("SELECT raw_json, data_quality FROM catalog_devices").fetchall()
-            for row in rows:
-                payload = json.loads(row["raw_json"])
-                db_quality = row["data_quality"]
-                if db_quality in DataQuality.__members__:
-                    payload["data_quality"] = DataQuality[db_quality]
-                else:
-                    payload["data_quality"] = db_quality
-                result.append(CatalogDevice(**payload))
-        return result
+            rows = conn.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices").fetchall()
+            return device_rows(rows)
 
     @property
     def devices(self) -> List[CatalogDevice]:
@@ -95,6 +79,8 @@ class CatalogRepository:
         """بازیابی Icu متناسب با ولتاژ نامی؛ در نبود داده دیتاشیت برای آن ولتاژ، None برمی‌گردد."""
         if tolerance_v != 0:
             raise ValueError("Nearby-voltage Icu lookup requires explicit manufacturer applicability; unsupported.")
+        if not math.isfinite(nominal_voltage_v) or nominal_voltage_v <= 0:
+            raise CatalogValidationError("Operating voltage must be finite and positive")
         with self._connect() as conn:
             row = conn.execute(
                 """
@@ -104,7 +90,12 @@ class CatalogRepository:
                 """,
                 (device_id, nominal_voltage_v),
             ).fetchone()
-            return float(row["icu_ka"]) if row else None
+            if row is None or row["icu_ka"] is None:
+                return None
+            value = float(row["icu_ka"])
+            if not math.isfinite(value) or value < 0:
+                raise CatalogValidationError("Icu catalog value must be finite and non-negative")
+            return value if value > 0 else None
 
     # ------------------------------------------------------------------
     # ۳. ضریب کاهش ظرفیت دمایی با کنترل سقف دما (رفع F-017)
@@ -225,7 +216,7 @@ class CatalogRepository:
             rows = conn.execute(
                 "SELECT raw_json FROM selectivity_rules WHERE is_verified_manufacturer_rule = 1"
             ).fetchall()
-            return [SelectivityRuleRecord(**json.loads(r["raw_json"])) for r in rows]
+            return validated_rules(SelectivityRuleRecord.model_validate(catalog_object(r["raw_json"])) for r in rows)
 
     @property
     def selectivity_rules(self) -> List[SelectivityRuleRecord]:
@@ -378,7 +369,7 @@ class SiemensSelectivityRepository:
         ratio = upstream.rated_current_in_a / max(1.0, downstream.rated_current_in_a)
 
         matching_rules = [
-            r for r in cls.get_selectivity_rules()
+            r for r in validated_rules(cls.get_selectivity_rules())
             if r.upstream_part_number == upstream.part_number
             and r.downstream_part_number == downstream.part_number
             and operating_voltage_v is not None and r.operating_voltage_v == operating_voltage_v

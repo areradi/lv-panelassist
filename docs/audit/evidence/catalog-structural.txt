@@ -1,0 +1,1 @@
+{"status": "STRUCTURALLY_VALID", "devices": 102, "selectivity_rules": 12, "structural_scope": "device identity/numbers and selectivity conditions", "engineering_verification": "NOT_VERIFIED"}

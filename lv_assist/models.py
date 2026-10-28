@@ -170,12 +170,12 @@ class FeederInput(BaseModel):
         return value
 
 class CatalogDevice(BaseModel):
-    model_config = ConfigDict(allow_inf_nan=False)
+    model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
-    part_number: str
-    manufacturer: str
-    series: str
-    device_type: str
+    part_number: str = Field(min_length=1)
+    manufacturer: str = Field(min_length=1)
+    series: str = Field(min_length=1)
+    device_type: str = Field(min_length=1)
     rated_current_in_a: float = 0.0
     boost_current_peak_a: float = 0.0
     setting_min_a: float = 0.0
@@ -207,6 +207,18 @@ class CatalogDevice(BaseModel):
     property_sources: dict[str, PropertySource] = Field(default_factory=dict)
 
     @model_validator(mode="after")
+    def valid_catalog_numbers(self):
+        # Zero remains the existing unknown/not-applicable sentinel. A negative
+        # current, dimension, loss or factor cannot be a valid catalog entry.
+        for name in type(self).model_fields:
+            value = getattr(self, name)
+            if isinstance(value, float) and value < 0:
+                raise ValueError(f"{name}: catalog numbers must be non-negative")
+        if self.setting_min_a > 0 and self.setting_max_a > 0 and self.setting_min_a > self.setting_max_a:
+            raise ValueError("setting_min_a must not exceed setting_max_a")
+        return self
+
+    @model_validator(mode="after")
     def unsupported_quality_is_estimated(self):
         # Whole-device quality cannot be inferred from one reviewed property.
         critical = {"power_loss_w", "dimensions", "thermal", "ip"}
@@ -221,17 +233,17 @@ class SelectivityRuleRecord(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)
 
     upstream_series: str
-    upstream_min_in_a: float
+    upstream_min_in_a: float = Field(ge=0)
     downstream_series: str
-    downstream_max_in_a: float
-    selectivity_limit_is_ka: float
+    downstream_max_in_a: float = Field(gt=0)
+    selectivity_limit_is_ka: float = Field(gt=0)
     is_total_up_to_icu: bool = False
     catalog_reference: str
     upstream_part_number: str | None = None
     downstream_part_number: str | None = None
-    operating_voltage_v: float | None = None
-    upstream_setting_a: float | None = None
-    downstream_setting_a: float | None = None
+    operating_voltage_v: float | None = Field(default=None, gt=0)
+    upstream_setting_a: float | None = Field(default=None, gt=0)
+    downstream_setting_a: float | None = Field(default=None, gt=0)
     source: PropertySource | None = None
 
 class ValidationResult(BaseModel):

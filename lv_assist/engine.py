@@ -11,6 +11,7 @@ from lv_assist.busbar import BusbarEngine
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 from lv_assist.run_metadata import create_run_metadata, catalog_file_hash
+from lv_assist.catalog_validation import validated_devices
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
     TripTimeEstimate as AuditTripTimeEstimate,
@@ -192,8 +193,8 @@ class EngineeringEngine:
     C_IK_MAX = 1.05        # ضریب ولتاژ c_max در LV (جدول ۱ استاندارد)
 
     def __init__(self, catalog: List[CatalogDevice]):
-        self._full_catalog = list(catalog)
-        self.catalog = list(catalog)
+        self._full_catalog = validated_devices(catalog)
+        self.catalog = validated_devices(self._full_catalog)
         self._catalog_file_hash = catalog_file_hash(catalog_repo.db_path)
 
     @staticmethod
@@ -371,7 +372,7 @@ class EngineeringEngine:
         feeders = [FeederInput.model_validate(feeder.model_dump()) for feeder in feeders]
         if not feeders or len({feeder.feeder_id for feeder in feeders}) != len(feeders):
             raise ValueError(tr("audit_input_invalid"))
-        self.catalog = list(self._full_catalog)
+        self.catalog = validated_devices(self._full_catalog)
         if project.preferred_manufacturer != "ANY":
             filtered = [d for d in self.catalog if d.manufacturer == project.preferred_manufacturer]
             if filtered:

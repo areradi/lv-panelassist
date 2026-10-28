@@ -164,3 +164,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   `*settings*` validation outputs.
 - **Remaining risks:** manufacturer data/applicability and actual installed
   device/settings require engineering evidence. P0 remains open.
+
+## Review unit 6 — Catalog input gates
+
+- **Observed:** invalid numbers, identities and mutable catalog data could enter
+  selection; SQL/JSON mismatches and conflicting rules were not rejected.
+- **Expected:** reject malformed structural data before project output without
+  modifying or auto-repairing the packaged database.
+- **Implementation:** shared device/rule validation, engine snapshot revalidation,
+  missing-file recovery error, strict Icu numeric lookup and read-only CLI.
+- **Tests:** invalid numeric/identity/schema/mutation cases, actual project path,
+  conflicting rule limits and actual CLI exit/status/unchanged file bytes.
+- **Evidence:** [catalog policy](../engineering/catalog_input_policy.md) and
+  `*catalog*` validation files; 450 passed, inherited PDF failure/Windows skip.
+- **Remaining risks:** structural validity is not source correctness or engineering
+  verification; full catalog schema/migration and independent references remain open.

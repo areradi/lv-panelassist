@@ -60,8 +60,6 @@ def test_frame_above_ampacity_is_not_an_error_when_actual_setting_is_lower(tmp_p
     ({"ir": None}, "INSUFFICIENT_DATA"),
     ({"i2": None}, "INSUFFICIENT_DATA"),
     ({"minimum": 0, "maximum": 0}, "INSUFFICIENT_DATA"),
-    ({"minimum": -1, "ir": None}, "ERROR"),
-    ({"minimum": 100, "maximum": 40, "ir": None}, "ERROR"),
     ({"ir": 60}, "ERROR"),  # Known Ir above Iz.
     ({"ir": 30}, "ERROR"),  # Below stated setting range, even though Ir < Iz.
     ({"ir": 110}, "ERROR"),  # Above frame/range.
@@ -79,6 +77,12 @@ def test_one_setting_verdict_reaches_both_legacy_and_structured_checks(changes, 
 def test_load_above_ampacity_is_an_error_even_without_ir():
     check = verify_overload_coordination(60, None, 57, None)
     assert check.status == ValidationStatus.ERROR
+
+
+@pytest.mark.parametrize("minimum,maximum", [(-1, 100), (100, 40)])
+def test_invalid_catalog_range_is_rejected_before_a_result_is_created(minimum, maximum):
+    with pytest.raises(ValueError):
+        run(minimum=minimum, maximum=maximum, ir=None)
 
 
 def test_no_protection_device_cannot_complete_coordination():
