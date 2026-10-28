@@ -9,7 +9,7 @@ not currently available and requested that unverified status be retained.
 | Real engine integration | Typed trip, fault-profile and check results returned by actual feeder processing | `test_p0_engine_path.py`; legacy checks not all migrated |
 | Trip time / adiabatic domain | No clipping to 5 s, no unknown-time substitution; >5 s outside method | Boundary policy tests; k and curve applicability remain unreviewed |
 | L-PE / hidden fault assumptions | No 10 kA or half-bus current; PE None / INSUFFICIENT_DATA | All four earth systems x three locales; physical model not implemented |
-| Network fault scopes | Diagnostic transformer/bus/start/end fields; no unqualified verified estimate | Source impedance, conductor temperatures and independent cases still needed |
+| Network fault scopes | Transformer diagnostic cannot supply missing panel bus; explicit bus preserved, end/earth-fault values stay unknown without complex impedance data; scoped checks reach GUI/HTML/XLSX | `test_network_fault_scopes.py`; [scope policy](fault_scope_policy.md); reviewed source/route solver and independent cases still needed |
 | Icu/Ics | Exact voltage lookup; unknowns not passed, main and feeder checks; device remains proposed | Synthetic comparison cases; exact property/manufacturer and Ics policy incomplete |
 | Clause 10 checklist | 13 evidence rows including continuity; no unevidenced assembly PASS | Demo + HTML/XLSX integration; actual test evidence/reviewer absent |
 | Cable ampacity | Exact combination lookup; unsupported Al/XLPE/method/1P table -> None | Synthetic scope tests; authenticated ampacity sources not supplied |

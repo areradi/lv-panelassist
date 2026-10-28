@@ -285,10 +285,11 @@ class EngineeringEngine:
         return _audit_verify_icu_status(icu, ik_ka, is_preliminary)
 
     @staticmethod
-    def _ik_from_transformer(project: ProjectSpec) -> float:
-        uk = project.transformer_uk_pct / 100.0
-        u_kv = project.nominal_voltage_v / 1000.0
-        return round(project.transformer_kva / (math.sqrt(3.0) * u_kv * uk) / 1000.0, 2)
+    def _ik_from_transformer(project: ProjectSpec) -> float | None:
+        """One diagnostic implementation; this is not a panel-bus input."""
+        return audit_calculate_network_ik_profile(
+            project.transformer_kva, project.transformer_uk_pct, project.nominal_voltage_v
+        ).ik_transformer_3p_ka
 
     @staticmethod
     def _feeder_ik_profile(
@@ -296,6 +297,7 @@ class EngineeringEngine:
         feeder_length_m=None,
         feeder_phase_mm2=None,
         feeder_pe_mm2=None,
+        bus_ik_ka=None,
     ):
         return _audit_calculate_feeder_ik_profile(
             transformer_kva=getattr(project, "transformer_kva", None),
@@ -304,24 +306,25 @@ class EngineeringEngine:
             feeder_length_m=feeder_length_m,
             feeder_phase_mm2=feeder_phase_mm2,
             feeder_pe_mm2=feeder_pe_mm2,
+            main_bus_ik_ka=(bus_ik_ka if bus_ik_ka is not None else
+                            getattr(project, "prospective_ik_ka", None)),
         )
 
     def _resolve_ik(self, project: ProjectSpec):
         if project.prospective_ik_ka is not None:
-            src = tr("ik_src_explicit")
-            if project.transformer_kva:
-                calc = self._ik_from_transformer(project)
-                src = tr("ik_src_explicit_checked", a=project.prospective_ik_ka, b=calc)
-            return project.prospective_ik_ka, src, []
+            return project.prospective_ik_ka, tr("audit_ik_bus_source"), []
         if project.transformer_kva:
             calc = self._ik_from_transformer(project)
             v = ValidationResult(
                 rule_id="RULE-IK-012", feeder_id="NETWORK", standard_ref="IEC 60909-0",
-                status=ValidationStatus.WARNING, description=tr("val_ik_tr_desc"),
-                supporting_evidence=tr("val_ik_tr_ev", a=project.transformer_kva, b=project.transformer_uk_pct, c=calc),
-                consequence=tr("val_ik_tr_cons"), recommended_action=tr("val_no_action")
+                status=ValidationStatus.INSUFFICIENT_DATA, description=tr("audit_ik_scope_missing"),
+                supporting_evidence=tr("audit_ik_transformer_only", value=calc if calc is not None else "?"),
+                consequence=tr("val_ik_none_cons"), recommended_action=tr("audit_ik_scope_action"),
+                input_values={"transformer_kva": project.transformer_kva,
+                              "uk_percent": project.transformer_uk_pct, "main_bus_ik_ka": None},
+                method="TRANSFORMER_TERMINAL_IS_NOT_PANEL_BUS", unit="kA",
             )
-            return calc, tr("ik_src_transformer", a=calc), [v]
+            return None, tr("audit_ik_scope_missing"), [v]
         v = ValidationResult(
             rule_id="RULE-IK-012", feeder_id="NETWORK", standard_ref="IEC 60909-0",
             status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_ik_none_desc"),
@@ -402,6 +405,8 @@ class EngineeringEngine:
         summary, panel_vals = self._process_panel_summary(
             project, feeder_outputs, ik_ka, ik_source, ik_total, ip_total, mot_ka)
         validations.extend(panel_vals)
+        summary.short_circuit_profile = self._feeder_ik_profile(project, bus_ik_ka=ik_total)
+        validations.extend(self._profile_validations(summary.short_circuit_profile, "PANEL", project, panel_only=True))
         for output in feeder_outputs:
             output.status = worst_status(v.status for v in validations
                                          if v.feeder_id in (output.feeder_id, "NETWORK", "PANEL"))
@@ -415,6 +420,27 @@ class EngineeringEngine:
         for output in feeder_outputs:
             output.run_metadata = metadata
         return feeder_outputs, summary, validations
+
+    @staticmethod
+    def _profile_validations(profile, subject_id, project, panel_only=False):
+        profile.scope_warning_note = tr("audit_ik_scope_missing")
+        results = []
+        for check in profile.checks:
+            if panel_only and check.scope not in ("TRANSFORMER", "MAIN_BUS"):
+                continue
+            check.subject_id = subject_id
+            check.input_values["network_source_at_panel_bus_ka"] = project.prospective_ik_ka
+            check.input_values["earthing_system"] = project.earthing_system.value
+            check.title = tr("audit_" + check.check_id.lower())
+            if check.status != ValidationStatus.ERROR:
+                check.cause = (tr("audit_ik_scope_missing") if check.result_value is None
+                               else tr("audit_ik_transformer_only", value=check.result_value)
+                               if check.scope == "TRANSFORMER" else tr("audit_ik_bus_total_source"))
+            check.recommended_action = tr("audit_ik_scope_action")
+            results.append(ValidationResult.from_check(
+                check, rule_id="RULE-" + check.check_id.replace("_", "-"),
+                subject_id=subject_id, standard_ref="IEC 60909-0; applicability unreviewed"))
+        return results
 
     def _process_single_feeder(self, project: ProjectSpec, f: FeederInput, ik_ka: Optional[float],
                                ik_total_ka: Optional[float]):
@@ -583,12 +609,8 @@ class EngineeringEngine:
         pe_basis_str = tr("audit_pe_missing")
         vals.append(ValidationResult.from_check(pe_check, rule_id="RULE-PE-006",
                     subject_id=f.feeder_id, standard_ref="IEC 60364-5-54"))
-        profile = self._feeder_ik_profile(project, cable_len_m, s_ph, None)
-        # Core diagnostics assume Cu and a return path. Never expose that
-        # diagnostic L-PE estimate as an engineering result for any earthing system.
-        profile.ik_feeder_end_min_1p_ka = None
-        profile.scope_status = ValidationStatus.INSUFFICIENT_DATA
-        profile.scope_warning_note = tr("audit_pe_missing")
+        profile = self._feeder_ik_profile(project, cable_len_m, s_ph, None, bus_ik_ka=ik_total_ka)
+        vals.extend(self._profile_validations(profile, f.feeder_id, project))
 
         ir_a = (f.protection_ir_a if is_adj_prot else
                 sel_prot.rated_current_in_a if sel_prot else None)
@@ -1384,6 +1406,7 @@ def _audit_calculate_feeder_ik_profile(
     feeder_length_m=None,
     feeder_phase_mm2=None,
     feeder_pe_mm2=None,
+    main_bus_ik_ka=None,
 ):
     """
     Network short-circuit profile helper.
@@ -1397,4 +1420,5 @@ def _audit_calculate_feeder_ik_profile(
         feeder_cable_length_m=feeder_length_m,
         feeder_phase_mm2=feeder_phase_mm2,
         feeder_pe_mm2=feeder_pe_mm2,
+        main_bus_ik_ka=main_bus_ik_ka,
     )

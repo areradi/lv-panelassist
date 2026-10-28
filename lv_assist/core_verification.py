@@ -158,6 +158,7 @@ class ShortCircuitProfile:
     is_attenuated_by_feeder_cable: bool
     scope_status: ValidationStatus
     scope_warning_note: str
+    checks: list[CheckResult] = field(default_factory=list)
 
 
 def calculate_network_ik_profile(
@@ -171,71 +172,81 @@ def calculate_network_ik_profile(
     feeder_pe_mm2: Optional[float] = None,
     voltage_factor_c_max: float = 1.05,
     voltage_factor_c_min: float = 0.95,
+    *,
+    main_bus_ik_ka: float | None = None,
 ) -> ShortCircuitProfile:
-    if not transformer_kva or not uk_percent or transformer_kva <= 0 or uk_percent <= 0:
-        return ShortCircuitProfile(
-            ik_transformer_3p_ka=None,
-            ik_main_busbar_3p_ka=None,
-            ik_feeder_start_3p_ka=None,
-            ik_feeder_end_max_3p_ka=None,
-            ik_feeder_end_min_1p_ka=None,
-            is_attenuated_by_feeder_cable=False,
-            scope_status=ValidationStatus.INSUFFICIENT_DATA,
-            scope_warning_note="مشخصات ترانسفورماتور وارد نشده است."
-        )
+    """Keep fault locations distinct; never infer a bus/loop from transformer kVA.
 
-    z_tr_ohm = (uk_percent / 100.0) * ((line_voltage_v ** 2) / (transformer_kva * 1000.0))
-    r_tr_ohm = 0.3 * z_tr_ohm
-    x_tr_ohm = math.sqrt(max(0.0, z_tr_ohm ** 2 - r_tr_ohm ** 2))
-
-    u_phase_v = line_voltage_v / math.sqrt(3.0)
-    ik_tr_ka = (voltage_factor_c_max * u_phase_v) / (z_tr_ohm * 1000.0)
-
-    r_bus = r_tr_ohm
-    x_bus = x_tr_ohm
-    rho_cu_20 = 0.018
-    x_per_m = 0.00008
-
-    if incomer_cable_length_m and incomer_cable_mm2 and incomer_cable_length_m > 0 and incomer_cable_mm2 > 0:
-        r_bus += rho_cu_20 * (incomer_cable_length_m / incomer_cable_mm2)
-        x_bus += x_per_m * incomer_cable_length_m
-
-    z_bus_ohm = math.hypot(r_bus, x_bus)
-    ik_bus_ka = (voltage_factor_c_max * u_phase_v) / (z_bus_ohm * 1000.0)
-
-    if not feeder_cable_length_m or not feeder_phase_mm2 or feeder_cable_length_m <= 0 or feeder_phase_mm2 <= 0:
-        return ShortCircuitProfile(
-            ik_transformer_3p_ka=round(ik_tr_ka, 3),
-            ik_main_busbar_3p_ka=round(ik_bus_ka, 3),
-            ik_feeder_start_3p_ka=round(ik_bus_ka, 3),
-            ik_feeder_end_max_3p_ka=None,
-            ik_feeder_end_min_1p_ka=None,
-            is_attenuated_by_feeder_cable=False,
-            scope_status=ValidationStatus.WARNING,
-            scope_warning_note="طول یا سطح مقطع کابل فیدر مشخص نیست."
-        )
-
-    r_feeder_max = r_bus + rho_cu_20 * (feeder_cable_length_m / feeder_phase_mm2)
-    x_feeder_max = x_bus + x_per_m * feeder_cable_length_m
-    z_feeder_max = math.hypot(r_feeder_max, x_feeder_max)
-    ik_end_max_3p_ka = (voltage_factor_c_max * u_phase_v) / (z_feeder_max * 1000.0)
-
-    pe_s = feeder_pe_mm2 if (feeder_pe_mm2 and feeder_pe_mm2 > 0) else feeder_phase_mm2
-    rho_hot = rho_cu_20 * 1.5
-    r_loop_min = (2.0 * r_bus) + rho_hot * feeder_cable_length_m * ((1.0 / feeder_phase_mm2) + (1.0 / pe_s))
-    x_loop_min = (2.0 * x_bus) + (2.0 * x_per_m * feeder_cable_length_m)
-    z_loop_min = math.hypot(r_loop_min, x_loop_min)
-    ik_end_min_1p_ka = (voltage_factor_c_min * u_phase_v) / (z_loop_min * 1000.0)
-
+    The transformer value is the inherited ideal-terminal diagnostic only.
+    Cable dimensions alone do not specify complex source/return impedance,
+    material, operating temperature, or earth-fault topology. Legacy route
+    arguments remain accepted, but do not produce invented end-fault values.
+    No numerical result from this helper constitutes IEC 60909 verification.
+    """
+    named = {
+        "transformer_kva": transformer_kva, "uk_percent": uk_percent,
+        "line_voltage_v": line_voltage_v, "voltage_factor_c_max": voltage_factor_c_max,
+        "voltage_factor_c_min": voltage_factor_c_min,
+        "incomer_cable_length_m": incomer_cable_length_m,
+        "incomer_cable_mm2": incomer_cable_mm2,
+        "feeder_cable_length_m": feeder_cable_length_m,
+        "feeder_phase_mm2": feeder_phase_mm2, "feeder_pe_mm2": feeder_pe_mm2,
+        "main_bus_ik_ka": main_bus_ik_ka,
+    }
+    required = {"line_voltage_v", "voltage_factor_c_max", "voltage_factor_c_min"}
+    invalid = [name for name, value in named.items()
+               if (value is None and name in required)
+               or (value is not None and (not math.isfinite(value) or value <= 0))]
+    ik_transformer = None
+    if not invalid and transformer_kva is not None and uk_percent is not None:
+        try:
+            diagnostic = (voltage_factor_c_max * transformer_kva
+                          / (math.sqrt(3) * line_voltage_v * (uk_percent / 100)))
+            if not math.isfinite(diagnostic) or diagnostic <= 0:
+                invalid.append("transformer_estimate")
+            else:
+                ik_transformer = diagnostic
+        except (OverflowError, ZeroDivisionError):
+            invalid.append("transformer_estimate")
+    bus_ik = main_bus_ik_ka if "main_bus_ik_ka" not in invalid else None
+    definitions = (
+        ("IK_TRANSFORMER_3P", "TRANSFORMER", ik_transformer,
+         "Ideal transformer terminal diagnostic, not panel bus fault current"),
+        ("IK_MAIN_BUS_3P", "MAIN_BUS", bus_ik,
+         "Explicit panel-bus magnitude; source and motor contributions require review"),
+        ("IK_FEEDER_START_3P", "FEEDER_START", bus_ik,
+         "Feeder protection at the same panel bus; no intermediate impedance modelled"),
+        ("IK_FEEDER_END_MAX_3P", "FEEDER_END", None,
+         "Complex source/cable impedance, material and conductor temperature are required"),
+        ("IK_FEEDER_END_MIN_LPE", "FEEDER_END", None,
+         "Earthing-specific source and return path, temperatures and protection settings are required"),
+    )
+    checks = [CheckResult(
+        check_id=identifier, title=identifier, scope=scope,
+        status=(ValidationStatus.ERROR if invalid else
+                ValidationStatus.WARNING if value is not None else ValidationStatus.INSUFFICIENT_DATA),
+        input_values=dict(named), result_value=value, unit="kA",
+        measured_or_calc_value="? kA" if value is None else f"{value} kA",
+        method="c_max*S_kVA/(sqrt(3)*U_LL_V*(uk_percent/100)); IDEAL_TERMINAL_DIAGNOSTIC" if scope == "TRANSFORMER" else
+               "EXPLICIT_BUS_MAGNITUDE" if value is not None else "NOT_MODELLED_WITH_AVAILABLE_DATA",
+        cause=note, assumptions=["No independent engineering validation recorded",
+                                 "Transformer diagnostic ignores upstream source impedance and transformer tolerances"
+                                 if scope == "TRANSFORMER" else note],
+        recommended_action="Supply applicable network/route data and request engineering review.",
+    ) for identifier, scope, value, note in definitions]
+    if invalid:
+        for check in checks:
+            check.result_value = None
+            check.measured_or_calc_value = "? kA"
+            check.cause = "Invalid non-positive/non-finite input: " + ", ".join(invalid)
+        ik_transformer = bus_ik = None
     return ShortCircuitProfile(
-        ik_transformer_3p_ka=round(ik_tr_ka, 3),
-        ik_main_busbar_3p_ka=round(ik_bus_ka, 3),
-        ik_feeder_start_3p_ka=round(ik_bus_ka, 3),
-        ik_feeder_end_max_3p_ka=round(ik_end_max_3p_ka, 3),
-        ik_feeder_end_min_1p_ka=round(ik_end_min_1p_ka, 3),
-        is_attenuated_by_feeder_cable=True,
-        scope_status=ValidationStatus.WARNING,
-        scope_warning_note="PRELIMINARY: assumed source R/X, Cu temperature and loop return; not independently verified."
+        ik_transformer_3p_ka=ik_transformer, ik_main_busbar_3p_ka=bus_ik,
+        ik_feeder_start_3p_ka=bus_ik, ik_feeder_end_max_3p_ka=None,
+        ik_feeder_end_min_1p_ka=None, is_attenuated_by_feeder_cable=False,
+        scope_status=aggregate_status(checks),
+        scope_warning_note="Missing complex network/route/earth-loop data; transformer and bus are separate scopes.",
+        checks=checks,
     )
 
 

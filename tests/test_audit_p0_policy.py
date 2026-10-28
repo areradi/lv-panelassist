@@ -49,13 +49,9 @@ def test_feeder_ik_profile_separates_source_and_feeder_end():
     project = types.SimpleNamespace(transformer_kva=1000.0, transformer_uk_pct=6.0, nominal_voltage_v=400.0)
     p = eng.EngineeringEngine._feeder_ik_profile(project, feeder_length_m=100.0, feeder_phase_mm2=10.0, feeder_pe_mm2=10.0)
     assert p.ik_transformer_3p_ka is not None
-    assert p.ik_main_busbar_3p_ka is not None
-    assert p.ik_feeder_start_3p_ka is not None
-    assert p.ik_feeder_end_max_3p_ka is not None
-    assert p.ik_feeder_end_min_1p_ka is not None
-    assert p.ik_main_busbar_3p_ka <= p.ik_transformer_3p_ka + 1e-9
-    assert p.ik_feeder_start_3p_ka <= p.ik_main_busbar_3p_ka + 1e-9
-    assert p.ik_feeder_end_max_3p_ka <= p.ik_feeder_start_3p_ka + 1e-9
-    assert p.ik_feeder_end_min_1p_ka <= p.ik_feeder_end_max_3p_ka + 1e-9
-    if p.is_attenuated_by_feeder_cable:
-        assert p.ik_feeder_end_max_3p_ka < p.ik_feeder_start_3p_ka - 1e-9
+    assert p.ik_main_busbar_3p_ka is None
+    assert p.ik_feeder_start_3p_ka is None
+    assert p.ik_feeder_end_max_3p_ka is None
+    assert p.ik_feeder_end_min_1p_ka is None
+    assert p.scope_status.value == "INSUFFICIENT_DATA"
+    assert not p.is_attenuated_by_feeder_cable

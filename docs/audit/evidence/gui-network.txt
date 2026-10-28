@@ -1,0 +1,2 @@
+GUI rendered and recalculated: 4 feeders; 70 validation results
+GUI: transformer-only input leaves panel Icu unknown; all fault scopes visible in validation log

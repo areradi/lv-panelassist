@@ -865,5 +865,15 @@
   "audit_overload_title": "Cable/protection settings coordination",
   "audit_overload_basis": "Actual Ir, I2 and applicable Iz are required; adjustability is not a setting.",
   "audit_overload_action": "Enter actual Ir and documented I2, and obtain applicable cable and device evidence.",
-  "audit_source_gap": "Supporting source/version/applicability and engineering review are not recorded; keep this check preliminary."
+  "audit_source_gap": "Supporting source/version/applicability and engineering review are not recorded; keep this check preliminary.",
+  "audit_ik_bus_source": "Panel-bus fault magnitude supplied by user; not independently verified.",
+  "audit_ik_scope_missing": "Panel/end-fault data are incomplete. Transformer terminals, panel bus and feeder end are different fault locations.",
+  "audit_ik_scope_action": "Provide the fault level at the panel bus, complex source/incomer/feeder impedances, conductor material/temperature and earthing return path; request engineering review.",
+  "audit_ik_transformer_only": "Transformer-terminal diagnostic: {value} kA; not the panel-bus fault current and not IEC verification.",
+  "audit_ik_transformer_3p": "Ik transformer terminals, 3P (diagnostic)",
+  "audit_ik_main_bus_3p": "Ik main panel bus, 3P",
+  "audit_ik_feeder_start_3p": "Ik feeder start at panel bus, 3P",
+  "audit_ik_feeder_end_max_3p": "Ik max at feeder end, 3P",
+  "audit_ik_feeder_end_min_lpe": "Ik min at feeder end, L-PE",
+  "audit_ik_bus_total_source": "Panel-bus total used for comparison includes the separate preliminary motor contribution; no independent verification."
 }

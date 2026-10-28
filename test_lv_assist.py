@@ -304,12 +304,13 @@ class TestPhase2DataLayer:
 
 
 class TestPhase2IkAndDip:
-    def test_ik_from_transformer(self):
+    def test_transformer_diagnostic_cannot_supply_unknown_panel_bus_ik(self):
         project = make_project(prospective_ik_ka=None, transformer_kva=1600.0, transformer_uk_pct=6.0)
         _, summary, validations = EngineeringEngine(CATALOG).process_project(project, [make_feeder()])
-        assert summary.ik_used_ka is not None
-        assert abs(summary.ik_used_ka - 38.49) < 0.05
-        assert any(v.rule_id == "RULE-IK-012" and v.status == ValidationStatus.WARNING for v in validations)
+        assert summary.ik_used_ka is None
+        assert summary.ik_bus_total_ka is None
+        assert summary.short_circuit_profile.ik_transformer_3p_ka > 0
+        assert any(v.rule_id == "RULE-IK-012" and v.status == ValidationStatus.INSUFFICIENT_DATA for v in validations)
 
     def test_no_ik_degrades_gracefully(self):
         project = make_project(prospective_ik_ka=None)

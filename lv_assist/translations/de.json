@@ -865,5 +865,15 @@
   "audit_overload_title": "Koordination von Kabel und Schutzeinstellungen",
   "audit_overload_basis": "Tatsächliches Ir, I2 und anwendbares Iz sind erforderlich; Einstellbarkeit ist keine Einstellung.",
   "audit_overload_action": "Tatsächliches Ir und dokumentiertes I2 eingeben sowie Kabel- und Gerätenachweise ergänzen.",
-  "audit_source_gap": "Quelle, Version, Anwendbarkeit und fachliche Prüfung sind nicht dokumentiert; diese Prüfung bleibt vorläufig."
+  "audit_source_gap": "Quelle, Version, Anwendbarkeit und fachliche Prüfung sind nicht dokumentiert; diese Prüfung bleibt vorläufig.",
+  "audit_ik_bus_source": "Fehlerstrombetrag an der Schaltanlagen-Sammelschiene vom Benutzer; nicht unabhängig verifiziert.",
+  "audit_ik_scope_missing": "Fehlerstromdaten für Sammelschiene/Leitungsende unvollständig. Trafoklemmen, Sammelschiene und Abgangsende sind verschiedene Fehlerorte.",
+  "audit_ik_scope_action": "Fehlerstrom an der Sammelschiene, komplexe Quellen-/Zuleitungs-/Abgangsimpedanzen, Leitermaterial/-temperatur und Erdungsrückweg ergänzen und fachlich prüfen lassen.",
+  "audit_ik_transformer_only": "Diagnosewert an den Trafoklemmen: {value} kA; kein Sammelschienen-Fehlerstrom und kein IEC-Nachweis.",
+  "audit_ik_transformer_3p": "Ik Trafoklemmen, 3P (Diagnose)",
+  "audit_ik_main_bus_3p": "Ik Hauptsammelschiene, 3P",
+  "audit_ik_feeder_start_3p": "Ik Abgangsanfang an der Sammelschiene, 3P",
+  "audit_ik_feeder_end_max_3p": "Ik max am Abgangsende, 3P",
+  "audit_ik_feeder_end_min_lpe": "Ik min am Abgangsende, L-PE",
+  "audit_ik_bus_total_source": "Der Vergleichswert an der Sammelschiene enthält den separat vorläufig geschätzten Motorbeitrag; nicht unabhängig verifiziert."
 }

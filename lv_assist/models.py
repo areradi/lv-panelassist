@@ -116,7 +116,10 @@ class ProjectSpec(BaseModel):
     earthing_system: EarthingSystem = Field(default=EarthingSystem.TN_S)
     panel_type: PanelType = Field(default=PanelType.MCC)
     special_scenario: SpecialScenario = Field(default=SpecialScenario.NONE)
-    prospective_ik_ka: Optional[float] = Field(default=None, gt=0)
+    prospective_ik_ka: Optional[float] = Field(
+        default=None, gt=0,
+        description="Network-source 3P fault contribution at the panel bus, before the separate preliminary motor model.",
+    )
     transformer_kva: Optional[float] = Field(default=None, gt=0)
     transformer_uk_pct: float = Field(default=6.0, gt=0.0, le=20.0)
     ambient_temp_c: float = Field(default=40.0, ge=-20.0, le=60.0)
@@ -445,6 +448,7 @@ class PanelSummaryOutput(BaseModel):
     estimated_panel_height_mm: float
     estimated_panel_depth_mm: float
     ik_used_ka: Optional[float] = None
+    short_circuit_profile: ShortCircuitProfile | None = None
     motor_contribution_ka: Optional[float] = None
     ik_bus_total_ka: Optional[float] = None
     ip_bus_total_ka: Optional[float] = None

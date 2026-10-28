@@ -131,3 +131,19 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   Existing thermal/busbar formula applicability remains unreviewed and their
   legacy checks are now explicitly warnings. Global lint/type debt, PDF printing,
   Windows/DPI/RTL acceptance, EPLAN 2024 import and human trials remain open.
+
+## Review unit 4 — Transformer/bus/end fault scopes
+
+- **Observed:** transformer-only input still supplied a numerical panel-bus fault
+  value; diagnostic R/X/copper/earth-loop defaults generated end-fault values.
+- **Expected:** missing installation-location data cannot become a device
+  comparison current or a calculated earth-fault result.
+- **Implementation:** one explicitly unreviewed transformer diagnostic, separate
+  panel and feeder scopes, explicit bus input required, unknown end-fault values,
+  and structured scope checks in the actual GUI/HTML/XLSX validation stream.
+  Source input guidance updated in all three languages. No catalog data changed.
+- **Tests:** real engine/locale/output tests plus updated regressions for unsafe
+  old assumptions; actual GUI log exercise. See `*network*` evidence files.
+- **Evidence:** [fault scope policy](../engineering/fault_scope_policy.md).
+- **Remaining risks:** physical network/loop solver, independent references and
+  reviewer remain unavailable; motor/source topology remains preliminary.

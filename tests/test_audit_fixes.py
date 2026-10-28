@@ -25,7 +25,7 @@ def test_audit_f1_pe_sizing_rejects_trip_time_above_5s_without_silent_cap():
     assert "5.0 s" in (check_res.limit_or_reference or "")
 
 
-def test_audit_f2_transformer_ik_differs_from_feeder_end_ik():
+def test_audit_f2_dimensions_do_not_supply_missing_source_and_return_impedances():
     profile = calculate_network_ik_profile(
         transformer_kva=1000.0,
         uk_percent=6.0,
@@ -36,10 +36,11 @@ def test_audit_f2_transformer_ik_differs_from_feeder_end_ik():
         feeder_phase_mm2=16.0,
         feeder_pe_mm2=16.0,
     )
-    assert profile.scope_status == ValidationStatus.WARNING
-    assert profile.ik_transformer_3p_ka > profile.ik_main_busbar_3p_ka
-    assert profile.ik_main_busbar_3p_ka > profile.ik_feeder_end_max_3p_ka
-    assert profile.ik_feeder_end_max_3p_ka > profile.ik_feeder_end_min_1p_ka
+    assert profile.scope_status == ValidationStatus.INSUFFICIENT_DATA
+    assert profile.ik_transformer_3p_ka > 0
+    assert profile.ik_main_busbar_3p_ka is None
+    assert profile.ik_feeder_end_max_3p_ka is None
+    assert profile.ik_feeder_end_min_1p_ka is None
 
 
 def test_audit_f3_missing_ik_never_produces_completed_status():
