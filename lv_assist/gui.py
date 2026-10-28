@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import csv
 import sys
 import webbrowser
 import zipfile
@@ -878,7 +879,11 @@ class LVAssistApp(ctk.CTk):
         path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile=prefix + filename,
                                           filetypes=[("CSV", "*.csv")])
         if path:
-            exporter(path, self.current_project, res[0], res[1], mode=mode)
+            try:
+                exporter(path, self.current_project, res[0], res[1], mode=mode)
+            except (OSError, UnicodeError, csv.Error):
+                messagebox.showerror(tr("msg_error"), tr("csv_write_failed"))
+                return
             messagebox.showinfo(tr("msg_success"), tr("csv_saved_" + mode.value))
 
     def action_export_eplan(self):

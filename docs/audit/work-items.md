@@ -290,3 +290,15 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [CSV mode policy](../engineering/csv_export_mode_policy.md).
 - **Remaining risks:** real spreadsheet/EPLAN field acceptance and atomic CSV
   writes remain open; P0 engineering gate remains OPEN.
+
+## Review unit 15 — Atomic CSV publication and visible write errors
+
+- **Observed:** direct CSV writing could truncate an old export on mid-write
+  failure; GUI did not handle OS/encoding/serialization errors.
+- **Expected:** old destination survives failed attempts; no GUI success on error.
+- **Implementation:** same-directory temporary file, flush/fsync/close, atomic
+  replace and cleanup; localized GUI error handling for all three CSV actions.
+- **Tests:** 18 new boundary/GUI cases plus 24 existing mode cases, both modes.
+- **Evidence:** [CSV publication policy](../engineering/csv_atomic_write_policy.md).
+- **Remaining risks:** power loss, network filesystems, concurrent write conflicts,
+  other formats and Windows field acceptance remain open; P0 stays OPEN.

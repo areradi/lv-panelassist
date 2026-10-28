@@ -891,5 +891,6 @@
   "csv_target_prompt": "In einer Tabellenkalkulation öffnen?\nJa: Textschutz für Tabellenkalkulation; nicht für EPLAN-Import.\nNein: Maschinen-CSV für EPLAN mit unveränderten Kennzeichen; nicht in Tabellenkalkulation öffnen.\nAbbrechen: kein Export.",
   "csv_saved_spreadsheet": "CSV für Tabellenkalkulation gespeichert. Formelähnlicher Text hat ein Apostroph-Präfix. Nicht für EPLAN importieren; Originaldatei behalten.",
   "csv_saved_machine": "Maschinen-CSV mit unveränderten Kennzeichen gespeichert. Nur maschinell importieren, nicht in Tabellenkalkulation öffnen.",
-  "csv_bundle_note": "CSV-Dateien in diesem Paket sind Maschinen-/EPLAN-Austauschdateien mit unveränderten Kennzeichen. Nicht in Excel oder anderen Tabellenkalkulationen öffnen. Dafür CSV separat mit Ja exportieren oder 01_Design_Output.xlsx nutzen. EPLAN-Importkompatibilität erfordert weiterhin Feldtests."
+  "csv_bundle_note": "CSV-Dateien in diesem Paket sind Maschinen-/EPLAN-Austauschdateien mit unveränderten Kennzeichen. Nicht in Excel oder anderen Tabellenkalkulationen öffnen. Dafür CSV separat mit Ja exportieren oder 01_Design_Output.xlsx nutzen. EPLAN-Importkompatibilität erfordert weiterhin Feldtests.",
+  "csv_write_failed": "CSV konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Freien Speicher, Schreibrechte und eine mögliche Dateisperre durch andere Programme prüfen."
 }
