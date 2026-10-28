@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List, Optional, Tuple
 
 from lv_assist.eplan_macro import EplanMacroExporter, MOTOR_TYPES
+from lv_assist.library_export import export_current_library
 from lv_assist.models import FeederCalcOutput, LoadType, PanelSummaryOutput, ProjectSpec
 
 Row = Tuple[str, str, str, str, str, float, float]
@@ -275,8 +276,12 @@ class EplanMacroFileExporter:
     @classmethod
     def export_library(cls, folder: str, project: ProjectSpec,
                        feeders: List[FeederCalcOutput],
-                       summary: PanelSummaryOutput) -> List[str]:
-        """نوشتن همهٔ فایل‌های .ema در پوشهٔ خروجی و برگرداندن مسیرهای نوشته‌شده."""
+                       summary: PanelSummaryOutput, *, validations=None) -> List[str]:
+        return export_current_library(folder, project, feeders, summary, validations,
+            lambda path, p, f, s, checks: cls._render_library(path, p, f, s))
+
+    @classmethod
+    def _render_library(cls, folder, project, feeders, summary):
         os.makedirs(folder, exist_ok=True)
         written: List[str] = []
         for name, potentials, rows in cls._rows_by_group(project, feeders, summary):
@@ -523,8 +528,12 @@ class EplanPageMacroExporter:
     def export_library(cls, folder: str, project: ProjectSpec,
                        feeders: List[FeederCalcOutput],
                        summary: PanelSummaryOutput,
-                       ts: Optional[int] = None) -> List[str]:
-        """نوشتن همه فایل‌های .emp در پوشه خروجی و برگرداندن مسیرهای نوشته‌شده."""
+                       ts: Optional[int] = None, *, validations=None) -> List[str]:
+        return export_current_library(folder, project, feeders, summary, validations,
+            lambda path, p, f, s, checks: cls._render_library(path, p, f, s, ts=ts))
+
+    @classmethod
+    def _render_library(cls, folder, project, feeders, summary, ts=None):
         os.makedirs(folder, exist_ok=True)
         if ts is None:
             ts = int(time.time())

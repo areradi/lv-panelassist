@@ -1746,11 +1746,11 @@ class TestPhase7Template:
 
 class TestPhase8EplanMacro:
     @staticmethod
-    def _demo_results():
+    def _demo_results(include_checks=False):
         from lv_assist.gui import build_demo_project
         project, feeders = build_demo_project()
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
-        return project, f_outs, summary
+        return (project, f_outs, summary, validations) if include_checks else (project, f_outs, summary)
 
     def test_generate_script_structure(self):
         from lv_assist.eplan_macro import EplanMacroExporter
@@ -1792,9 +1792,9 @@ class TestPhase8EplanMacro:
 
     def test_export_file_utf8(self, tmp_path):
         from lv_assist.eplan_macro import EplanMacroExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         p = tmp_path / "EPLAN_Generate_Pages.cs"
-        EplanMacroExporter.export_file(str(p), project, f_outs, summary)
+        EplanMacroExporter.export_file(str(p), project, f_outs, summary, validations=validations)
         raw = p.read_bytes()
         assert raw.startswith(b"\xef\xbb\xbf")
         assert p.read_text(encoding="utf-8-sig") == EplanMacroExporter.generate_script(project, f_outs, summary)
@@ -1848,9 +1848,9 @@ class TestPhase8EplanMacro:
         if not os.path.exists(csc):
             import pytest
             pytest.skip("csc.exe (C# 5 compiler) not available")
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         cs_path = tmp_path / "gen.cs"
-        EplanMacroExporter.export_file(str(cs_path), project, f_outs, summary)
+        EplanMacroExporter.export_file(str(cs_path), project, f_outs, summary, validations=validations)
         stub = tmp_path / "stub.cs"
         stub.write_text(
             "namespace Eplan.EplApi.Base {\n"
@@ -1884,17 +1884,17 @@ class TestPhase8EplanMacro:
 class TestPhase9EplanMacroFiles:
     """فاز ۹: ماکروهای واقعی EPLAN (.ema) — ساختار PXF تأییدشده از نمونه‌های EPLAN 1.9 تا 2.7"""
 
-    def _demo_results(self):
+    def _demo_results(self, include_checks=False):
         from lv_assist.gui import build_demo_project
         project, feeders = build_demo_project()
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
-        return project, f_outs, summary
+        return (project, f_outs, summary, validations) if include_checks else (project, f_outs, summary)
 
     def test_export_library_files_and_names(self, tmp_path):
         import os
         from lv_assist.eplan_macro_files import EplanMacroFileExporter
-        project, f_outs, summary = self._demo_results()
-        paths = EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary)
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        paths = EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary, validations=validations)
         names = [os.path.basename(p) for p in paths]
         assert names == ["LV_SLD_Main.ema", "LV_Control_PSU.ema", "LV_Control_DOL.ema",
                          "LV_Control_StarDelta.ema", "LV_Control_VFD.ema"]
@@ -1905,8 +1905,8 @@ class TestPhase9EplanMacroFiles:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanMacroFileExporter, ELEMENT_WHITELIST
-        project, f_outs, summary = self._demo_results()
-        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary):
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary, validations=validations):
             tree = ET.parse(p)
             root = tree.getroot()
             assert root.tag == "EplanPxfRoot"
@@ -1947,7 +1947,7 @@ class TestPhase9EplanMacroFiles:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanMacroFileExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         expected = {
             "LV_SLD_Main.ema": ["-Q0", "-Q1", "-Q2", "-Q3", "-Q4", "-Qcap"],
             "LV_Control_PSU.ema": ["-Q01", "-G1", "-F0", "-X1", "-X2"],
@@ -1956,7 +1956,7 @@ class TestPhase9EplanMacroFiles:
             "LV_Control_VFD.ema": ["-S30", "-S31", "-U3", "-H31", "-H32"],
         }
         parts_by_file = {}
-        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary):
+        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary, validations=validations):
             name = os.path.basename(p)
             root = ET.parse(p).getroot()
             o70s = [el for el in root.iter() if el.tag == "O70"]
@@ -1982,8 +1982,8 @@ class TestPhase9EplanMacroFiles:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanMacroFileExporter
-        project, f_outs, summary = self._demo_results()
-        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary):
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        for p in EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary, validations=validations):
             name = os.path.basename(p)
             root = ET.parse(p).getroot()
             o30s = [el for el in root.iter() if el.tag == "O30"]
@@ -2002,9 +2002,9 @@ class TestPhase9EplanMacroFiles:
         from lv_assist.eplan_macro_files import EplanMacroFileExporter
         project = make_project()
         feeders = [make_feeder(feeder_id="F01", load_type=LoadType.SUB_FEEDER)]
-        f_outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, feeders)
+        f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         names = [os.path.basename(p) for p in
-                 EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary)]
+                 EplanMacroFileExporter.export_library(str(tmp_path), project, f_outs, summary, validations=validations)]
         assert names == ["LV_SLD_Main.ema", "LV_Control_PSU.ema"]
 
     def test_xml_escaping_roundtrip(self):
@@ -2049,17 +2049,17 @@ class TestPhase9EplanMacroFiles:
 class TestPhase10EplanPageMacros:
     """فاز ۱۰: ماکروهای صفحه EPLAN (.emp) — ساختار PXF تأییدشده از نمونه واقعی EPLAN 2024"""
 
-    def _demo_results(self):
+    def _demo_results(self, include_checks=False):
         from lv_assist.gui import build_demo_project
         project, feeders = build_demo_project()
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
-        return project, f_outs, summary
+        return (project, f_outs, summary, validations) if include_checks else (project, f_outs, summary)
 
     def test_export_library_files_and_names(self, tmp_path):
         import os
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
-        paths = EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1724679797)
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        paths = EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1724679797, validations=validations)
         names = [os.path.basename(p) for p in paths]
         assert names == ["LV_SLD_Main.emp", "LV_Control_PSU.emp", "LV_Control_DOL.emp",
                          "LV_Control_StarDelta.emp", "LV_Control_VFD.emp"]
@@ -2072,8 +2072,8 @@ class TestPhase10EplanPageMacros:
         from lv_assist.eplan_macro_files import (
             EplanPageMacroExporter, ELEMENT_WHITELIST,
             EMP_VERSION, EMP_BUILD, EMP_CONFIGURATION_FLAGS, STREAM_SCHEMA)
-        project, f_outs, summary = self._demo_results()
-        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1724679797):
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1724679797, validations=validations):
             text = open(p, encoding="utf-8").read()
             assert text.startswith('<?xml version="1.0" encoding="utf-8" ?>')
             root = ET.fromstring(text)
@@ -2114,11 +2114,11 @@ class TestPhase10EplanPageMacros:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         expected = {"LV_SLD_Main.emp": "001", "LV_Control_PSU.emp": "100",
                     "LV_Control_DOL.emp": "101", "LV_Control_StarDelta.emp": "102",
                     "LV_Control_VFD.emp": "103"}
-        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1):
+        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1, validations=validations):
             name = os.path.basename(p)
             page = ET.parse(p).getroot().find("MacroVariant").find("O4")
             assert page.get("A1101") == expected[name]
@@ -2128,9 +2128,9 @@ class TestPhase10EplanPageMacros:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         poles_by_file = {}
-        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1):
+        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1, validations=validations):
             name = os.path.basename(p)
             page = ET.parse(p).getroot().find("MacroVariant").find("O4")
             by_tag = {}
@@ -2163,7 +2163,7 @@ class TestPhase10EplanPageMacros:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         expected = {
             "LV_SLD_Main.emp": ["-Q0", "-Q1", "-Q2", "-Q3", "-Q4", "-Qcap"],
             "LV_Control_PSU.emp": ["-Q01", "-G1", "-F0", "-X1", "-X2"],
@@ -2172,7 +2172,7 @@ class TestPhase10EplanPageMacros:
             "LV_Control_VFD.emp": ["-S30", "-S31", "-U3", "-H31", "-H32"],
         }
         parts_by_file = {}
-        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1):
+        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1, validations=validations):
             name = os.path.basename(p)
             page = ET.parse(p).getroot().find("MacroVariant").find("O4")
             dts = []
@@ -2198,8 +2198,8 @@ class TestPhase10EplanPageMacros:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
-        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1):
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
+        for p in EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1, validations=validations):
             name = os.path.basename(p)
             page = ET.parse(p).getroot().find("MacroVariant").find("O4")
             n_left = n_right = 0
@@ -2234,7 +2234,7 @@ class TestPhase10EplanPageMacros:
         project, feeders = build_demo_project()
         feeders = [make_feeder("F-NON-MOTOR", load_type=LoadType.SUB_FEEDER)]
         f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
-        paths = EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1)
+        paths = EplanPageMacroExporter.export_library(str(tmp_path), project, f_outs, summary, ts=1, validations=validations)
         names = [os.path.basename(p) for p in paths]
         assert names == ["LV_SLD_Main.emp", "LV_Control_PSU.emp"]
 
@@ -2242,9 +2242,9 @@ class TestPhase10EplanPageMacros:
         import os
         import xml.etree.ElementTree as ET
         from lv_assist.eplan_macro_files import EplanPageMacroExporter
-        project, f_outs, summary = self._demo_results()
+        project, f_outs, summary, validations = self._demo_results(include_checks=True)
         out = str(tmp_path)
-        for p in EplanPageMacroExporter.export_library(out, project, f_outs, summary, ts=1):
+        for p in EplanPageMacroExporter.export_library(out, project, f_outs, summary, ts=1, validations=validations):
             ET.fromstring(open(p, encoding="utf-8").read())
         # متن‌های دارای کاراکترهای خاص XML سالم رندر و دوباره خوانده می‌شوند
         from lv_assist.eplan_macro_files import _build_page_macro, POWER_RAILS
@@ -2698,9 +2698,9 @@ class TestPhase14EplanFieldTest:
 
     def test_kit_creates_guide_and_checklist(self, tmp_path):
         from lv_assist.eplan_field_test import EplanFieldTestKit
-        project, outs, summary, _ = self._demo()
+        project, outs, summary, validations = self._demo()
         folder = str(tmp_path / "kit")
-        written = EplanFieldTestKit.export_kit(folder, project, outs, summary)
+        written = EplanFieldTestKit.export_kit(folder, project, outs, summary, validations=validations)
         assert [os.path.basename(p) for p in written] == [
             EplanFieldTestKit.GUIDE_FILE, EplanFieldTestKit.CHECKLIST_FILE]
         assert all(os.path.getsize(p) > 0 for p in written)
@@ -2730,8 +2730,8 @@ class TestPhase14EplanFieldTest:
 
     def test_guide_has_steps_and_scope(self, tmp_path):
         from lv_assist.eplan_field_test import EplanFieldTestKit
-        project, outs, summary, _ = self._demo()
-        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary)
+        project, outs, summary, validations = self._demo()
+        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary, validations=validations)
         content = open(written[0], encoding="utf-8").read()
         assert project.project_name in content
         for token in ("12_EPLAN_Macros", "13_EPLAN_Page_Macros", ".ema", ".emp"):
@@ -2741,8 +2741,8 @@ class TestPhase14EplanFieldTest:
 
     def test_checklist_dropdown_and_headers(self, tmp_path):
         from lv_assist.eplan_field_test import EplanFieldTestKit
-        project, outs, summary, _ = self._demo()
-        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary)
+        project, outs, summary, validations = self._demo()
+        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary, validations=validations)
         wb = openpyxl.load_workbook(written[1])
         assert wb.sheetnames == ["Checklist", "README"]
         ws = wb["Checklist"]
@@ -2755,8 +2755,8 @@ class TestPhase14EplanFieldTest:
 
     def test_validate_all_pass_then_fail(self, tmp_path):
         from lv_assist.eplan_field_test import EplanFieldTestKit
-        project, outs, summary, _ = self._demo()
-        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary)
+        project, outs, summary, validations = self._demo()
+        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary, validations=validations)
         path = written[1]
         wb = openpyxl.load_workbook(path)
         ws = wb["Checklist"]
@@ -2778,8 +2778,8 @@ class TestPhase14EplanFieldTest:
 
     def test_validate_reports_pending_rows(self, tmp_path):
         from lv_assist.eplan_field_test import EplanFieldTestKit
-        project, outs, summary, _ = self._demo()
-        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary)
+        project, outs, summary, validations = self._demo()
+        written = EplanFieldTestKit.export_kit(str(tmp_path / "kit"), project, outs, summary, validations=validations)
         res = EplanFieldTestKit.validate_checklist(written[1])
         assert res["ok"] is False
         assert len(res["pending"]) == res["total"] > 0

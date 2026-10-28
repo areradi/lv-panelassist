@@ -900,5 +900,6 @@
   "bundle_pdf_generated": "PDF: erzeugt.",
   "bundle_pdf_not_requested": "PDF: nicht angefordert.",
   "bundle_pdf_failed_status": "PDF: fehlgeschlagen; nicht enthalten.",
-  "drawing_write_failed": "Die Zeichnung konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre prüfen."
+  "drawing_write_failed": "Die Zeichnung konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre prüfen.",
+  "library_exists": "Der Ausgabeordner enthält bereits Dateien. Einen anderen übergeordneten Ordner für eine neue Bibliothek wählen; vorhandene Dateien und ausgefüllte Checklisten wurden nicht überschrieben."
 }

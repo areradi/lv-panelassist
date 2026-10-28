@@ -808,7 +808,7 @@ class LVAssistApp(ctk.CTk):
             "08_Control_Circuits.dxf": lambda p: ControlLadderDxfExporter.export_file(p, project, f_outs, summary, validations=validations),
             "09_EPLAN_Parts_Import.csv": lambda p: EplanExporter.export_csv(p, project, f_outs, summary, validations=validations),
             "10_EPLAN_Parts_Management.csv": lambda p: EplanPartsExporter.export_csv(p, project, f_outs, summary, validations=validations),
-            "11_EPLAN_Generate_Pages.cs": lambda p: EplanMacroExporter.export_file(p, project, f_outs, summary),
+            "11_EPLAN_Generate_Pages.cs": lambda p: EplanMacroExporter.export_file(p, project, f_outs, summary, validations=validations),
         }
         count = 0
         with tempfile.TemporaryDirectory(prefix="lvassist_bundle_") as tmp:
@@ -821,15 +821,15 @@ class LVAssistApp(ctk.CTk):
                     zf.write(p, arcname=name)
                     count += 1
                 macros_dir = os.path.join(tmp, "EPLAN_Macros")
-                for path in EplanMacroFileExporter.export_library(macros_dir, project, f_outs, summary):
+                for path in EplanMacroFileExporter.export_library(macros_dir, project, f_outs, summary, validations=validations):
                     zf.write(path, arcname="12_EPLAN_Macros/" + os.path.basename(path))
                     count += 1
                 pages_dir = os.path.join(tmp, "EPLAN_Page_Macros")
-                for path in EplanPageMacroExporter.export_library(pages_dir, project, f_outs, summary):
+                for path in EplanPageMacroExporter.export_library(pages_dir, project, f_outs, summary, validations=validations):
                     zf.write(path, arcname="13_EPLAN_Page_Macros/" + os.path.basename(path))
                     count += 1
                 field_dir = os.path.join(tmp, "EPLAN_FieldTest")
-                for path in EplanFieldTestKit.export_kit(field_dir, project, f_outs, summary):
+                for path in EplanFieldTestKit.export_kit(field_dir, project, f_outs, summary, validations=validations):
                     zf.write(path, arcname="14_EPLAN_FieldTest/" + os.path.basename(path))
                     count += 1
                 pdf_status, pdf_reason = "NOT_REQUESTED", None
@@ -958,39 +958,35 @@ class LVAssistApp(ctk.CTk):
         self._export_csv_for_target(EplanExporter.export_csv, "Parts_Import.csv")
 
     def action_export_eplan_script(self):
+        self._export_drawing(EplanMacroExporter.export_file, "EPLAN_Generate_Pages.cs", ".cs", open_after=False)
+
+    def _export_eplan_library(self, exporter, dirname, title, done):
         res = self._get_results()
         if not res: return
-        path = filedialog.asksaveasfilename(defaultextension=".cs", initialfile="EPLAN_Generate_Pages.cs", filetypes=[("C# Script", "*.cs")])
-        if path:
-            EplanMacroExporter.export_file(path, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
+        folder = filedialog.askdirectory(title=tr(title))
+        if not folder: return
+        try:
+            written = exporter(os.path.join(folder, dirname), self.current_project,
+                               res[0], res[1], validations=res[2])
+        except ExportSnapshotError:
+            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+            return
+        except FileExistsError:
+            messagebox.showwarning(tr("msg_warning"), tr("library_exists"))
+            return
+        except OSError:
+            messagebox.showerror(tr("msg_error"), tr("drawing_write_failed"))
+            return
+        messagebox.showinfo(tr("msg_success"), tr(done, n=len(written)))
 
     def action_export_eplan_macros(self):
-        res = self._get_results()
-        if not res: return
-        folder = filedialog.askdirectory(title=tr("btn_eplan_macros"))
-        if folder:
-            out_dir = os.path.join(folder, "EPLAN_Macros")
-            written = EplanMacroFileExporter.export_library(out_dir, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_macros_done", n=len(written)))
+        self._export_eplan_library(EplanMacroFileExporter.export_library, "EPLAN_Macros", "btn_eplan_macros", "msg_macros_done")
 
     def action_export_eplan_page_macros(self):
-        res = self._get_results()
-        if not res: return
-        folder = filedialog.askdirectory(title=tr("btn_eplan_page_macros"))
-        if folder:
-            out_dir = os.path.join(folder, "EPLAN_Page_Macros")
-            written = EplanPageMacroExporter.export_library(out_dir, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_page_macros_done", n=len(written)))
+        self._export_eplan_library(EplanPageMacroExporter.export_library, "EPLAN_Page_Macros", "btn_eplan_page_macros", "msg_page_macros_done")
 
     def action_export_eplan_test_kit(self):
-        res = self._get_results()
-        if not res: return
-        folder = filedialog.askdirectory(title=tr("btn_eplan_test_kit"))
-        if folder:
-            out_dir = os.path.join(folder, "EPLAN_FieldTest")
-            written = EplanFieldTestKit.export_kit(out_dir, self.current_project, res[0], res[1])
-            messagebox.showinfo(tr("msg_success"), tr("msg_test_kit_done", n=len(written)))
+        self._export_eplan_library(EplanFieldTestKit.export_kit, "EPLAN_FieldTest", "btn_eplan_test_kit", "msg_test_kit_done")
 
     def _on_mfg_change(self, display_value: str):
         if self.current_project is None: return

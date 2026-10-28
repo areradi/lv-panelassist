@@ -415,3 +415,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [drawing publication policy](../engineering/standalone_drawing_preflight_policy.md).
 - **Remaining risks:** macros/scripts, CAD/EPLAN field acceptance, immutable context
   and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 24 — Accepted-run EPLAN script/libraries/field kit
+
+- **Observed:** four standalone publication APIs bypassed accepted-run checks and
+  library writes could overwrite edited macros or completed user checklists.
+- **Expected:** full current checks are required; nonempty library destinations
+  remain untouched; generation failure cannot publish a partial new library.
+- **Implementation:** guarded staged script file and library directory publication,
+  explicit occupied-destination refusal, GUI/bundle checks forwarding and messages.
+- **Tests:** 37 new API/directory/renderer/GUI cases; existing structural/encoding/
+  checklist fixtures retain actual engine checks without removing assertions.
+- **Evidence:** [EPLAN publication policy](../engineering/eplan_export_preflight_policy.md).
+- **Remaining risks:** real EPLAN/Windows acceptance, separate verification report,
+  immutable context and engineering sign-off remain open. P0 stays OPEN.

@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from typing import List, Tuple
 
+from lv_assist.report_export import export_current_report
 from lv_assist.models import ProjectSpec, FeederCalcOutput, PanelSummaryOutput, LoadType
 
 
@@ -229,7 +230,12 @@ class EplanMacroExporter:
 
     @classmethod
     def export_file(cls, filepath: str, project: ProjectSpec,
-                    feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> None:
+                    feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, *, validations=None) -> None:
+        return export_current_report(filepath, project, feeders, summary, validations,
+                                     cls._render_file)
+
+    @classmethod
+    def _render_file(cls, filepath, project, feeders, summary, checks):
         with open(filepath, "w", encoding="utf-8-sig", newline="\r\n") as fh:
             fh.write(cls.generate_script(project, feeders, summary))
 

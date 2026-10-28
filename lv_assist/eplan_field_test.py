@@ -20,6 +20,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from lv_assist.eplan_macro_files import EplanMacroFileExporter, EplanPageMacroExporter
 from lv_assist.i18n import tr
+from lv_assist.library_export import export_current_library
 from lv_assist.models import FeederCalcOutput, PanelSummaryOutput, ProjectSpec
 
 RESULT_CHOICES = ("PASS", "FAIL", "BLOCKED", "N/A")
@@ -67,7 +68,12 @@ class EplanFieldTestKit:
     @classmethod
     def export_kit(cls, folder: str, project: ProjectSpec,
                    feeders: List[FeederCalcOutput],
-                   summary: PanelSummaryOutput) -> List[str]:
+                   summary: PanelSummaryOutput, *, validations=None) -> List[str]:
+        return export_current_library(folder, project, feeders, summary, validations,
+            lambda path, p, f, s, checks: cls._render_kit(path, p, f, s))
+
+    @classmethod
+    def _render_kit(cls, folder, project, feeders, summary):
         os.makedirs(folder, exist_ok=True)
         files = cls.expected_files(project, feeders, summary)
         rows = cls.checklist_rows(project, feeders, summary)
