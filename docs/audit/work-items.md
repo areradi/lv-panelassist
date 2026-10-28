@@ -249,3 +249,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [scope policy](../engineering/enclosure_catalog_scope_policy.md).
 - **Remaining risks:** auxiliary repository data and all-format immutable export
   context remain open; no engineering approval and P0 stays OPEN.
+
+## Review unit 12 — PDF integrity and specific failure messages
+
+- **Observed:** old destination could imply false success; fixed browser/HTML
+  paths mixed attempts; all GUI failures incorrectly claimed a missing browser.
+- **Expected:** only this attempt's output is published; old file survives failure;
+  user sees a meaningful, localized failure reason.
+- **Implementation:** isolated temporary output/profile and GUI HTML, basic PDF
+  marker guard, atomic publication, structured result plus compatible bool API.
+- **Tests:** 15 synthetic browser/GUI-action tests; actual minimal Chromium print
+  timed out independently of the engineering report.
+- **Evidence:** [PDF integrity policy](../engineering/pdf_export_integrity_policy.md).
+- **Remaining risks:** real PDF rendering and Windows/RTL acceptance unresolved;
+  the existing PDF roundtrip test stays enabled. P0 remains OPEN.

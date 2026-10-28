@@ -880,5 +880,11 @@
   "audit_ir_frame_proposal": "Tatsächliches Ir unbekannt. Der Bemessungsstrom {frame} A dient nur dem konservativen Kabelvorschlag, nicht dem Überlastnachweis.",
   "audit_property_evidence_missing": "Keine geprüfte Eigenschaftsquelle stimmt mit exaktem Wert, Einheit, Geräteidentität und Betriebsbedingungen überein; dies bleibt ein rechnerischer Vorschlag.",
   "audit_ip_bound_desc": "IP-Obergrenze der Komponenten (ungeprüft): {a}",
-  "audit_ip_bound_action": "Montierte Baugruppe, Öffnungen, Dichtungen und Einbaubedingungen prüfen; Komponenten-Schutzarten belegen keine Baugruppen-Schutzart."
+  "audit_ip_bound_action": "Montierte Baugruppe, Öffnungen, Dichtungen und Einbaubedingungen prüfen; Komponenten-Schutzarten belegen keine Baugruppen-Schutzart.",
+  "msg_pdf_invalid_input": "Die HTML-Eingabe fehlt oder ist zugleich das PDF-Ziel.",
+  "msg_pdf_missing_browser": "Edge/Chrome/Chromium nicht gefunden. Unterstützten Browser installieren oder HTML-Bericht manuell drucken.",
+  "msg_pdf_timeout": "Zeitlimit des Browsers erreicht. PDF nicht gespeichert; erneut versuchen oder HTML-Bericht manuell drucken.",
+  "msg_pdf_browser_failed": "Der Browser konnte den Bericht nicht drucken. PDF nicht gespeichert; Browser und Berechtigungen prüfen.",
+  "msg_pdf_invalid_pdf": "Der Browser erzeugte kein vollständiges PDF. Die bisherige Zieldatei blieb erhalten.",
+  "msg_pdf_write_failed": "PDF konnte nicht gespeichert werden. Zielordner, Berechtigungen und freien Speicher prüfen."
 }

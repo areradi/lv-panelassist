@@ -880,5 +880,11 @@
   "audit_ir_frame_proposal": "Actual Ir is unknown. Frame {frame} A is used only for a conservative cable proposal, not overload verification.",
   "audit_property_evidence_missing": "No reviewed property source matches the exact value, unit, device identity and operating conditions; this remains a numerical candidate.",
   "audit_ip_bound_desc": "Component IP upper bound (unverified): {a}",
-  "audit_ip_bound_action": "Verify the installed assembly, openings, seals and installation conditions; component IP ratings do not prove assembly IP."
+  "audit_ip_bound_action": "Verify the installed assembly, openings, seals and installation conditions; component IP ratings do not prove assembly IP.",
+  "msg_pdf_invalid_input": "Input HTML is missing or is also the PDF destination.",
+  "msg_pdf_missing_browser": "Edge/Chrome/Chromium was not found. Install a supported browser or print the HTML report manually.",
+  "msg_pdf_timeout": "The browser timed out. PDF was not saved; retry or print the HTML report manually.",
+  "msg_pdf_browser_failed": "The browser could not print the report. PDF was not saved; check browser availability and permissions.",
+  "msg_pdf_invalid_pdf": "The browser did not produce a complete PDF. The previous destination was preserved.",
+  "msg_pdf_write_failed": "PDF could not be saved. Check the destination folder, permissions and free disk space."
 }

@@ -4,6 +4,8 @@ import math
 import os
 import shutil
 import subprocess
+import tempfile
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -362,6 +364,12 @@ class TccGenerator:
             f.write(TccGenerator.generate_svg(project, feeders, summary))
 
 
+@dataclass(frozen=True)
+class PdfExportResult:
+    success: bool
+    reason: str
+
+
 class PdfExporter:
     """تبدیل گزارش HTML به PDF با استفاده از مرورگر نصب‌شده (بدون وابستگی پایتونی)."""
 
@@ -390,22 +398,47 @@ class PdfExporter:
         return None
 
     @classmethod
-    def export_html_to_pdf(cls, html_path: str, pdf_path: str) -> bool:
-        browser = cls._find_browser()
-        if not browser:
-            return False
-        url = Path(os.path.abspath(html_path)).as_uri()
-        profile_dir = os.path.join(os.environ.get("TEMP", os.path.dirname(pdf_path)), "lvassist_edge_profile")
+    def export_html_to_pdf_result(cls, html_path: str, pdf_path: str) -> PdfExportResult:
+        """Publish only this attempt's PDF; preserve an existing destination on failure."""
         try:
-            subprocess.run(
-                [browser, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-                 "--no-pdf-header-footer", f"--user-data-dir={profile_dir}",
-                 f"--print-to-pdf={os.path.abspath(pdf_path)}", url],
-                check=True, capture_output=True, timeout=120,
-            )
-        except (subprocess.SubprocessError, OSError):
-            return False
-        return os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0
+            source, target = Path(html_path).resolve(), Path(pdf_path).resolve()
+            if not source.is_file() or source == target:
+                return PdfExportResult(False, "invalid_input")
+            browser = cls._find_browser()
+            if not browser:
+                return PdfExportResult(False, "missing_browser")
+            # Same filesystem as target for atomic publication; separate profile
+            # prevents concurrent exports attaching to a previous browser session.
+            with tempfile.TemporaryDirectory(prefix="lvassist-pdf-", dir=target.parent,
+                                             ignore_cleanup_errors=True) as folder:
+                output = Path(folder) / "report.pdf"
+                profile = Path(folder) / "profile"
+                try:
+                    subprocess.run(
+                        [browser, "--headless=new", "--disable-gpu", "--no-first-run",
+                         "--no-default-browser-check", "--no-pdf-header-footer",
+                         f"--user-data-dir={profile}", f"--print-to-pdf={output}", source.as_uri()],
+                        check=True, capture_output=True, timeout=120,
+                    )
+                except subprocess.TimeoutExpired:
+                    return PdfExportResult(False, "timeout")
+                except (subprocess.SubprocessError, OSError):
+                    return PdfExportResult(False, "browser_failed")
+                if not output.is_file():
+                    return PdfExportResult(False, "invalid_pdf")
+                data = output.read_bytes()
+                # Basic format/truncation guard, not a full PDF conformance test.
+                if not data.startswith(b"%PDF-") or b"%%EOF" not in data[-1024:]:
+                    return PdfExportResult(False, "invalid_pdf")
+                os.replace(output, target)
+            return PdfExportResult(True, "ok")
+        except OSError:
+            return PdfExportResult(False, "write_failed")
+
+    @classmethod
+    def export_html_to_pdf(cls, html_path: str, pdf_path: str) -> bool:
+        """Compatibility API; callers needing a message use the structured result."""
+        return cls.export_html_to_pdf_result(html_path, pdf_path).success
 
 
 def _bom_entries(project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> List[tuple]:

@@ -856,12 +856,14 @@ class LVAssistApp(ctk.CTk):
         if not res: return
         path = filedialog.asksaveasfilename(defaultextension=".pdf", initialfile="LV_Panel_Engineering_Report.pdf", filetypes=[("PDF", "*.pdf")])
         if path:
-            tmp_html = os.path.join(os.environ.get("TEMP", get_app_working_dir()), "lvassist_report_temp.html")
-            PrintableReportExporter.generate_html_report(tmp_html, self.current_project, res[0], res[1], res[2])
-            if PdfExporter.export_html_to_pdf(tmp_html, path):
+            with tempfile.TemporaryDirectory(prefix="lvassist-report-") as folder:
+                tmp_html = os.path.join(folder, "report.html")
+                PrintableReportExporter.generate_html_report(tmp_html, self.current_project, res[0], res[1], res[2])
+                result = PdfExporter.export_html_to_pdf_result(tmp_html, path)
+            if result.success:
                 messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
             else:
-                messagebox.showwarning(tr("msg_warning"), tr("msg_pdf_fail"))
+                messagebox.showwarning(tr("msg_warning"), tr("msg_pdf_" + result.reason))
 
     def action_export_eplan(self):
         res = self._get_results()
