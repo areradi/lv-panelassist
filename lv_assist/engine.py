@@ -12,30 +12,13 @@ from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
-    ValidationStatus as AuditValidationStatus,
-    CheckResult as AuditCheckResult,
     TripTimeEstimate as AuditTripTimeEstimate,
-    ShortCircuitProfile as AuditShortCircuitProfile,
     estimate_clear_time_s as audit_estimate_clear_time,
     calculate_adiabatic_pe_mm2 as audit_calculate_adiabatic_pe_mm2,
     calculate_network_ik_profile as audit_calculate_network_ik_profile,
     verify_breaking_capacity_icu as audit_verify_breaking_capacity_icu,
-    aggregate_status as audit_aggregate_status,
-)
-from lv_assist.catalog_provenance import (
-    evaluate_selectivity_status as audit_evaluate_selectivity_status,
 )
 # --- end audit safe imports ---
-# --- [AUDIT P0 POLICY FLAGS] ---
-# Backward-compatible by default.
-# Flip these only after reference tests are updated.
-ENGINE_AUDIT_STRICT_CLEAR_TIME = True
-ENGINE_AUDIT_ICU_UNKNOWN_AS_PASS = False
-ENGINE_AUDIT_ENABLE_FEEDER_IK_PROFILE = True
-# --- end audit P0 policy flags ---
-
-
-
 class CableSizingEngine:
     MATERIAL_IZ_FACTOR: Dict[str, float] = {"CU": 1.0, "AL": 0.78}
     INSULATION_IZ_FACTOR: Dict[str, float] = {"PVC": 1.0, "XLPE": 1.17}
@@ -84,56 +67,74 @@ class CableSizingEngine:
         return round((delta_u / u_base) * 100.0, 2)
 
     @classmethod
-    def calculate_pe_section(cls, phase_section_mm2: float, fault_current_ka: float = 10.0, clear_time_s: float = 0.02) -> Optional[float]:
-        if phase_section_mm2 <= 16.0: s_table = phase_section_mm2
-        elif phase_section_mm2 <= 35.0: s_table = 16.0
-        else: s_table = phase_section_mm2 / 2.0
-        i_fault_a = fault_current_ka * 1000.0 * 0.5
-        s_adiabatic = (i_fault_a * math.sqrt(clear_time_s)) / 143.0
-        req_pe = max(s_table, s_adiabatic)
-        # اولین مقطع استاندارد از جدول PE دیتابیس؛ فراتر از جدول → None (F-005، بدون سقف ساختگی)
-        return catalog_repo.get_standard_pe_section(req_pe)
+    def proposed_table_pe_section(cls, phase_section_mm2: float) -> Optional[float]:
+        """Geometric candidate only; not an earth-fault/thermal verification."""
+        if not math.isfinite(phase_section_mm2) or phase_section_mm2 <= 0:
+            return None
+        required = phase_section_mm2 if phase_section_mm2 <= 16 else (
+            16.0 if phase_section_mm2 <= 35 else phase_section_mm2 / 2.0)
+        return catalog_repo.get_standard_pe_section(required)
+
+    @classmethod
+    def calculate_pe_section(cls, phase_section_mm2: float,
+                             fault_current_ka: Optional[float] = None,
+                             clear_time_s: Optional[float] = None) -> Optional[float]:
+        """Preliminary Cu PE candidate; fault_current_ka must be L-PE, not bus 3P.
+
+        k=143 is inherited and unreviewed. A candidate is never proof of ADS or
+        construction suitability. Missing fault/time data have no defaults.
+        """
+        trip = AuditTripTimeEstimate(clear_time_s, True,
+                                    clear_time_s is not None and clear_time_s > 5,
+                                    ValidationStatus.WARNING, "PRELIMINARY: k applicability unreviewed")
+        minimum, _ = audit_calculate_adiabatic_pe_mm2(
+            None if fault_current_ka is None else fault_current_ka * 1000.0, trip)
+        table_section = cls.proposed_table_pe_section(phase_section_mm2)
+        if minimum is None or table_section is None:
+            return None
+        return catalog_repo.get_standard_pe_section(max(table_section, minimum))
 
     @classmethod
     def select_feeder_cable(
-        cls, ib_a: float, protection_in_a: float, is_adjustable_prot: bool, length_m: float,
+        cls, ib_a: float, protection_in_a: float, is_adjustable_prot: bool, length_m: Optional[float],
         cos_phi: float, voltage_v: float, phases: int, ambient_temp_c: float, grouping_k2: float,
         max_vdrop_pct: float, load_type: LoadType, user_specified_mm2: Optional[float] = None,
         conductor: str = "CU", insulation: str = "PVC", installation_method: str = "C",
         fire_resistant: bool = False, thdi_pct: Optional[float] = None,
         fault_current_ka: Optional[float] = None, clear_time_s: Optional[float] = None
-    ) -> Tuple[float, float, Optional[float], Optional[float], float, str]:
+    ) -> Tuple[float, float, Optional[float], Optional[float], Optional[float], str]:
         k1, k2, total_k = cls.get_derating_summary(ambient_temp_c, grouping_k2, conductor, insulation, installation_method)
-        required_iz = ib_a if is_adjustable_prot else protection_in_a
+        required_iz = max(ib_a, protection_in_a)
         min_allowed_section = 1.5 if load_type == LoadType.LIGHTING_SOCKET else 2.5
 
-        table = cls.get_iz0_table(loaded_conductors=3)
+        table = catalog_repo.get_cable_iz0_table(conductor, insulation, installation_method,
+                                                3 if phases == 3 else 2)
         if user_specified_mm2 is not None:
             s_ph = user_specified_mm2
             iz0 = table.get(s_ph)
             # مقطع غیرجدولی → None به‌جای ۱۰۰ ساختگی قدیمی (F-001)
             iz_derated = round(iz0 * total_k, 1) if iz0 is not None else None
-            vdrop = cls.calc_voltage_drop_pct(ib_a, length_m, s_ph, cos_phi, voltage_v, phases, conductor, insulation)
+            vdrop = (cls.calc_voltage_drop_pct(ib_a, length_m, s_ph, cos_phi, voltage_v, phases, conductor, insulation) if length_m is not None else None)
         else:
-            s_ph = 240.0
-            iz_derated, vdrop = None, 0.0
+            # Without a table this is a geometry proposal only, not sized Iz.
+            s_ph = min_allowed_section
+            iz_derated, vdrop = None, None
             sections = sorted(table.items()) if table else []
             if sections:
                 s_ph, iz0_largest = sections[-1]
                 iz_derated = round(iz0_largest * total_k, 1)
-                vdrop = cls.calc_voltage_drop_pct(ib_a, length_m, s_ph, cos_phi, voltage_v, phases, conductor, insulation)
+                vdrop = (cls.calc_voltage_drop_pct(ib_a, length_m, s_ph, cos_phi, voltage_v, phases, conductor, insulation) if length_m is not None else None)
                 for sec, iz0 in sections:
                     if sec < min_allowed_section: continue
                     curr_iz = round(iz0 * total_k, 1)
-                    curr_vd = cls.calc_voltage_drop_pct(ib_a, length_m, sec, cos_phi, voltage_v, phases, conductor, insulation)
-                    if curr_iz >= required_iz and curr_vd <= max_vdrop_pct:
+                    curr_vd = (cls.calc_voltage_drop_pct(ib_a, length_m, sec, cos_phi, voltage_v, phases, conductor, insulation) if length_m is not None else None)
+                    if curr_iz >= required_iz and (curr_vd is None or curr_vd <= max_vdrop_pct):
                         s_ph = sec; iz_derated = curr_iz; vdrop = curr_vd; break
 
         # F-005: جریان خطا و زمان قطع واقعی پروژه (نه فرض ثابت ۱۰ kA / ۲۰ ms)
         s_pe = cls.calculate_pe_section(
             s_ph,
-            fault_current_ka if fault_current_ka is not None else 10.0,
-            clear_time_s if clear_time_s is not None else 0.02,
+            fault_current_ka, clear_time_s,
         )
         s_neutral = 0.0
         if phases == 3 and load_type in (LoadType.LIGHTING_SOCKET, LoadType.SUB_FEEDER):
@@ -143,7 +144,7 @@ class CableSizingEngine:
                 half_s = s_ph / 2.0
                 s_neutral = next((s for s in sorted(table.keys()) if s >= half_s), s_ph)
 
-        s_pe_lbl = f"{s_pe:g}" if s_pe is not None else tr("desig_pe_nostd")
+        s_pe_lbl = f"{s_pe:g}" if s_pe is not None else "?"
         mat_lbl = "Cu" if conductor == "CU" else "Al"
         if load_type == LoadType.MOTOR_STAR_DELTA:
             i_delta = ib_a / math.sqrt(3)
@@ -160,6 +161,8 @@ class CableSizingEngine:
             desig = f"3x{s_ph:g}+{s_pe_lbl} mm² {mat_lbl} (3P+PE)"
         if fire_resistant:
             desig += " FR"
+        if not table:
+            desig += " | " + tr("audit_cable_unknown")
         return s_ph, s_neutral, s_pe, iz_derated, vdrop, desig
 
 class EngineeringEngine:
@@ -235,20 +238,31 @@ class EngineeringEngine:
         return int(digits[:2]) if len(digits) >= 2 else None
 
     @staticmethod
-    def _estimate_clear_time_s(prot: CatalogDevice, ik_ka: float) -> float:
-        """زمان قطع تخمینی حفاظ فیدر در جریان خطای پروژه (F-005):
-        ناحیه لحظه‌ای → ۲۰ ms (زمان شکست تیپیک MCCB/MCB)؛ ناحیه حرارتی → درون‌یابی منحنی (سقف ۵ s)."""
-        i_fault_a = ik_ka * 1000.0
-        im_min_a, _ = TripCurveRepository.instantaneous_band_a(prot.series, prot.rated_current_in_a)
-        if i_fault_a >= im_min_a:
-            return 0.02
-        mult = i_fault_a / max(1.0, prot.rated_current_in_a)
-        raw_t = TripCurveRepository.thermal_time_s(prot.series, mult)
-        if raw_t is None:
-            return 5.0
-        if ENGINE_AUDIT_STRICT_CLEAR_TIME:
-            return float(raw_t)
-        return min(5.0, float(raw_t))
+    def _estimate_trip_time(prot: Optional[CatalogDevice], ik_ka: Optional[float]) -> AuditTripTimeEstimate:
+        if prot is None or ik_ka is None or not math.isfinite(ik_ka) or ik_ka <= 0:
+            return AuditTripTimeEstimate(None, True, False, ValidationStatus.INSUFFICIENT_DATA,
+                                         tr("audit_trip_missing"))
+        if prot.series not in catalog_repo.trip_curves or prot.rated_current_in_a <= 0:
+            return AuditTripTimeEstimate(None, True, False, ValidationStatus.INSUFFICIENT_DATA,
+                                         tr("audit_trip_missing"))
+        current_a = ik_ka * 1000.0
+        # 20 ms is a visible estimate only; the maximum threshold is conservative
+        # relative to the stored instantaneous band. Settings/evidence are absent.
+        instantaneous_min, instantaneous_max = TripCurveRepository.instantaneous_band_a(prot.series, prot.rated_current_in_a)
+        if not (math.isfinite(instantaneous_max) and 0 < instantaneous_min <= instantaneous_max):
+            return AuditTripTimeEstimate(None, True, False, ValidationStatus.INSUFFICIENT_DATA,
+                                         tr("audit_trip_missing"))
+        if current_a >= instantaneous_max:
+            return AuditTripTimeEstimate(0.02, True, False, ValidationStatus.WARNING,
+                                         tr("audit_trip_20ms"))
+        return audit_estimate_clear_time(prot.series, current_a / prot.rated_current_in_a,
+                                         TripCurveRepository.thermal_time_s, True)
+
+    @staticmethod
+    def _estimate_clear_time_s(prot: CatalogDevice, ik_ka: Optional[float]) -> Optional[float]:
+        """Compatibility scalar; no cap, hidden time fallback, or policy flag."""
+        return EngineeringEngine._estimate_trip_time(prot, ik_ka).time_s
+
     def _device_icu_ka(self, dev: CatalogDevice, project: ProjectSpec) -> Optional[float]:
         # Icu در ولتاژ واقعی پروژه از جدول قدرت قطع دیتابیس؛ در نبود داده → None (F-006)
         return catalog_repo.get_device_icu_at_voltage(dev.part_number, project.nominal_voltage_v)
@@ -300,7 +314,7 @@ class EngineeringEngine:
             calc = self._ik_from_transformer(project)
             v = ValidationResult(
                 rule_id="RULE-IK-012", feeder_id="NETWORK", standard_ref="IEC 60909-0",
-                status=ValidationStatus.COMPLETED, description=tr("val_ik_tr_desc"),
+                status=ValidationStatus.WARNING, description=tr("val_ik_tr_desc"),
                 supporting_evidence=tr("val_ik_tr_ev", a=project.transformer_kva, b=project.transformer_uk_pct, c=calc),
                 consequence=tr("val_ik_tr_cons"), recommended_action=tr("val_no_action")
             )
@@ -372,6 +386,10 @@ class EngineeringEngine:
         summary, panel_vals = self._process_panel_summary(
             project, feeder_outputs, ik_ka, ik_source, ik_total, ip_total, mot_ka)
         validations.extend(panel_vals)
+        for output in feeder_outputs:
+            output.status = worst_status(v.status for v in validations
+                                         if v.feeder_id in (output.feeder_id, "NETWORK", "PANEL"))
+        summary.status = worst_status(v.status for v in validations)
         return feeder_outputs, summary, validations
 
     def _process_single_feeder(self, project: ProjectSpec, f: FeederInput, ik_ka: Optional[float],
@@ -499,15 +517,16 @@ class EngineeringEngine:
                 rcds = [d for d in self.catalog if d.device_type == "RCD" and d.rated_current_in_a >= ib_a]
                 if rcds: sel_rcd = rcds[0]
 
-        cable_len_m = f.cable_length_m if f.cable_length_m is not None else 25.0
+        cable_len_m = f.cable_length_m
         max_vd = 3.0 if f.load_type == LoadType.LIGHTING_SOCKET else 5.0
         prot_in = sel_prot.rated_current_in_a if sel_prot else ib_a * 1.25
         is_adj_prot = (sel_prot.device_type in ("MPCB", "MCCB")) if sel_prot else True
 
-        # F-005: جریان خطای واقعی پروژه و زمان قطع حفاظ (به‌جای فرض ثابت ۱۰ kA / ۲۰ ms)
-        # فاز ۱۱: جریان کل باس شامل مشارکت موتورها (خطای داخل شاخه فیدر از همه منابع تغذیه می‌شود)
-        fault_ka = ik_total_ka if ik_total_ka is not None else 10.0
-        clear_t = self._estimate_clear_time_s(sel_prot, fault_ka) if sel_prot is not None else 0.02
+        # No L-PE loop model/settings are present in ProjectSpec. Bus 3P current
+        # cannot substitute for the earth fault at the end of the feeder.
+        fault_ka = None
+        trip_estimate = self._estimate_trip_time(sel_prot, fault_ka)
+        clear_t = trip_estimate.time_s
         protection_icu_ka = self._device_icu_ka(sel_prot, project) if sel_prot is not None else None
 
         s_ph, s_neutral, s_pe, iz_derated, v_drop_pct, cable_desig = CableSizingEngine.select_feeder_cable(
@@ -527,13 +546,28 @@ class EngineeringEngine:
         )
         method_ref_str = tr("cable_method_ref", a=f.installation_method.value)
 
-        # F-005: نمایش فرمول آدیاباتیک مبنای انتخاب PE در گزارش
-        i_pe_ka = fault_ka * 0.5
-        s_adiabatic = (i_pe_ka * 1000.0 * math.sqrt(clear_t)) / 143.0
-        pe_basis_str = tr("pe_adia_basis", a=fault_ka, b=clear_t, c=round(i_pe_ka, 1),
-                          d=round(s_adiabatic, 1), e=(f"{s_pe:g}" if s_pe is not None else "?"))
+        _, pe_check = audit_calculate_adiabatic_pe_mm2(None, trip_estimate)
+        pe_check.title = tr("audit_pe_title")
+        pe_check.cause = tr("audit_pe_missing")
+        pe_check.recommended_action = tr("audit_pe_action")
+        pe_check.scope = "FEEDER"
+        pe_check.subject_id = f.feeder_id
+        pe_check.input_values = {"earthing_system": project.earthing_system.value,
+                                 "length_m": cable_len_m, "earth_fault_current_ka": None,
+                                 "clear_time_s": clear_t}
+        pe_check.method = "NOT_SUPPORTED_WITH_AVAILABLE_LOOP_DATA"
+        pe_check.unit = "mm²"
+        pe_basis_str = tr("audit_pe_missing")
+        vals.append(ValidationResult.from_check(pe_check, rule_id="RULE-PE-006",
+                    subject_id=f.feeder_id, standard_ref="IEC 60364-5-54"))
+        profile = self._feeder_ik_profile(project, cable_len_m, s_ph, None)
+        # Core diagnostics assume Cu and a return path. Never expose that
+        # diagnostic L-PE estimate as an engineering result for any earthing system.
+        profile.ik_feeder_end_min_1p_ka = None
+        profile.scope_status = ValidationStatus.INSUFFICIENT_DATA
+        profile.scope_warning_note = tr("audit_pe_missing")
 
-        req_iz_ref = ib_a if is_adj_prot else prot_in
+        req_iz_ref = prot_in
         if iz_derated is None:
             vals.append(ValidationResult(rule_id="RULE-CABLE-010", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52",
                 status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_cable_nontable_desc", a=f"{s_ph:g}"),
@@ -544,24 +578,26 @@ class EngineeringEngine:
         else:
             vals.append(ValidationResult(rule_id="RULE-CABLE-009", feeder_id=f.feeder_id, standard_ref="IEC 60364-4-43", status=ValidationStatus.ERROR, description=tr("val_cable_err_desc"), supporting_evidence=tr("val_cable_err_ev", a=iz_derated, b=f"{req_iz_ref:.1f}"), consequence=tr("val_cable_err_cons"), recommended_action=tr("val_cable_err_action")))
 
-        if s_pe is None:
-            vals.append(ValidationResult(rule_id="RULE-PE-006", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-54",
-                status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_pe_nostd_desc", a=f"{s_ph:g}"),
-                supporting_evidence=tr("val_pe_nostd_ev", a=f"{s_ph:g}"), consequence=tr("val_pe_nostd_cons"),
-                recommended_action=tr("val_pe_nostd_action")))
+        vals.append(ValidationResult(rule_id="RULE-VDROP-003", feeder_id=f.feeder_id,
+            standard_ref="IEC 60364-5-52",
+            status=(ValidationStatus.INSUFFICIENT_DATA if v_drop_pct is None else
+                    ValidationStatus.COMPLETED if v_drop_pct <= max_vd else ValidationStatus.ERROR),
+            description=tr("val_vdrop_desc", max=max_vd),
+            supporting_evidence=tr("val_vdrop_ev", pct=v_drop_pct if v_drop_pct is not None else "?"),
+            consequence=tr("val_vdrop_cons"), recommended_action=tr("audit_length_action") if v_drop_pct is None else tr("val_no_action")))
 
-        vals.append(ValidationResult(rule_id="RULE-VDROP-003", feeder_id=f.feeder_id, standard_ref="IEC 60364-5-52", status=ValidationStatus.COMPLETED if v_drop_pct <= max_vd else ValidationStatus.ERROR, description=tr("val_vdrop_desc", max=max_vd), supporting_evidence=tr("val_vdrop_ev", pct=v_drop_pct), consequence=tr("val_vdrop_cons"), recommended_action=tr("val_no_action")))
-
-        if sel_prot is not None:
-            icu_ka = protection_icu_ka
-            if ik_total_ka is None:
-                vals.append(ValidationResult(rule_id="RULE-PROT-SC-001", feeder_id=f.feeder_id, standard_ref="IEC 60947-2", status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_sc_noik_desc"), supporting_evidence=f"Icu={'?' if icu_ka is None else icu_ka}kA, Ik=? kA", consequence=tr("val_sc_noik_cons"), recommended_action=tr("val_sc_noik_action")))
-            elif icu_ka is None:
-                vals.append(ValidationResult(rule_id="RULE-PROT-SC-001", feeder_id=f.feeder_id, standard_ref="IEC 60947-2", status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_sc_noicu_desc", a=sel_prot.part_number, b=project.nominal_voltage_v), supporting_evidence=tr("val_sc_noicu_ev", a=sel_prot.part_number, b=project.nominal_voltage_v), consequence=tr("val_sc_noicu_cons"), recommended_action=tr("val_sc_noicu_action")))
-            elif icu_ka >= ik_total_ka:
-                vals.append(ValidationResult(rule_id="RULE-PROT-SC-001", feeder_id=f.feeder_id, standard_ref="IEC 60947-2", status=ValidationStatus.COMPLETED, description=tr("val_sc_ok_desc"), supporting_evidence=tr("val_sc_ok_ev", a=icu_ka, b=ik_total_ka), consequence=tr("val_sc_ok_cons"), recommended_action=tr("val_no_action")))
-            else:
-                vals.append(ValidationResult(rule_id="RULE-PROT-SC-001", feeder_id=f.feeder_id, standard_ref="IEC 60947-2", status=ValidationStatus.ERROR, description=tr("val_sc_err_desc"), supporting_evidence=tr("val_sc_err_ev", a=icu_ka, b=ik_total_ka), consequence=tr("val_sc_err_cons"), recommended_action=tr("val_sc_err_action")))
+        icu_check = (self._icu_check(sel_prot, project, ik_total_ka, is_preliminary=True)
+                     if sel_prot is not None else audit_verify_breaking_capacity_icu(None, ik_total_ka))
+        icu_check.title = tr("audit_icu_title")
+        icu_check.input_values = {"icu_ka": protection_icu_ka, "ik_at_device_ka": ik_total_ka,
+                                  "voltage_v": project.nominal_voltage_v}
+        icu_check.result_value = protection_icu_ka
+        icu_check.limit = ik_total_ka
+        icu_check.unit = "kA"
+        icu_check.method = "Icu >= Ik; manufacturer property evidence not recorded"
+        icu_check.recommended_action = tr("audit_icu_action")
+        vals.append(ValidationResult.from_check(icu_check, rule_id="RULE-PROT-SC-001",
+                    subject_id=f.feeder_id, standard_ref="IEC 60947-2"))
 
         if f.thdi_pct is not None and f.thdi_pct > 0.0:
             if f.thdi_pct >= 33.0:
@@ -626,6 +662,7 @@ class EngineeringEngine:
             cable_designation_str=cable_desig, cable_temp_factor_k1=k1_f, cable_grouping_factor_k2=k2_f,
             cable_total_derating_k=ktotal_f, cable_method_ref_str=method_ref_str, pe_basis_str=pe_basis_str,
             protection_icu_ka=protection_icu_ka, voltage_drop_percent=v_drop_pct, assumptions_used=assumptions,
+            short_circuit_profile=profile, trip_time_estimate=trip_estimate, pe_check=pe_check,
             selected_protection=sel_prot, selected_contactor_main=sel_cont_main, selected_contactor_delta=sel_cont_delta,
             selected_contactor_star=sel_cont_star, selected_bimetal=sel_bimetal, selected_timer_yd=sel_timer_yd,
             selected_vfd=sel_vfd, selected_soft_starter=sel_soft, selected_rcd=sel_rcd,
@@ -1061,7 +1098,7 @@ class EngineeringEngine:
         if ik_ka is not None and mot_ka > 0.0:
             ik_note_str += " — " + tr("ik_motor_note", a=round(mot_ka, 3), b=ik_total_ka)
 
-        max_feeder_du = max((f.voltage_drop_percent for f in feeders), default=0.0)
+        max_feeder_du = max((f.voltage_drop_percent for f in feeders if f.voltage_drop_percent is not None), default=0.0)
 
         summary = PanelSummaryOutput(
             total_active_kw=round(sum_p, 2), total_reactive_kvar=round(sum_q, 2), total_apparent_kva=round(s_design_kva, 2),
@@ -1081,7 +1118,8 @@ class EngineeringEngine:
             ik_bus_total_ka=(ik_total_ka if ik_ka is not None else None),
             ip_bus_total_ka=(ip_total_ka if ik_ka is not None else None),
             busbar_du_v=bus_res.voltage_drop_v, busbar_du_pct=bus_res.voltage_drop_pct,
-            max_total_du_pct=round(max_feeder_du + bus_res.voltage_drop_pct, 3),
+            max_total_du_pct=(round(max_feeder_du + bus_res.voltage_drop_pct, 3)
+                              if all(f.voltage_drop_percent is not None for f in feeders) else None),
             ik_source_str=ik_note_str, effective_ip_str=effective_ip_str, suggested_main_breaker_str=suggested_main,
             suggested_psu_str=suggested_psu, suggested_fan_str=suggested_fan,
             max_motor_starting_dip_pct=max_dip, max_starting_dip_motor=dip_motor,
@@ -1180,7 +1218,7 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
 
     # 10.8 — ترمینال‌های هادی‌های خارجی (سایزینگ کابل فیدرها)
     n_cable = sum(1 for f in feeders if f.cable_derated_iz_a is not None)
-    max_vd = max((f.voltage_drop_percent for f in feeders), default=0.0)
+    max_vd = max((f.voltage_drop_percent for f in feeders if f.voltage_drop_percent is not None), default=0.0)
     items.append(DesignVerificationItem(
         clause_ref="10.8", title=tr("dv_10_8_t"), requirement=tr("dv_10_8_r"),
         method=VerificationMethod.CALCULATION,
@@ -1287,23 +1325,6 @@ def _audit_status_to_models_status(audit_status):
     return ValidationStatus(audit_status.value)
 
 
-def _audit_estimate_clear_time_detailed(prot, fault_multiple):
-    """
-    Non-breaking detailed trip-time estimator.
-
-    Legacy `_estimate_clear_time_s()` still returns float.
-    This helper returns TripTimeEstimate and exposes whether the real
-    thermal curve exceeds the IEC adiabatic 5-second boundary.
-    """
-    series = getattr(prot, "series", "GENERIC")
-    return audit_estimate_clear_time(
-        series=series,
-        fault_multiple=fault_multiple,
-        thermal_curve_lookup=TripCurveRepository.thermal_time_s,
-        is_approximated_curve=True,
-    )
-
-
 def _audit_verify_icu_status(device_icu_ka, ik_ka, is_preliminary=False):
     """
     Four-state ICu verification helper.
@@ -1339,26 +1360,3 @@ def _audit_calculate_feeder_ik_profile(
         feeder_phase_mm2=feeder_phase_mm2,
         feeder_pe_mm2=feeder_pe_mm2,
     )
-
-
-def _audit_selectivity_status(
-    upstream_icu_ka,
-    downstream_icu_ka,
-    selectivity_ratio,
-    rule_source="catalog",
-    data_quality="EXACT",
-):
-    """
-    Selectivity provenance helper.
-
-    Prevents missing/approximate selectivity data from being silently
-    treated as fully verified.
-    """
-    return audit_evaluate_selectivity_status(
-        upstream_icu_ka=upstream_icu_ka,
-        downstream_icu_ka=downstream_icu_ka,
-        selectivity_ratio=selectivity_ratio,
-        rule_source=rule_source,
-        data_quality=data_quality,
-    )
-# --- end audit safe helpers ---

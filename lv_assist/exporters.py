@@ -47,6 +47,7 @@ class ExcelExporter:
         ws1 = wb.active; ws1.title = "01_Project_Summary"
         _append_safe(ws1, [tr("rpt_h_param"), tr("rpt_h_value"), tr("rpt_h_unit"), tr("rpt_h_ref")])
         summary_rows = [
+            ("Review status", "PRELIMINARY — NOT FOR CONSTRUCTION", "-", summary.status.value),
             (tr("rpt_s_name"), project.project_name, "-", project.standard_ref),
             (tr("rpt_s_tag"), project.panel_tag, "-", tr("rpt_ref_form", form=project.internal_separation_form)),
             (tr("rpt_s_voltage"), f"{project.nominal_voltage_v} V / {project.earthing_system.value}", "V / Hz", f"{project.frequency_hz} Hz"),
@@ -146,7 +147,7 @@ class ExcelExporter:
             if f.selected_vfd: add_bom(f.func_tag, f.loc_tag, f"-U{idx}", tr("bom_vfd"), f.selected_vfd)
             if f.selected_soft_starter: add_bom(f.func_tag, f.loc_tag, f"-G{idx}", tr("bom_soft_starter"), f.selected_soft_starter)
             if f.selected_rcd: add_bom(f.func_tag, f.loc_tag, f"-F{idx}R", tr("bom_rcd"), f.selected_rcd)
-            ws4.append([f"{f.func_tag}{f.loc_tag}-W{idx}", f.func_tag, f.loc_tag, f"-W{idx}", tr("bom_cable"), "IEC 60502-1", f.cable_designation_str, f"Iz={'?' if f.cable_derated_iz_a is None else f.cable_derated_iz_a}A", int(f.cable_length_m), "M", 0.0, DataQuality.ESTIMATED.value])
+            ws4.append([f"{f.func_tag}{f.loc_tag}-W{idx}", f.func_tag, f.loc_tag, f"-W{idx}", tr("bom_cable"), "IEC 60502-1", f.cable_designation_str, f"Iz={'?' if f.cable_derated_iz_a is None else f.cable_derated_iz_a}A", f.cable_length_m, "M", 0.0, DataQuality.ESTIMATED.value])
             if f.suggested_spec_str:
                 _append_safe(ws4, [f"{f.func_tag}{f.loc_tag}-SUG{idx}", f.func_tag, f.loc_tag, f"-SUG{idx}", tr("bom_suggested"), "To be purchased", f.suggested_spec_str, tr("bom_suggested"), 1, "PCS", 0.0, DataQuality.ESTIMATED.value])
 
@@ -195,6 +196,13 @@ class ExcelExporter:
             for col in ws.columns:
                 max_len = max(len(str(c.value or "")) for c in col)
                 ws.column_dimensions[col[0].column_letter].width = min(max(max_len + 4, 13), 48)
+        # Preserve existing column positions while making procurement status
+        # explicit for every line. Legacy device quality is not selection proof.
+        ws4.cell(1, 13, "Selection status")
+        ws4.cell(1, 14, "Project status")
+        for row in range(2, ws4.max_row + 1):
+            ws4.cell(row, 13, "PROPOSED")
+            ws4.cell(row, 14, summary.status.value)
         wb.save(filename)
 
 class PrintableReportExporter:
@@ -235,7 +243,7 @@ class PrintableReportExporter:
                 <td>{_h(f.description)}</td><td>{_h(f.load_type.value)}</td><td>{_h(f.power_kw)}</td>
                 <td><b>{_h(f.design_current_ib_a)} A</b></td><td dir="ltr">{eq}</td>
                 <td dir="ltr"><b>{_h(f.cable_designation_str)}</b><br><small>Iz={'?' if f.cable_derated_iz_a is None else _h(f.cable_derated_iz_a)}A | L={_h(f.cable_length_m)}m</small><br><small>k1={_h(f.cable_temp_factor_k1)} | k2={_h(f.cable_grouping_factor_k2)} | kΣ={_h(f.cable_total_derating_k)} | {_h(f.cable_method_ref_str)}</small><br><small>{_h(f.pe_basis_str)}</small></td>
-                <td>{_h(f.voltage_drop_percent)}%</td><td><span class="badge {sel_cls}">{_h(f.selectivity_state.value)}</span></td><td>{_h(f.total_feeder_loss_w)} W</td>
+                <td>{_h(f.voltage_drop_percent if f.voltage_drop_percent is not None else "?")}%</td><td><span class="badge {sel_cls}">{_h(f.selectivity_state.value)}</span></td><td>{_h(f.total_feeder_loss_w)} W</td>
             </tr>"""
 
         n_err = sum(1 for v in validations if v.status == ValidationStatus.ERROR)
@@ -353,7 +361,7 @@ class PrintableReportExporter:
                 <td dir="ltr">{ktot_str}</td>
                 <td dir="ltr"><b>{iz_str}</b></td>
                 <td dir="ltr"><small>{formula}</small></td>
-                <td dir="ltr">{_h(f.voltage_drop_percent)}%</td>
+                <td dir="ltr">{_h(f.voltage_drop_percent if f.voltage_drop_percent is not None else '?')}%</td>
             </tr>"""
 
         sign_block = f"""
@@ -406,6 +414,7 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 }}
 </style></head>
 <body><div class="container">
+<p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
 <div class="header-box"><div><h1>{_h(tr("html_title"))}</h1><p>{_h(tr("html_project"))} <b>{_h(project.project_name)}</b> | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>
 {kpi_html}
@@ -519,6 +528,7 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 }}
 </style></head>
 <body><div class="container">
+<p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
 <div class="header-box"><div><h1>{_h(tr("dv_title"))}</h1>
 <p>{_h(tr("dv_subtitle"))} — {_h(report.standard_ref)} / {_h(report.clause_ref)} | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>

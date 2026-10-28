@@ -61,3 +61,32 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   and missing structured numeric/source fields; this is visibility, not a claim
   that every legacy calculation is migrated. No physical evidence ingestion or
   engineer sign-off workflow yet. This unit does not close the P0 gate.
+
+## Review unit 2 — PE/fault integration and missing cable data
+
+- **Observed:** process_project substituted 10 kA, 25 m and 20 ms; PE used half
+  the bus three-phase current. Detailed trip/PE/network helpers were not used
+  to produce the actual feeder result. Unsupported ampacity combinations fell
+  back to a Cu/PVC/C table. GUI hid missing-data counts.
+- **Expected:** no assumed L-PE result or verification, no clipped known trip
+  times, no numeric voltage drop for unknown length, and consistent proposed BOM.
+- **Implementation:** actual feeder path now carries typed TripTimeEstimate,
+  ShortCircuitProfile and CheckResult. Since the current project schema has no
+  validated earthing-specific return path/settings, PE and L-PE results are None
+  with INSUFFICIENT_DATA. The standalone curve estimator preserves known times
+  including 8 s and labels instantaneous 20 ms as an estimate. Removed audit
+  flags and the unused incompatible selectivity wrapper. Exact cable table
+  combinations only; missing Iz remains None. GUI severity sort/four counters,
+  HTML/XLSX preliminary notices, explicit proposed procurement lines, and SLD
+  bridge preserve unknowns and operating-voltage Icu instead of a 400 V fallback.
+- **Tests:** new integrated earthing x locale matrix, trip boundaries
+  0.02/4.9/5/8/None/NaN/Inf, missing curve, and Cu/PVC/C vs missing
+  Al/XLPE/E, B1 and 1P tables. Existing tests for the removed unsafe assumptions
+  are replaced by explicit unknown/estimate expectations, not skipped.
+- **Evidence:** `tests/test_p0_engine_path.py`; `pytest-pe.txt`; GUI smoke output.
+- **Remaining risks:** no validated L-PE/ADS calculation is implemented. Diagnostic
+  3P network estimates still require source/material/temperature modelling and
+  engineer review. Unsupported ampacity uses a clearly marked geometry proposal,
+  not a validated selected cable. k=143 in the standalone helper is inherited,
+  unreviewed and never used to verify a feeder without loop data. Other legacy
+  protection, thermal, busbar and property-provenance work remains open.

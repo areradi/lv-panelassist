@@ -61,17 +61,17 @@ class TestCableSizing:
         assert abs(vd_pvc / vd_xlpe - 1.2 / 1.28) < 0.002
 
     def test_pe_section_table_logic(self):
-        assert CableSizingEngine.calculate_pe_section(2.5, fault_current_ka=0.0) == 2.5
-        assert CableSizingEngine.calculate_pe_section(16.0, fault_current_ka=0.0) == 16.0
-        assert CableSizingEngine.calculate_pe_section(25.0, fault_current_ka=0.0) == 16.0
-        assert CableSizingEngine.calculate_pe_section(35.0, fault_current_ka=0.0) == 16.0
-        assert CableSizingEngine.calculate_pe_section(50.0, fault_current_ka=0.0) == 25.0
-        assert CableSizingEngine.calculate_pe_section(95.0, fault_current_ka=0.0) == 50.0
-        assert CableSizingEngine.calculate_pe_section(240.0, fault_current_ka=0.0) == 120.0
+        assert CableSizingEngine.proposed_table_pe_section(2.5) == 2.5
+        assert CableSizingEngine.proposed_table_pe_section(16.0) == 16.0
+        assert CableSizingEngine.proposed_table_pe_section(25.0) == 16.0
+        assert CableSizingEngine.proposed_table_pe_section(35.0) == 16.0
+        assert CableSizingEngine.proposed_table_pe_section(50.0) == 25.0
+        assert CableSizingEngine.proposed_table_pe_section(95.0) == 50.0
+        assert CableSizingEngine.proposed_table_pe_section(240.0) == 120.0
 
-    def test_pe_section_adiabatic_dominates_with_default_fault(self):
-        # 10kA / 20ms ⇒ S_min ≈ 5 mm² → کوچکترین مقطع استاندارد PE برابر 6 mm²
-        assert CableSizingEngine.calculate_pe_section(2.5) == 6.0
+    def test_pe_section_requires_fault_and_time(self):
+        # Missing L-PE current/time must not trigger a hidden 10 kA / 20 ms assumption.
+        assert CableSizingEngine.calculate_pe_section(2.5) is None
 
     def test_auto_sizing_meets_iz_and_vdrop(self):
         s_ph, s_n, s_pe, iz, vd, _ = CableSizingEngine.select_feeder_cable(
@@ -80,7 +80,7 @@ class TestCableSizing:
             max_vdrop_pct=5.0, load_type=LoadType.SUB_FEEDER)
         assert iz >= 45.0
         assert vd <= 5.0
-        assert s_pe <= s_ph
+        assert s_pe is None  # No L-PE fault/time input was supplied.
 
     def test_user_specified_section_respected(self):
         s_ph, _, _, _, _, _ = CableSizingEngine.select_feeder_cable(
@@ -308,7 +308,7 @@ class TestPhase2IkAndDip:
         _, summary, validations = EngineeringEngine(CATALOG).process_project(project, [make_feeder()])
         assert summary.ik_used_ka is not None
         assert abs(summary.ik_used_ka - 38.49) < 0.05
-        assert any(v.rule_id == "RULE-IK-012" and v.status == ValidationStatus.COMPLETED for v in validations)
+        assert any(v.rule_id == "RULE-IK-012" and v.status == ValidationStatus.WARNING for v in validations)
 
     def test_no_ik_degrades_gracefully(self):
         project = make_project(prospective_ik_ka=None)
@@ -337,7 +337,7 @@ class TestPhase2IkAndDip:
 
 
 class TestPhase2CableData:
-    def test_al_conductor_requires_larger_section(self):
+    def test_al_conductor_without_exact_table_is_unknown(self):
         cu = CableSizingEngine.select_feeder_cable(
             ib_a=100.0, protection_in_a=125.0, is_adjustable_prot=True, length_m=20.0, cos_phi=0.9,
             voltage_v=400.0, phases=3, ambient_temp_c=30.0, grouping_k2=0.8, max_vdrop_pct=5.0,
@@ -346,10 +346,11 @@ class TestPhase2CableData:
             ib_a=100.0, protection_in_a=125.0, is_adjustable_prot=True, length_m=20.0, cos_phi=0.9,
             voltage_v=400.0, phases=3, ambient_temp_c=30.0, grouping_k2=0.8, max_vdrop_pct=5.0,
             load_type=LoadType.SUB_FEEDER, conductor="AL")
-        assert al[0] > cu[0]
+        assert al[3] is None
+        assert cu[3] is not None
         assert "Al" in al[5]
 
-    def test_xlpe_and_method_e_boost_iz(self):
+    def test_xlpe_and_method_e_require_their_own_table(self):
         pvc = CableSizingEngine.select_feeder_cable(
             ib_a=30.0, protection_in_a=32.0, is_adjustable_prot=True, length_m=20.0, cos_phi=0.9,
             voltage_v=400.0, phases=3, ambient_temp_c=30.0, grouping_k2=0.8, max_vdrop_pct=5.0,
@@ -358,7 +359,8 @@ class TestPhase2CableData:
             ib_a=30.0, protection_in_a=32.0, is_adjustable_prot=True, length_m=20.0, cos_phi=0.9,
             voltage_v=400.0, phases=3, ambient_temp_c=30.0, grouping_k2=0.8, max_vdrop_pct=5.0,
             load_type=LoadType.SUB_FEEDER, insulation="XLPE", installation_method="E")
-        assert xlpe_e[3] > pvc[3]
+        assert xlpe_e[3] is None
+        assert pvc[3] is not None
 
     def test_thdi_neutral_sized_equal_phase(self):
         s_ph, s_n, _, _, _, _ = CableSizingEngine.select_feeder_cable(
@@ -858,8 +860,8 @@ class TestAuditDataLayer:
     def test_f005_pe_no_artificial_cap(self):
         assert catalog_repo.get_standard_pe_section(380.0) == 400.0
         assert catalog_repo.get_standard_pe_section(500.0) is None
-        assert CableSizingEngine.calculate_pe_section(900.0, fault_current_ka=0.0) is None
-        assert CableSizingEngine.calculate_pe_section(240.0, fault_current_ka=0.0) == 120.0
+        assert CableSizingEngine.proposed_table_pe_section(900.0) is None
+        assert CableSizingEngine.proposed_table_pe_section(240.0) == 120.0
 
     def test_f006_icu_at_project_voltage(self):
         mccb = next(d for d in CATALOG if d.device_type == "MCCB")
@@ -1437,16 +1439,16 @@ class TestPhase7AuditFixes:
     def _run_project(project, feeders):
         return EngineeringEngine(CATALOG).process_project(project, feeders)
 
-    def test_f005_pe_uses_project_ik_with_adiabatic_basis(self):
+    def test_f005_bus_3p_ik_is_not_a_pe_loop_current(self):
         def run(ik):
             outs, _, _ = self._run_project(
                 make_project(prospective_ik_ka=ik),
                 [make_feeder("F01", load_type=LoadType.SUB_FEEDER, power_kw=5.0, cos_phi=0.9, efficiency=1.0)])
             return outs[0]
         f_low, f_high = run(6.0), run(25.0)
-        norm = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
-        assert "143" in f_low.pe_basis_str.translate(norm) and "143" in f_high.pe_basis_str.translate(norm)
-        assert f_high.cable_designation_str != f_low.cable_designation_str
+        assert f_low.selected_pe_mm2 is None and f_high.selected_pe_mm2 is None
+        assert f_low.pe_check.status == f_high.pe_check.status == ValidationStatus.INSUFFICIENT_DATA
+        assert f_low.trip_time_estimate.time_s is None and f_high.trip_time_estimate.time_s is None
 
     def test_f006_icu_at_voltage_in_excel_and_html(self, tmp_path):
         project = make_project(prospective_ik_ka=22.0)
@@ -2349,14 +2351,15 @@ class TestPhase11BusbarAndMotorIk:
 
     def test_max_total_du_pct_is_cable_plus_busbar(self):
         _, outs, summary, _ = self._demo()
-        max_cable = max(f.voltage_drop_percent for f in outs)
-        assert abs(summary.max_total_du_pct - (max_cable + summary.busbar_du_pct)) < 0.005
+        assert any(f.voltage_drop_percent is None for f in outs)
+        assert summary.max_total_du_pct is None  # Missing route length is not zero drop.
         assert summary.busbar_du_v > 0.0
 
     def test_feeder_sc_rule_uses_total_ik(self):
         project, outs, summary, validations = self._demo()
         sc_vals = [v for v in validations if v.rule_id == "RULE-PROT-SC-001" and v.feeder_id == "F01"]
-        assert sc_vals and sc_vals[0].status == ValidationStatus.COMPLETED
+        assert sc_vals and sc_vals[0].status == ValidationStatus.WARNING
+        assert sc_vals[0].input_values["ik_at_device_ka"] == summary.ik_bus_total_ka
         assert any(v.rule_id == "RULE-BUS-025" for v in validations)
 
     def test_excel_phase11_rows(self, tmp_path):

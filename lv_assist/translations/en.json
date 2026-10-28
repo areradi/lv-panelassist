@@ -849,5 +849,16 @@
   "val_spd_035_warn_cons": "Without a dedicated fuse the SPD fault current is not cleared in time by the main breaker",
   "val_spd_035_warn_action": "Install a gG {b} A fuse in the SPD path (row -F9F) and verify selectivity with the main breaker",
   "audit_missing_assembly_evidence": "NOT VERIFIED: no assembly test document, responsible reviewer or approval recorded.",
-  "audit_pe_continuity": "Protective circuit continuity (physical verification)"
+  "audit_pe_continuity": "Protective circuit continuity (physical verification)",
+  "audit_trip_missing": "Trip time is unknown: supply fault current, actual settings and a documented device curve.",
+  "audit_trip_20ms": "PRELIMINARY: assumed 20 ms, not a documented clearing time.",
+  "audit_pe_title": "PE thermal verification",
+  "audit_pe_missing": "NOT VERIFIED: L-PE fault current and actual trip settings are missing; bus 3P current is not a substitute.",
+  "audit_pe_action": "Provide the earthing-specific loop/source/return-path data and documented protection settings; request engineering review.",
+  "audit_length_action": "Enter the actual cable route length; voltage drop has not been calculated.",
+  "audit_icu_title": "Breaking capacity at device location",
+  "audit_icu_action": "Check exact model, operating voltage, settings and manufacturer evidence; the displayed device remains proposed.",
+  "audit_cable_unknown": "PRELIMINARY: exact ampacity table unavailable",
+  "audit_status_counts": "Completed checks: {ok} | Warning: {warn} | Missing data: {missing} | Error: {err}",
+  "audit_preliminary": "PRELIMINARY — NOT FOR CONSTRUCTION"
 }

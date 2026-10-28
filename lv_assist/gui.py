@@ -29,6 +29,7 @@ from lv_assist.eplan_macro_files import EplanMacroFileExporter, EplanPageMacroEx
 from lv_assist.eplan_field_test import EplanFieldTestKit
 from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
+from lv_assist.result_contract import STATUS_SEVERITY_ORDER
 
 LANG_SEGMENT_TO_CODE = {"FA": "fa", "EN": "en", "DE": "de"}
 
@@ -648,16 +649,18 @@ class LVAssistApp(ctk.CTk):
 
         err = sum(1 for v in validations if v.status == ValidationStatus.ERROR)
         warn = sum(1 for v in validations if v.status == ValidationStatus.WARNING)
-        self.kpi_labels["val_summary"].configure(text=tr("kpi_errors", err=err, warn=warn))
+        missing = sum(v.status == ValidationStatus.INSUFFICIENT_DATA for v in validations)
+        ok = sum(v.status == ValidationStatus.COMPLETED for v in validations)
+        self.kpi_labels["val_summary"].configure(text=tr("audit_status_counts", ok=ok, err=err, warn=warn, missing=missing))
 
         for item in self.tree_feeders.get_children(): self.tree_feeders.delete(item)
         for f in f_outs:
             cont = f.selected_contactor_main.part_number if f.selected_contactor_main else "-"
             aux = f.selected_bimetal.part_number if f.selected_bimetal else (f.selected_soft_starter.part_number if f.selected_soft_starter else (f.selected_vfd.part_number if f.selected_vfd else "-"))
-            self.tree_feeders.insert("", "end", values=(f.feeder_id, f.description, tr(f"lt_{f.load_type.value}"), f.design_current_ib_a, f.cable_designation_str, f"{f.voltage_drop_percent}%", f.selected_protection.part_number if f.selected_protection else "NONE", cont, aux, f.selectivity_state.value))
+            self.tree_feeders.insert("", "end", values=(f.feeder_id, f.description, tr(f"lt_{f.load_type.value}"), f.design_current_ib_a, f.cable_designation_str, f"{f.voltage_drop_percent if f.voltage_drop_percent is not None else '?'}%", f.selected_protection.part_number if f.selected_protection else "NONE", cont, aux, f.selectivity_state.value))
 
         for item in self.tree_rules.get_children(): self.tree_rules.delete(item)
-        for v in validations:
+        for v in sorted(validations, key=lambda check: -STATUS_SEVERITY_ORDER[check.status]):
             self.tree_rules.insert("", "end", tags=(v.status.value,), values=(v.status.value, v.rule_id, v.feeder_id, v.standard_ref, v.description, v.supporting_evidence, v.recommended_action))
 
         self._stale = False

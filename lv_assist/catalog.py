@@ -181,14 +181,18 @@ class CatalogRepository:
             ).fetchone()
             if row:
                 return float(row["iz0_a"])
-            fallback_row = conn.execute(
-                """
-                SELECT iz0_a FROM cable_ampacity_reference
-                WHERE section_mm2 = ? AND material = 'CU' AND insulation = 'PVC' AND installation_method = 'C'
-                """,
-                (section_mm2,),
-            ).fetchone()
-            return float(fallback_row["iz0_a"]) if fallback_row else None
+            return None
+
+    def get_cable_iz0_table(self, material: str, insulation: str,
+                            installation_method: str, loaded_conductors: int) -> Dict[float, float]:
+        """Exact combination only. An absent table is not a scaled Cu/PVC/C table."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT section_mm2, iz0_a FROM cable_ampacity_reference "
+                "WHERE material=? AND insulation=? AND installation_method=? AND loaded_conductors=?",
+                (material.upper(), insulation.upper(), installation_method.upper(), loaded_conductors),
+            ).fetchall()
+        return {float(row[0]): float(row[1]) for row in rows}
 
     def get_pe_standard_sections(self) -> List[float]:
         """فهرست مقاطع استاندارد PE از دیتابیس (بدون سقف مصنوعی)."""
