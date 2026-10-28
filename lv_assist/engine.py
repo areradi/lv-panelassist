@@ -11,7 +11,7 @@ from lv_assist.busbar import BusbarEngine
 from lv_assist.ip_rating import ip_meets, ip_upper_bound
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
-from lv_assist.run_metadata import create_run_metadata, catalog_file_hash
+from lv_assist.run_metadata import create_run_metadata, catalog_file_hash, result_fingerprint
 from lv_assist.catalog_validation import validated_devices
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
@@ -438,6 +438,7 @@ class EngineeringEngine:
                                        + ["Engineering evidence/reviewer not recorded; results remain preliminary."], self.catalog)
         if metadata.catalog_version != self._catalog_file_hash:
             raise ValueError(tr("audit_source_gap"))
+        metadata = metadata.model_copy(update={"result_fingerprint": result_fingerprint(feeder_outputs, summary, validations)})
         summary.run_metadata = metadata
         for output in feeder_outputs:
             output.run_metadata = metadata

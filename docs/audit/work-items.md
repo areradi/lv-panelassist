@@ -357,3 +357,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [bundle preflight policy](../engineering/bundle_snapshot_preflight_policy.md).
 - **Remaining risks:** derived-output hashes, current in-memory/raw input API
   context, all-format guards and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 20 — Fingerprint calculated results and validation rows
+
+- **Observed:** derived payloads/checks could change while preserving an accepted
+  run ID, bypassing input-only freshness checks.
+- **Expected:** edited currents/cables/devices/statuses/checks require recalculation
+  before GUI-current state or bundle publication.
+- **Implementation:** immutable metadata carries a canonical derived-result hash;
+  engine stamps it, GUI and bundle pre/post checks compare it. Legacy missing hash
+  remains deserializable but cannot be treated as a current export.
+- **Tests:** 16 new payload/GUI/manifest/generator cases plus 16 preflight cases;
+  old macro fixture now retains actual checks without altering asset assertions.
+- **Evidence:** [result fingerprint policy](../engineering/calculated_result_fingerprint_policy.md).
+- **Remaining risks:** authenticity, standalone API guards, immutable render
+  context and engineering verification remain open. P0 stays OPEN.

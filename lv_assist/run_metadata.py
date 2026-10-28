@@ -25,6 +25,7 @@ class RunMetadata(BaseModel):
     input_fingerprint: str
     input_snapshot_json: str
     assumptions: tuple[str, ...]
+    result_fingerprint: str | None = None
 
 
 def canonical_inputs(project: BaseModel, feeders: Sequence[BaseModel]) -> str:
@@ -35,6 +36,17 @@ def canonical_inputs(project: BaseModel, feeders: Sequence[BaseModel]) -> str:
 
 def input_fingerprint(project: BaseModel, feeders: Sequence[BaseModel]) -> str:
     return hashlib.sha256(canonical_inputs(project, feeders).encode()).hexdigest()
+
+
+def result_fingerprint(outputs: Sequence[BaseModel], summary: BaseModel,
+                       checks: Sequence[BaseModel]) -> str:
+    """Bind derived data/checks to a run; this is not an authenticated signature."""
+    payload = {"feeders": [row.model_dump(mode="json", exclude={"run_metadata"}) for row in outputs],
+               "summary": summary.model_dump(mode="json", exclude={"run_metadata"}),
+               "checks": [row.model_dump(mode="json") for row in checks]}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def catalog_file_hash(catalog_path: Path) -> str:

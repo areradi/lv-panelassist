@@ -4,14 +4,14 @@ import json
 import sqlite3
 
 from lv_assist.models import FeederInput, ProjectSpec
-from lv_assist.run_metadata import run_is_current
+from lv_assist.run_metadata import result_fingerprint, run_is_current
 
 
 class ExportSnapshotError(ValueError):
     """Recalculation is required before this bundle can be published."""
 
 
-def require_current_bundle(project, outputs, summary, catalog_path):
+def require_current_bundle(project, outputs, summary, checks, catalog_path):
     try:
         metadata = summary.run_metadata
         if metadata is None:
@@ -23,6 +23,8 @@ def require_current_bundle(project, outputs, summary, catalog_path):
                 or recorded_project.model_dump(mode='json') != project.model_dump(mode='json')
                 or [row.feeder_id for row in inputs] != [row.feeder_id for row in outputs]
                 or any(row.run_metadata != metadata for row in outputs)
+                or not metadata.result_fingerprint
+                or metadata.result_fingerprint != result_fingerprint(outputs, summary, checks)
                 or not run_is_current(metadata, project, inputs, catalog_path)):
             raise ValueError('Stale or mixed run')
     except (ValueError, OSError, KeyError, TypeError, sqlite3.Error) as error:

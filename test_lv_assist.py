@@ -2019,9 +2019,11 @@ class TestPhase9EplanMacroFiles:
         import zipfile
         from lv_assist.gui import LVAssistApp
         assert hasattr(LVAssistApp, "action_export_eplan_macros")
-        project, f_outs, summary = self._demo_results()
+        from lv_assist.gui import build_demo_project
+        project, feeders = build_demo_project()
+        f_outs, summary, validations = EngineeringEngine(CATALOG).process_project(project, feeders)
         zpath = str(tmp_path / "bundle9.zip")
-        n = LVAssistApp.build_document_bundle(zpath, project, f_outs, summary, [], include_pdf=False)
+        n = LVAssistApp.build_document_bundle(zpath, project, f_outs, summary, validations, include_pdf=False)
         with zipfile.ZipFile(zpath) as zf:
             names = zf.namelist()
         macros = [x for x in names if x.startswith("12_EPLAN_Macros/") and x.endswith(".ema")]

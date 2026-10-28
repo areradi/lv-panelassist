@@ -36,7 +36,7 @@ from lv_assist.eplan_field_test import EplanFieldTestKit
 from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
 from lv_assist.result_contract import STATUS_SEVERITY_ORDER
-from lv_assist.run_metadata import run_is_current
+from lv_assist.run_metadata import result_fingerprint, run_is_current
 from lv_assist.catalog import catalog_repo
 
 LANG_SEGMENT_TO_CODE = {"FA": "fa", "EN": "en", "DE": "de"}
@@ -703,6 +703,8 @@ class LVAssistApp(ctk.CTk):
             current = metadata is not None and run_is_current(
                 metadata, self.current_project, self.current_feeders, catalog_repo.db_path,
                 self.engine.catalog if hasattr(self, "engine") else None)
+            current = (current and metadata is not None and bool(metadata.result_fingerprint)
+                       and metadata.result_fingerprint == result_fingerprint(*self.last_results))
         except (ValueError, OSError):
             current = False
         if not current:
@@ -779,13 +781,13 @@ class LVAssistApp(ctk.CTk):
     def build_document_bundle_result(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> BundleExportResult:
         # Render every file from a private copy of one accepted run.
         project, f_outs, summary, validations = copy.deepcopy((project, f_outs, summary, validations))
-        require_current_bundle(project, f_outs, summary, catalog_repo.db_path)
+        require_current_bundle(project, f_outs, summary, validations, catalog_repo.db_path)
         result: BundleExportResult | None = None
         def build(path):
             nonlocal result
             result = LVAssistApp._build_document_bundle(path, project, f_outs, summary, validations, include_pdf)
             # A source/catalog change during rendering must abort publication.
-            require_current_bundle(project, f_outs, summary, catalog_repo.db_path)
+            require_current_bundle(project, f_outs, summary, validations, catalog_repo.db_path)
             return result.file_count
         build_bundle_atomic(zip_path, build)
         assert result is not None
