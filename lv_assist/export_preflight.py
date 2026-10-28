@@ -11,7 +11,7 @@ class ExportSnapshotError(ValueError):
     """Recalculation is required before this bundle can be published."""
 
 
-def require_current_bundle(project, outputs, summary, checks, catalog_path):
+def require_current_result(project, outputs, summary, checks, catalog_path):
     try:
         metadata = summary.run_metadata
         if metadata is None:
@@ -28,4 +28,8 @@ def require_current_bundle(project, outputs, summary, checks, catalog_path):
                 or not run_is_current(metadata, project, inputs, catalog_path)):
             raise ValueError('Stale or mixed run')
     except (ValueError, OSError, KeyError, TypeError, sqlite3.Error) as error:
-        raise ExportSnapshotError('Recalculate before exporting this bundle') from error
+        raise ExportSnapshotError('Recalculate before exporting this report') from error
+
+
+# Compatibility name for existing bundle callers.
+require_current_bundle = require_current_result

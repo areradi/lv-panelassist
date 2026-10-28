@@ -978,7 +978,7 @@ class TestPhase5ManufacturerLibrary:
 
 
 class TestPhase5ControlCircuits:
-    def _motor_project(self):
+    def _motor_project(self, include_checks=False):
         project = make_project()
         feeders = [
             make_feeder("F01", load_type=LoadType.MOTOR_DOL, power_kw=15.0, cos_phi=0.85, efficiency=0.91),
@@ -987,8 +987,8 @@ class TestPhase5ControlCircuits:
             make_feeder("F04", load_type=LoadType.MOTOR_VFD, power_kw=7.5, cos_phi=0.95, efficiency=0.90),
             make_feeder("F05", load_type=LoadType.LIGHTING_SOCKET, power_kw=5.0, cos_phi=0.90),
         ]
-        outs, summary, _ = EngineeringEngine(CATALOG).process_project(project, feeders)
-        return project, outs, summary
+        outs, summary, checks = EngineeringEngine(CATALOG).process_project(project, feeders)
+        return (project, outs, summary, checks) if include_checks else (project, outs, summary)
 
     def test_wire_counts_per_feeder_type(self):
         project, outs, summary = self._motor_project()
@@ -1021,9 +1021,9 @@ class TestPhase5ControlCircuits:
         assert len(lines) == len(wires) + 1
 
     def test_excel_sheet_control_circuits(self, tmp_path):
-        project, outs, summary = self._motor_project()
+        project, outs, summary, checks = self._motor_project(include_checks=True)
         path = tmp_path / "out.xlsx"
-        ExcelExporter.export_to_excel(str(path), project, outs, summary, [])
+        ExcelExporter.export_to_excel(str(path), project, outs, summary, checks)
         ws = openpyxl.load_workbook(str(path))["05_Control_Circuits"]
         assert ws.max_row > 1
         assert ws.cell(row=2, column=1).value.startswith("W")
@@ -1657,7 +1657,12 @@ class TestPhase7HtmlReport:
                              consequence="c", recommended_action="a"),
         ]
         path = tmp_path / "v.html"
-        PrintableReportExporter.generate_html_report(str(path), project, outs, summary, vals)
+        import pytest
+        from lv_assist.export_preflight import ExportSnapshotError
+        with pytest.raises(ExportSnapshotError):
+            PrintableReportExporter.generate_html_report(str(path), project, outs, summary, vals)
+        # Explicit synthetic renderer test; these checks are not an accepted run.
+        PrintableReportExporter._render_html_report(str(path), project, outs, summary, vals)
         content = path.read_text(encoding="utf-8")
         for key in ("html_badge_completed", "html_badge_warning", "html_badge_error", "html_badge_insufficient"):
             assert html.escape(tr(key)) in content

@@ -856,6 +856,9 @@ class LVAssistApp(ctk.CTk):
             f_outs, summary, validations = self.last_results
             try:
                 ExcelExporter.export_to_excel(path, self.current_project, f_outs, summary, validations)
+            except ExportSnapshotError:
+                messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+                return
             except (OSError, zipfile.BadZipFile):
                 messagebox.showerror(tr("msg_error"), tr("xlsx_write_failed"))
                 return
@@ -865,7 +868,11 @@ class LVAssistApp(ctk.CTk):
         if not self._results_are_current(): return
         f_outs, summary, validations = self.last_results
         path = os.path.join(get_app_working_dir(), "LV_Panel_Engineering_Report.html")
-        PrintableReportExporter.generate_html_report(path, self.current_project, f_outs, summary, validations)
+        try:
+            PrintableReportExporter.generate_html_report(path, self.current_project, f_outs, summary, validations)
+        except ExportSnapshotError:
+            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+            return
         webbrowser.open(f"file://{path}")
 
     def action_export_dv(self):
@@ -910,7 +917,11 @@ class LVAssistApp(ctk.CTk):
         if path:
             with tempfile.TemporaryDirectory(prefix="lvassist-report-") as folder:
                 tmp_html = os.path.join(folder, "report.html")
-                PrintableReportExporter.generate_html_report(tmp_html, self.current_project, res[0], res[1], res[2])
+                try:
+                    PrintableReportExporter.generate_html_report(tmp_html, self.current_project, res[0], res[1], res[2])
+                except ExportSnapshotError:
+                    messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+                    return
                 result = PdfExporter.export_html_to_pdf_result(tmp_html, path)
             if result.success:
                 messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))

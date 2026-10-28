@@ -14,6 +14,7 @@ from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.engine import build_design_verification
 from lv_assist.i18n import tr, i18n
 from lv_assist.xlsx_export import save_workbook_atomic
+from lv_assist.report_export import export_current_report
 
 
 def _h(val) -> str:
@@ -31,6 +32,10 @@ def _append_safe(ws, row):
 class ExcelExporter:
     @staticmethod
     def export_to_excel(filename: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, validations: List[ValidationResult]):
+        return export_current_report(filename, project, feeders, summary, validations, ExcelExporter._render_to_excel)
+
+    @staticmethod
+    def _render_to_excel(filename, project, feeders, summary, validations):
         wb = openpyxl.Workbook()
         header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
         header_font = Font(color="FFFFFF", bold=True, name="Calibri", size=11)
@@ -225,6 +230,10 @@ class PrintableReportExporter:
 
     @staticmethod
     def generate_html_report(filepath: str, project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput, validations: List[ValidationResult]):
+        return export_current_report(filepath, project, feeders, summary, validations, PrintableReportExporter._render_html_report)
+
+    @staticmethod
+    def _render_html_report(filepath, project, feeders, summary, validations):
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         lang = i18n.get_language()
         direction = i18n.direction()

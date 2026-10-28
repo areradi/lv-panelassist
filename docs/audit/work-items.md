@@ -372,3 +372,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [result fingerprint policy](../engineering/calculated_result_fingerprint_policy.md).
 - **Remaining risks:** authenticity, standalone API guards, immutable render
   context and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 21 — Standalone primary-report accepted-run guards
+
+- **Observed:** direct primary Excel/HTML APIs bypassed bundle/GUI identity and
+  result-fingerprint checks and could render stale/modified data.
+- **Expected:** rejected runs cannot overwrite a prior report or be presented as
+  accepted/current; rendering uses one private captured snapshot.
+- **Implementation:** shared pre/post report guard, private copy and staged atomic
+  publication for both public APIs, GUI stale warnings including PDF HTML source.
+- **Tests:** 20 public-format/renderer/copy/GUI cases plus 34 XLSX cases. Prior
+  synthetic badge fixture now explicitly separates public rejection from rendering.
+- **Evidence:** [standalone report policy](../engineering/standalone_report_preflight_policy.md).
+- **Remaining risks:** other standalone formats, immutable context, real printing,
+  field acceptance and engineering verification remain open. P0 stays OPEN.
