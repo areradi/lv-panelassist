@@ -849,5 +849,16 @@
   "val_spd_035_warn_cons": "Ohne eigene Sicherung wird der SPD-Fehlerstrom nicht rechtzeitig vom Hauptschalter abgeschaltet",
   "val_spd_035_warn_action": "gG {b} A im SPD-Pfad einbauen (Zeile -F9F) und Selektivität zum Hauptschalter prüfen",
   "audit_missing_assembly_evidence": "NICHT VERIFIZIERT: Prüfbeleg der Schaltgerätekombination, verantwortlicher Prüfer oder Freigabe fehlen.",
-  "audit_pe_continuity": "Durchgängigkeit des Schutzleiters (physische Prüfung)"
+  "audit_pe_continuity": "Durchgängigkeit des Schutzleiters (physische Prüfung)",
+  "audit_trip_missing": "Abschaltzeit unbekannt: Fehlerstrom, tatsächliche Einstellungen und dokumentierte Kennlinie fehlen.",
+  "audit_trip_20ms": "VORLÄUFIG: angenommene 20 ms, keine dokumentierte Abschaltzeit.",
+  "audit_pe_title": "Thermische PE-Prüfung",
+  "audit_pe_missing": "NICHT VERIFIZIERT: L-PE-Fehlerstrom und tatsächliche Abschalteinstellungen fehlen; Sammelschienen-Drehstrom ist kein Ersatz.",
+  "audit_pe_action": "Erdungsspezifische Schleifen-, Quellen- und Rückleiterdaten sowie Schutzeinstellungen ergänzen und fachlich prüfen lassen.",
+  "audit_length_action": "Tatsächliche Kabellänge eingeben; Spannungsfall wurde nicht berechnet.",
+  "audit_icu_title": "Ausschaltvermögen am Einbauort",
+  "audit_icu_action": "Exaktes Modell, Betriebsspannung, Einstellungen und Herstellerbeleg prüfen; Gerät bleibt vorgeschlagen.",
+  "audit_cable_unknown": "VORLÄUFIG: genaue Strombelastbarkeitstabelle fehlt",
+  "audit_status_counts": "Abgeschlossene Prüfungen: {ok} | Warnung: {warn} | Fehlende Daten: {missing} | Fehler: {err}",
+  "audit_preliminary": "VORLÄUFIG — NICHT ZUR AUSFÜHRUNG"
 }

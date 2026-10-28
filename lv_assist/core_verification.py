@@ -50,7 +50,7 @@ def estimate_clear_time_s(
     thermal_curve_lookup: Callable[[str, float], Optional[float]],
     is_approximated_curve: bool = True,
 ) -> TripTimeEstimate:
-    if fault_multiple is None or fault_multiple <= 0:
+    if fault_multiple is None or not math.isfinite(fault_multiple) or fault_multiple <= 0:
         return TripTimeEstimate(
             time_s=None,
             is_curve_estimated=is_approximated_curve,
@@ -60,7 +60,7 @@ def estimate_clear_time_s(
         )
 
     raw_time_s = thermal_curve_lookup(series, fault_multiple)
-    if raw_time_s is None or math.isnan(raw_time_s) or raw_time_s <= 0:
+    if raw_time_s is None or not math.isfinite(raw_time_s) or raw_time_s <= 0:
         return TripTimeEstimate(
             time_s=None,
             is_curve_estimated=is_approximated_curve,
@@ -101,7 +101,8 @@ def calculate_adiabatic_pe_mm2(
     trip_estimate: TripTimeEstimate,
     k_factor: float = 143.0,
 ) -> Tuple[Optional[float], CheckResult]:
-    if fault_current_a is None or fault_current_a <= 0 or trip_estimate.time_s is None:
+    if (fault_current_a is None or not math.isfinite(fault_current_a)
+            or fault_current_a <= 0 or trip_estimate.time_s is None):
         return None, CheckResult(
             check_id="PE_ADIABATIC_SIZING",
             title="سایزینگ آدیاباتیک هادی حفاظتی (PE)",
@@ -111,7 +112,14 @@ def calculate_adiabatic_pe_mm2(
             recommended_action="طول کابل، امپدانس منبع و مشخصات منحنی کلید را تکمیل کنید."
         )
 
-    if trip_estimate.exceeds_adiabatic_5s_limit:
+    if (not math.isfinite(k_factor) or k_factor <= 0
+            or not math.isfinite(trip_estimate.time_s) or trip_estimate.time_s <= 0):
+        return None, CheckResult(
+            check_id="PE_ADIABATIC_SIZING", title="PE", status=ValidationStatus.ERROR,
+            cause="Invalid time or k factor; finite positive values are required.",
+            recommended_action="Provide documented conductor and protection parameters.")
+
+    if trip_estimate.exceeds_adiabatic_5s_limit or trip_estimate.time_s > 5.0:
         return None, CheckResult(
             check_id="PE_ADIABATIC_SIZING",
             title="سایزینگ آدیاباتیک هادی حفاظتی (PE)",
@@ -133,6 +141,10 @@ def calculate_adiabatic_pe_mm2(
         cause=trip_estimate.note if trip_estimate.is_curve_estimated else "",
         effect="حداقل سطح مقطع حرارتی PE محاسبه شد.",
         recommended_action="در صورت تخمینی بودن منحنی، زمان قطع را با دیتاشیت کلید کنترل کنید."
+        , input_values={"fault_current_a": fault_current_a, "time_s": trip_estimate.time_s,
+                        "k_factor": k_factor}, result_value=round(s_min_mm2, 2), unit="mm²",
+        method="I*sqrt(t)/k", source_ref="IEC 60364-5-54; applicability requires review",
+        assumptions=[trip_estimate.note, "k factor applicability must be documented"]
     )
 
 
@@ -222,8 +234,8 @@ def calculate_network_ik_profile(
         ik_feeder_end_max_3p_ka=round(ik_end_max_3p_ka, 3),
         ik_feeder_end_min_1p_ka=round(ik_end_min_1p_ka, 3),
         is_attenuated_by_feeder_cable=True,
-        scope_status=ValidationStatus.COMPLETED,
-        scope_warning_note="جریان اتصال کوتاه تا انتهای فیدر محاسبه شد."
+        scope_status=ValidationStatus.WARNING,
+        scope_warning_note="PRELIMINARY: assumed source R/X, Cu temperature and loop return; not independently verified."
     )
 
 
@@ -232,7 +244,9 @@ def verify_breaking_capacity_icu(
     prospective_ik_ka: Optional[float],
     is_ik_preliminary: bool = False,
 ) -> CheckResult:
-    if prospective_ik_ka is None or device_icu_ka is None or prospective_ik_ka <= 0 or device_icu_ka <= 0:
+    if (prospective_ik_ka is None or device_icu_ka is None
+            or not math.isfinite(prospective_ik_ka) or not math.isfinite(device_icu_ka)
+            or prospective_ik_ka <= 0 or device_icu_ka <= 0):
         return CheckResult(
             check_id="BREAKING_CAPACITY_ICU",
             title="بررسی قدرت قطع کلید حفاظتی (Icu >= Ik)",

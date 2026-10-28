@@ -88,15 +88,15 @@ class GuiOutputBridge:
                 protection_tag=f"-Q{idx}",
                 protection_part=str(getattr(prot, "part_number", "UNSELECTED")),
                 protection_in_a=float(getattr(prot, "rated_current_in_a", 0.0)),
-                protection_icu_ka=float(getattr(prot, "icu_ka_400v", 0.0)),
+                protection_icu_ka=getattr(f, "protection_icu_ka", None),
                 switching_tag=sw_tag,
                 switching_part=sw_part,
                 overload_tag=ol_tag,
                 overload_part=ol_part,
                 overload_range=ol_range,
                 cable_designation=str(getattr(f, "cable_designation_str", "")),
-                cable_length_m=float(getattr(f, "cable_length_m", 0.0) or 0.0),
-                voltage_drop_pct=float(getattr(f, "voltage_drop_percent", 0.0) or 0.0),
+                cable_length_m=getattr(f, "cable_length_m", None),
+                voltage_drop_pct=getattr(f, "voltage_drop_percent", None),
                 selectivity_status=sel_str
             ))
 

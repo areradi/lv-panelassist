@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from lv_assist.result_contract import ValidationStatus
+from lv_assist.core_verification import CheckResult, ShortCircuitProfile, TripTimeEstimate
 
 class EarthingSystem(str, Enum):
     TN_S = "TN-S"
@@ -289,9 +290,9 @@ class FeederCalcOutput(BaseModel):
     delta_loop_current_a: Optional[float] = None
     star_current_a: Optional[float] = None
     required_in_after_derating_a: float
-    cable_length_m: float = 20.0
+    cable_length_m: Optional[float] = None
     selected_phase_mm2: float = 2.5
-    selected_pe_mm2: Optional[float] = 2.5
+    selected_pe_mm2: Optional[float] = None
     cable_derated_iz_a: Optional[float] = 0.0
     cable_Auto_sized: bool = True
     cable_designation_str: str = ""
@@ -301,7 +302,12 @@ class FeederCalcOutput(BaseModel):
     cable_method_ref_str: str = ""
     pe_basis_str: str = ""
     protection_icu_ka: Optional[float] = None
-    voltage_drop_percent: float = 0.0
+    voltage_drop_percent: Optional[float] = None
+    status: ValidationStatus = ValidationStatus.INSUFFICIENT_DATA
+    selection_status: str = "PROPOSED"
+    short_circuit_profile: Optional[ShortCircuitProfile] = None
+    trip_time_estimate: Optional[TripTimeEstimate] = None
+    pe_check: Optional[CheckResult] = None
     assumptions_used: List[str] = []
     selected_protection: Optional[CatalogDevice] = None
     selected_contactor_main: Optional[CatalogDevice] = None
@@ -368,7 +374,7 @@ class PanelSummaryOutput(BaseModel):
     ip_bus_total_ka: Optional[float] = None
     busbar_du_v: float = 0.0
     busbar_du_pct: float = 0.0
-    max_total_du_pct: float = 0.0
+    max_total_du_pct: Optional[float] = None
     ik_source_str: str = ""
     effective_ip_str: str = ""
     suggested_main_breaker_str: str = ""
@@ -392,6 +398,7 @@ class PanelSummaryOutput(BaseModel):
     spd_suggested_str: str = ""
     estimated_internal_temp_c: Optional[float] = None
     altitude_derating_factor: float = 1.0
+    status: ValidationStatus = ValidationStatus.INSUFFICIENT_DATA
 
 class VerificationMethod(str, Enum):
     CALCULATION = "CALCULATION"
