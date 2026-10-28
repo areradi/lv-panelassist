@@ -223,3 +223,15 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [IP upper-bound policy](../engineering/enclosure_ip_bound_policy.md).
 - **Remaining risks:** assembly verification and independent source/reviewer
   unavailable; P0 remains OPEN.
+
+## Review unit 10 — IP catalog applicability and missing fallback rating
+
+- **Observed:** special water classes were treated as ordinal compatibility;
+  hypothetical EST-PANEL inherited an unsupported generic IP20 declaration.
+- **Expected:** unsupported applicability and absent enclosure data stay unknown.
+- **Implementation:** conservative catalog comparison for water categories 0–6;
+  explicit missing IP on EST-PANEL. Supported dimensions retain existing behavior.
+- **Tests:** 24 synthetic comparison/repository/engine/FA/EN/DE report cases.
+- **Evidence:** [catalog IP policy](../engineering/ip_catalog_applicability_policy.md).
+- **Remaining risks:** manufacturer evidence and assembly verification absent;
+  special water/combined markings need separate review. P0 stays OPEN.

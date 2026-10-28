@@ -125,7 +125,7 @@ class CatalogRepository:
     # ۴. بدنه تابلو با شرط IP هدف (رفع F-007)
     # ------------------------------------------------------------------
     def get_compatible_enclosures(self, target_ip: Optional[str] = None) -> List[CatalogDevice]:
-        """بدنه‌هایی که درجه حفاظت IP هدف پروژه را تأمین می‌کنند."""
+        """Proposals matching supported IP categories; no assembly certification."""
         enclosures = [d for d in self.devices if d.device_type == "ENCLOSURE"]
         if not target_ip:
             return enclosures

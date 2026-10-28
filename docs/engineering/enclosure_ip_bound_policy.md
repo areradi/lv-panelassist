@@ -52,3 +52,6 @@ selection remain preliminary. P0 stays OPEN. No merge or release is performed.
   debt remains outside this checkpoint.
 - No database, dependencies or user data changes. Based on `a74398f`, requiring
   previous audit units. Main remains untouched.
+
+The older catalog filter and the EST-PANEL default-IP limitation described above
+are subsequently addressed by [review unit 10](ip_catalog_applicability_policy.md).

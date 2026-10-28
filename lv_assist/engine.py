@@ -1133,7 +1133,7 @@ class EngineeringEngine:
             selected_enc = enclosures[min(idx, len(enclosures) - 1)]
         else:
             selected_enc = CatalogDevice(part_number="EST-PANEL", manufacturer="?", series=tr("est_series"), device_type="ENCLOSURE",
-                                         width_mm=800.0, height_mm=2000.0, depth_mm=600.0, data_quality=DataQuality.ESTIMATED)
+                                         width_mm=800.0, height_mm=2000.0, depth_mm=600.0, ip_rating="", data_quality=DataQuality.ESTIMATED)
             vals.append(ValidationResult(rule_id="RULE-ENC-IP-019", feeder_id="PANEL", standard_ref="IEC 60529",
                 status=ValidationStatus.INSUFFICIENT_DATA, description=tr("val_enc_ip_desc", a=project.target_ip),
                 supporting_evidence=tr("val_enc_ip_ev", a=project.target_ip), consequence=tr("val_enc_ip_cons"),

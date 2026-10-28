@@ -17,8 +17,15 @@ def ip_upper_bound(*ratings: str) -> str | None:
 
 
 def ip_meets(actual: str, required: str) -> bool:
+    """Filter proposals within supported categories, never certify an assembly.
+
+    Water categories 7–9 require separate applicability evidence, including
+    exact matches. False means automatic compatibility is not established.
+    """
     actual_match = re.fullmatch(r"IP([0-6])([0-9])", actual)
     required_match = re.fullmatch(r"IP([0-6])([0-9])", required)
     if actual_match is None or required_match is None:
+        return False
+    if int(actual_match[2]) > 6 or int(required_match[2]) > 6:
         return False
     return all(int(a) >= int(r) for a, r in zip(actual_match.groups(), required_match.groups()))
