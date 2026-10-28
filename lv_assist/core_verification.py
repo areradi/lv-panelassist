@@ -1,23 +1,9 @@
-from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Callable, Tuple
 import math
 
 
-class ValidationStatus(str, Enum):
-    """وضعیت‌های چهارگانه استاندارد با معنای مهندسی صریح."""
-    COMPLETED = "COMPLETED"
-    WARNING = "WARNING"
-    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
-    ERROR = "ERROR"
-
-
-STATUS_SEVERITY_ORDER = {
-    ValidationStatus.COMPLETED: 0,
-    ValidationStatus.WARNING: 1,
-    ValidationStatus.INSUFFICIENT_DATA: 2,
-    ValidationStatus.ERROR: 3,
-}
+from lv_assist.result_contract import ValidationStatus, worst_status
 
 
 @dataclass
@@ -30,13 +16,23 @@ class CheckResult:
     cause: str = ""
     effect: str = ""
     recommended_action: str = ""
+    scope: str = "CHECK"
+    subject_id: str = ""
+    input_values: dict = field(default_factory=dict)
+    result_value: Optional[float] = None
+    unit: Optional[str] = None
+    limit: Optional[float] = None
+    method: str = "UNSPECIFIED"
+    source_ref: Optional[str] = None
+    assumptions: List[str] = field(default_factory=list)
+
+    @property
+    def reason(self) -> str:
+        return self.cause or self.effect or self.title
 
 
 def aggregate_status(results: List[CheckResult]) -> ValidationStatus:
-    if not results:
-        return ValidationStatus.INSUFFICIENT_DATA
-    worst = max(results, key=lambda r: STATUS_SEVERITY_ORDER[r.status])
-    return worst.status
+    return worst_status(r.status for r in results)
 
 
 @dataclass

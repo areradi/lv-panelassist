@@ -9,6 +9,7 @@ from lv_assist.models import (
 from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository, catalog_repo
 from lv_assist.busbar import BusbarEngine
 from lv_assist.i18n import tr
+from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
     ValidationStatus as AuditValidationStatus,
@@ -1102,20 +1103,13 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
     با مقدار محاسبه‌شده، روش تأیید، قاعده مرجع و وضعیت."""
     def _worst(rule_ids) -> VerificationStatus:
         rel = [v for v in validations if v.rule_id in rule_ids]
-        if not rel:
-            return VerificationStatus.NOT_VERIFIED
-        if any(v.status == ValidationStatus.ERROR for v in rel):
-            return VerificationStatus.FAIL
-        if any(v.status == ValidationStatus.WARNING for v in rel):
-            return VerificationStatus.WARNING
-        if any(v.status == ValidationStatus.INSUFFICIENT_DATA for v in rel):
-            return VerificationStatus.NOT_VERIFIED
-        return VerificationStatus.PASS
+        return VerificationStatus(VERIFICATION_STATUS[worst_status(v.status for v in rel)])
 
     items: List[DesignVerificationItem] = []
     enc = summary.selected_enclosure
     enc_pn = enc.part_number if enc else "-"
-    enc_verified = enc is not None and enc.data_quality == DataQuality.REAL_VERIFIED
+    # Device-level quality is not evidence of an assembled enclosure test.
+    enc_verified = False
 
     # 10.2 — استحکام مصالح و قطعات (مقاومت در برابر خوردگی)
     items.append(DesignVerificationItem(
@@ -1152,10 +1146,17 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
     items.append(DesignVerificationItem(
         clause_ref="10.5", title=tr("dv_10_5_t"), requirement=tr("dv_10_5_r"),
         method=VerificationMethod.CALCULATION,
-        status=VerificationStatus.PASS if n_pe == len(feeders) else VerificationStatus.FAIL,
+        status=_worst(["RULE-PE-006"]),
         computed_value=tr("dv_10_5_val", a=n_pe, b=len(feeders)),
         evidence=tr("dv_10_5_ev", a=summary.recommended_pe_busbar_spec, b=project.earthing_system.value),
-        rule_ids=[]))
+        rule_ids=["RULE-PE-006"]))
+
+    # Protective circuit continuity is a physical check, separate from sizing.
+    items.append(DesignVerificationItem(
+        clause_ref="10.5.2", title=tr("audit_pe_continuity"),
+        requirement=tr("audit_missing_assembly_evidence"),
+        method=VerificationMethod.TYPE_TEST, status=VerificationStatus.NOT_VERIFIED,
+        computed_value="-", evidence=tr("audit_missing_assembly_evidence"), rule_ids=[]))
 
     # 10.6 — اجزای کلیدزنی و قطعات (Icu و هماهنگی)
     ik_txt = summary.ik_bus_total_ka if summary.ik_bus_total_ka is not None else summary.ik_used_ka
@@ -1250,6 +1251,14 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
         computed_value=tr("dv_10_13_val", pn=enc_pn),
         evidence=tr("dv_10_13_ev"),
         rule_ids=[]))
+
+    # Calculated recommendations and catalog labels are not Clause 10 evidence.
+    # No assembly test document or reviewer workflow exists yet. Preserve an
+    # actual failed check, but never turn an unevidenced recommendation into PASS.
+    for item in items:
+        if item.status != VerificationStatus.FAIL:
+            item.status = VerificationStatus.NOT_VERIFIED
+        item.evidence = tr("audit_missing_assembly_evidence") + " | " + item.evidence
 
     n_pass = sum(1 for it in items if it.status == VerificationStatus.PASS)
     n_warn = sum(1 for it in items if it.status == VerificationStatus.WARNING)

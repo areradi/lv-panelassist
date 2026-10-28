@@ -2379,7 +2379,7 @@ class TestPhase11BusbarAndMotorIk:
         for lang in ("fa", "en", "de"):
             with open(base + "/" + lang + ".json", encoding="utf-8") as fh:
                 data[lang] = json.load(fh)
-        assert len(data["fa"]) == len(data["en"]) == len(data["de"]) == 849
+        assert set(data["fa"]) == set(data["en"]) == set(data["de"])
         for key in ("val_bus_028_desc", "val_bus_028_warn_desc", "val_bus_028_ev",
                     "val_bus_028_cons", "val_bus_028_action", "val_mot_029_desc",
                     "val_mot_029_noik_desc", "val_mot_029_ev", "val_mot_029_cons",
@@ -2404,24 +2404,24 @@ class TestPhase12DesignVerification:
         from lv_assist.engine import build_design_verification
         project, outs, summary, validations = self._demo()
         report = build_design_verification(project, outs, summary, validations)
-        assert len(report.items) == 12
+        assert len(report.items) == 13
         clauses = [it.clause_ref for it in report.items]
-        for expected in ("10.2", "10.3", "10.4", "10.5", "10.6", "10.7", "10.8",
+        for expected in ("10.2", "10.3", "10.4", "10.5", "10.5.2", "10.6", "10.7", "10.8",
                          "10.9", "10.10", "10.11", "10.12", "10.13"):
             assert expected in clauses
         assert all(it.title and it.requirement and it.computed_value for it in report.items)
 
-    def test_demo_project_conforms(self):
+    def test_demo_without_assembly_evidence_is_not_verified(self):
         from lv_assist.engine import build_design_verification
         from lv_assist.models import VerificationStatus
         project, outs, summary, validations = self._demo()
         report = build_design_verification(project, outs, summary, validations)
         assert not any(it.status == VerificationStatus.FAIL for it in report.items)
-        assert report.conclusion_status in (VerificationStatus.PASS, VerificationStatus.WARNING)
+        assert report.conclusion_status == VerificationStatus.NOT_VERIFIED
         by_clause = {it.clause_ref: it for it in report.items}
-        assert by_clause["10.4"].status == VerificationStatus.PASS
+        assert by_clause["10.4"].status == VerificationStatus.NOT_VERIFIED
         assert by_clause["10.9"].method.value == "DESIGN_RULE"
-        assert by_clause["10.11"].status == VerificationStatus.PASS
+        assert by_clause["10.11"].status == VerificationStatus.NOT_VERIFIED
         assert "RULE-BUS-025" in by_clause["10.11"].rule_ids
         assert by_clause["10.10"].method.value == "CALCULATION"
 
@@ -2457,9 +2457,9 @@ class TestPhase12DesignVerification:
         report = build_design_verification(project, outs, summary, validations)
         by_clause = {it.clause_ref: it for it in report.items}
         if summary.effective_ip_str != project.target_ip:
-            assert by_clause["10.3"].status == VerificationStatus.WARNING
+            assert by_clause["10.3"].status == VerificationStatus.NOT_VERIFIED
         else:
-            assert by_clause["10.3"].status == VerificationStatus.PASS
+            assert by_clause["10.3"].status == VerificationStatus.NOT_VERIFIED
 
     def test_html_report_generates_with_items(self, tmp_path):
         from lv_assist.engine import build_design_verification
@@ -2505,7 +2505,7 @@ class TestPhase12DesignVerification:
         for lang in ("fa", "en", "de"):
             with open(base + "/" + lang + ".json", encoding="utf-8") as fh:
                 data[lang] = json.load(fh)
-        assert len(data["fa"]) == len(data["en"]) == len(data["de"]) == 849
+        assert set(data["fa"]) == set(data["en"]) == set(data["de"])
         for key in ("btn_dv", "tip_dv", "dv_title", "dv_subtitle", "dv_h_clause",
                     "dv_h_item", "dv_h_req", "dv_h_method", "dv_h_value", "dv_h_evidence",
                     "dv_h_rules", "dv_h_status", "dv_h_proj", "dv_h_items", "dv_gen_by",
@@ -2657,7 +2657,7 @@ class TestPhase13Spd:
         for lang in ("fa", "en", "de"):
             with open(base / f"{lang}.json", encoding="utf-8") as fh:
                 data[lang] = json.load(fh)
-        assert len(data["fa"]) == len(data["en"]) == len(data["de"]) == 849
+        assert set(data["fa"]) == set(data["en"]) == set(data["de"])
         for key in ("val_spd_none_desc", "val_spd_none_cons", "val_spd_none_action",
                     "val_spd_030_desc", "val_spd_030_ev", "val_spd_030_cons",
                     "val_spd_030_err_desc", "val_spd_030_err_ev", "val_spd_030_err_cons",
@@ -2791,7 +2791,7 @@ class TestPhase14EplanFieldTest:
         for lang in ("fa", "en", "de"):
             with open(base / f"{lang}.json", encoding="utf-8") as fh:
                 data[lang] = json.load(fh)
-        assert len(data["fa"]) == len(data["en"]) == len(data["de"]) == 849
+        assert set(data["fa"]) == set(data["en"]) == set(data["de"])
         keys = ["btn_eplan_test_kit", "tip_eplan_test_kit", "msg_test_kit_done",
                 "eft_title", "eft_subtitle", "eft_project", "eft_date", "eft_kit_files",
                 "eft_devices", "eft_s1_t", "eft_s1_p1", "eft_s1_p2", "eft_s2_t",
@@ -2893,7 +2893,7 @@ class TestPhase15SpdInstallation:
         for lang in ("fa", "en", "de"):
             with open(base / f"{lang}.json", encoding="utf-8") as fh:
                 data[lang] = json.load(fh)
-        assert len(data["fa"]) == len(data["en"]) == len(data["de"]) == 849
+        assert set(data["fa"]) == set(data["en"]) == set(data["de"])
         for key in ("xl_g_spd_inst",
                     "val_spd_032_warn_desc", "val_spd_032_warn_ev", "val_spd_032_warn_cons",
                     "val_spd_032_warn_action", "val_spd_032_err_desc", "val_spd_032_err_ev",
