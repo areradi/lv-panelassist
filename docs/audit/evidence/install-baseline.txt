@@ -1,0 +1,18 @@
+Requirement already satisfied: pydantic<3.0,>=2.10 in ./.venv/lib/python3.12/site-packages (from -r /workspace/lv-panelassist/requirements.txt (line 1)) (2.14.1)
+Requirement already satisfied: openpyxl<4.0,>=3.1 in ./.venv/lib/python3.12/site-packages (from -r /workspace/lv-panelassist/requirements.txt (line 2)) (3.1.5)
+Requirement already satisfied: customtkinter<7.0,>=5.2 in ./.venv/lib/python3.12/site-packages (from -r /workspace/lv-panelassist/requirements.txt (line 3)) (6.0.0)
+Requirement already satisfied: defusedxml<0.8,>=0.7 in ./.venv/lib/python3.12/site-packages (from -r /workspace/lv-panelassist/requirements.txt (line 4)) (0.7.1)
+Requirement already satisfied: pytest<10.0,>=8.0 in ./.venv/lib/python3.12/site-packages (from -r requirements-dev.txt (line 2)) (9.2.0)
+Requirement already satisfied: annotated-types>=0.6.0 in ./.venv/lib/python3.12/site-packages (from pydantic<3.0,>=2.10->-r /workspace/lv-panelassist/requirements.txt (line 1)) (0.8.0)
+Requirement already satisfied: pydantic-core==2.50.1 in ./.venv/lib/python3.12/site-packages (from pydantic<3.0,>=2.10->-r /workspace/lv-panelassist/requirements.txt (line 1)) (2.50.1)
+Requirement already satisfied: typing-extensions>=4.16.0 in ./.venv/lib/python3.12/site-packages (from pydantic<3.0,>=2.10->-r /workspace/lv-panelassist/requirements.txt (line 1)) (4.16.0)
+Requirement already satisfied: typing-inspection>=0.4.4 in ./.venv/lib/python3.12/site-packages (from pydantic<3.0,>=2.10->-r /workspace/lv-panelassist/requirements.txt (line 1)) (0.4.4)
+Requirement already satisfied: et-xmlfile in ./.venv/lib/python3.12/site-packages (from openpyxl<4.0,>=3.1->-r /workspace/lv-panelassist/requirements.txt (line 2)) (2.0.0)
+Requirement already satisfied: darkdetect in ./.venv/lib/python3.12/site-packages (from customtkinter<7.0,>=5.2->-r /workspace/lv-panelassist/requirements.txt (line 3)) (0.8.0)
+Requirement already satisfied: packaging in ./.venv/lib/python3.12/site-packages (from customtkinter<7.0,>=5.2->-r /workspace/lv-panelassist/requirements.txt (line 3)) (26.3)
+Requirement already satisfied: iniconfig>=2 in ./.venv/lib/python3.12/site-packages (from pytest<10.0,>=8.0->-r requirements-dev.txt (line 2)) (2.3.1)
+Requirement already satisfied: pluggy<2,>=1.6 in ./.venv/lib/python3.12/site-packages (from pytest<10.0,>=8.0->-r requirements-dev.txt (line 2)) (1.7.0)
+Requirement already satisfied: pygments>=2.15 in ./.venv/lib/python3.12/site-packages (from pytest<10.0,>=8.0->-r requirements-dev.txt (line 2)) (2.21.0)
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.2
+[notice] To update, run: python -m pip install --upgrade pip
