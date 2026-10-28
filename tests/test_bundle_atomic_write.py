@@ -42,7 +42,7 @@ def test_actual_success_replaces_bundle_and_retains_expected_assets(tmp_path):
     count = LVAssistApp.build_document_bundle(str(path), project, feeders, summary, checks, include_pdf=False)
     with ZipFile(path) as archive:
         assert archive.testzip() is None
-        assert count == len(archive.namelist()) == 19
+        assert count == len(archive.namelist()) == 21
         assert archive.read('00_CSV_README.txt').decode() == tr('csv_bundle_note')
         assert '01_Design_Output.xlsx' in archive.namelist()
         assert '02_Engineering_Report.html' in archive.namelist()

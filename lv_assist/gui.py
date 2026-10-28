@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import csv
+import json
 import sys
 import webbrowser
 import zipfile
@@ -22,7 +23,7 @@ from lv_assist.catalog import CatalogRepository
 from lv_assist.engine import EngineeringEngine, build_design_verification
 from lv_assist.exporters import ExcelExporter, PrintableReportExporter, DesignVerificationExporter
 from lv_assist.csv_export import CsvMode
-from lv_assist.bundle_export import build_bundle_atomic
+from lv_assist.bundle_export import BundleExportResult, build_bundle_atomic, export_manifest
 from lv_assist.outputs import SldGenerator, TccGenerator, PdfExporter, EplanExporter, EplanPartsExporter
 from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.dxf_export import ControlLadderDxfExporter
@@ -754,8 +755,11 @@ class LVAssistApp(ctk.CTk):
         if not path: return
         f_outs, summary, validations = self.last_results
         try:
-            n = LVAssistApp.build_document_bundle(path, self.current_project, f_outs, summary, validations)
-            messagebox.showinfo(tr("msg_success"), tr("msg_export_all_done", n=n))
+            result = LVAssistApp.build_document_bundle_result(path, self.current_project, f_outs, summary, validations)
+            if result.pdf_status == "FAILED":
+                messagebox.showwarning(tr("msg_warning"), tr("bundle_pdf_failed", reason=tr("msg_pdf_" + result.pdf_reason)))
+            else:
+                messagebox.showinfo(tr("msg_success"), tr("msg_export_all_done", n=result.file_count))
         except (OSError, zipfile.BadZipFile):
             messagebox.showerror(tr("msg_error"), tr("bundle_write_failed"))
         except Exception as ex:
@@ -763,12 +767,23 @@ class LVAssistApp(ctk.CTk):
 
     @staticmethod
     def build_document_bundle(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> int:
-        """Publish only a complete ZIP; keep the old bundle on failure."""
-        return build_bundle_atomic(zip_path, lambda path: LVAssistApp._build_document_bundle(
-            path, project, f_outs, summary, validations, include_pdf))
+        """Compatibility API returning the number of archived files."""
+        return LVAssistApp.build_document_bundle_result(
+            zip_path, project, f_outs, summary, validations, include_pdf).file_count
 
     @staticmethod
-    def _build_document_bundle(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool) -> int:
+    def build_document_bundle_result(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> BundleExportResult:
+        result = None
+        def build(path):
+            nonlocal result
+            result = LVAssistApp._build_document_bundle(path, project, f_outs, summary, validations, include_pdf)
+            return result.file_count
+        build_bundle_atomic(zip_path, build)
+        assert result is not None
+        return result
+
+    @staticmethod
+    def _build_document_bundle(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool) -> BundleExportResult:
         dv_report = build_design_verification(project, f_outs, summary, validations)
         files = {
             "01_Design_Output.xlsx": lambda p: ExcelExporter.export_to_excel(p, project, f_outs, summary, validations),
@@ -806,12 +821,22 @@ class LVAssistApp(ctk.CTk):
                 for path in EplanFieldTestKit.export_kit(field_dir, project, f_outs, summary):
                     zf.write(path, arcname="14_EPLAN_FieldTest/" + os.path.basename(path))
                     count += 1
+                pdf_status, pdf_reason = "NOT_REQUESTED", None
                 if include_pdf:
                     pdf_path = os.path.join(tmp, "02_Engineering_Report.pdf")
-                    if PdfExporter.export_html_to_pdf(os.path.join(tmp, "02_Engineering_Report.html"), pdf_path):
+                    pdf = PdfExporter.export_html_to_pdf_result(os.path.join(tmp, "02_Engineering_Report.html"), pdf_path)
+                    pdf_status, pdf_reason = ("GENERATED", None) if pdf.success else ("FAILED", pdf.reason)
+                    if pdf.success:
                         zf.write(pdf_path, arcname="02_Engineering_Report.pdf")
                         count += 1
-        return count
+                manifest = export_manifest(zf.namelist(), summary.run_metadata, i18n.get_language(), pdf_status, pdf_reason)
+                zf.writestr("00_Export_Manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+                note = tr("bundle_status_scope") + "\n" + tr("bundle_pdf_failed_status" if pdf_status == "FAILED" else "bundle_pdf_" + pdf_status.lower())
+                if pdf_status == "FAILED":
+                    note += "\n" + tr("msg_pdf_" + pdf_reason)
+                zf.writestr("00_Export_Status.txt", note)
+                count += 2
+        return BundleExportResult(count, pdf_status, pdf_reason)
 
     def action_export_report(self):
         if not self._results_are_current(): return

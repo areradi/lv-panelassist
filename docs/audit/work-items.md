@@ -329,3 +329,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [bundle publication policy](../engineering/bundle_atomic_write_policy.md).
 - **Remaining risks:** omitted-format manifest, PDF printing, all-format parity,
   Windows field tests and engineering verification remain open. P0 stays OPEN.
+
+## Review unit 18 — Bundle inventory and explicit PDF outcomes
+
+- **Observed:** requested but failed PDF was silently omitted, while GUI reported
+  normal completion.
+- **Expected:** distinguish generated/failed/not-requested PDF in the archive;
+  warn on partial requested output without hiding other available documents.
+- **Implementation:** JSON inventory with run metadata, localized status note,
+  frozen structured result plus compatible integer API, specific PDF failure code
+  and GUI warning. Atomic publication remains in use.
+- **Tests:** 15 new actual bundle/GUI cases in three languages plus 13 atomic cases;
+  asset counts updated only for the two new status/inventory files.
+- **Evidence:** [bundle status policy](../engineering/bundle_export_status_policy.md).
+- **Remaining risks:** real printing, full expected-format manifest, content hashes,
+  all-format parity and engineering verification remain open. P0 stays OPEN.

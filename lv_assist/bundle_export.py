@@ -2,8 +2,27 @@
 
 import os
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from zipfile import BadZipFile, ZipFile
+
+
+@dataclass(frozen=True)
+class BundleExportResult:
+    file_count: int
+    pdf_status: str
+    pdf_reason: str | None
+
+
+def export_manifest(names, metadata, locale, pdf_status, pdf_reason):
+    files = [{"path": name, "status": "GENERATED"} for name in names]
+    if pdf_status != "GENERATED":
+        files.append({"path": "02_Engineering_Report.pdf", "status": pdf_status,
+                      "reason": pdf_reason})
+    return {"schema_version": 1, "locale": locale, "preliminary": True,
+            "run_metadata": metadata.model_dump(mode="json") if metadata else None,
+            "pdf": {"status": pdf_status, "reason": pdf_reason}, "files": files,
+            "inventory_excludes": ["00_Export_Manifest.json", "00_Export_Status.txt"]}
 
 
 def build_bundle_atomic(filename, build):

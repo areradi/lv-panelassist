@@ -894,5 +894,10 @@
   "csv_bundle_note": "CSV files in this bundle are MACHINE/EPLAN interchange files with literal, unchanged tags. Do not open them in Excel or another spreadsheet. For spreadsheet use, export CSV separately and choose Yes for spreadsheet protection, or use 01_Design_Output.xlsx. Actual EPLAN import compatibility still requires field testing.",
   "csv_write_failed": "CSV could not be saved. The previous destination was preserved. Check free disk space, write permissions and whether the file is open in another application.",
   "xlsx_write_failed": "The Excel report could not be saved completely. The previous destination was preserved. Check disk space, folder permissions and whether the file is open in Excel.",
-  "bundle_write_failed": "The document bundle could not be saved completely. The previous destination was preserved. Check disk space, write permissions and whether the ZIP is open in another application."
+  "bundle_write_failed": "The document bundle could not be saved completely. The previous destination was preserved. Check disk space, write permissions and whether the ZIP is open in another application.",
+  "bundle_pdf_failed": "The bundle was saved, but PDF generation failed. Other documents are included. See 00_Export_Status.txt.\n{reason}",
+  "bundle_status_scope": "Export status only; generated files are preliminary and are not engineering approval. See 00_Export_Manifest.json for file inventory and run metadata.",
+  "bundle_pdf_generated": "PDF: generated.",
+  "bundle_pdf_not_requested": "PDF: not requested.",
+  "bundle_pdf_failed_status": "PDF: failed; not included."
 }
