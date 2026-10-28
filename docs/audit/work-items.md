@@ -429,3 +429,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [EPLAN publication policy](../engineering/eplan_export_preflight_policy.md).
 - **Remaining risks:** real EPLAN/Windows acceptance, separate verification report,
   immutable context and engineering sign-off remain open. P0 stays OPEN.
+
+## Review unit 25 — Preliminary design-checklist accepted-run publication
+
+- **Observed:** standalone checklist HTML accepted incomplete context and mutable
+  report statuses/evidence and wrote directly to the final path.
+- **Expected:** only the canonical preliminary checklist for one accepted run is
+  published; altered PASS/evidence cannot be smuggled into a run's report.
+- **Implementation:** complete feeder/check keywords, copied supplied report,
+  canonical pre/post report comparison, shared guarded atomic HTML publication,
+  GUI/bundle forwarding and localized stale/IO messages.
+- **Tests:** 27 new run/report/context/renderer/three-language GUI cases plus 19
+  result-contract cases; previous content/no-PASS assertions unchanged.
+- **Evidence:** [checklist publication policy](../engineering/design_checklist_preflight_policy.md).
+- **Remaining risks:** real evidence/reviewer workflow, immutable context, signing
+  and independent field/engineering acceptance remain open. P0 stays OPEN.

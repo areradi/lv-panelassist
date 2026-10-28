@@ -15,6 +15,7 @@ from lv_assist.engine import build_design_verification
 from lv_assist.i18n import tr, i18n
 from lv_assist.xlsx_export import save_workbook_atomic
 from lv_assist.report_export import export_current_report
+from lv_assist.export_preflight import ExportSnapshotError
 
 
 def _h(val) -> str:
@@ -488,7 +489,22 @@ class DesignVerificationExporter:
 
     @staticmethod
     def generate_html(filepath: str, project: ProjectSpec, summary: PanelSummaryOutput,
-                      report: DesignVerificationReport):
+                      report: DesignVerificationReport, *, feeders=None, validations=None):
+        if not isinstance(report, DesignVerificationReport):
+            raise ExportSnapshotError("Regenerate the design checklist from the current run")
+        supplied = report.model_copy(deep=True)
+        def render(path, p, outputs, s, checks):
+            expected = build_design_verification(p, outputs, s, checks)
+            canonical = expected.model_dump(mode="json")
+            if supplied.model_dump(mode="json") != canonical:
+                raise ExportSnapshotError("Regenerate the design checklist from the current run")
+            DesignVerificationExporter._render_html(path, p, s, expected)
+            if expected.model_dump(mode="json") != canonical:
+                raise ExportSnapshotError("Design checklist changed during rendering")
+        return export_current_report(filepath, project, feeders, summary, validations, render)
+
+    @staticmethod
+    def _render_html(filepath, project, summary, report):
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         lang = i18n.get_language()
         direction = i18n.direction()

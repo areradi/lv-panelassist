@@ -2482,7 +2482,7 @@ class TestPhase12DesignVerification:
         project, outs, summary, validations = self._demo()
         report = build_design_verification(project, outs, summary, validations)
         path = str(tmp_path / "dv.html")
-        DesignVerificationExporter.generate_html(path, project, summary, report)
+        DesignVerificationExporter.generate_html(path, project, summary, report, feeders=outs, validations=validations)
         content = open(path, encoding="utf-8").read()
         assert project.project_name in content
         for clause in ("10.2", "10.11", "10.13"):

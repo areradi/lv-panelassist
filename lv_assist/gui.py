@@ -799,7 +799,7 @@ class LVAssistApp(ctk.CTk):
         files = {
             "01_Design_Output.xlsx": lambda p: ExcelExporter.export_to_excel(p, project, f_outs, summary, validations),
             "02_Engineering_Report.html": lambda p: PrintableReportExporter.generate_html_report(p, project, f_outs, summary, validations),
-            "02_Design_Verification_Report.html": lambda p: DesignVerificationExporter.generate_html(p, project, summary, dv_report),
+            "02_Design_Verification_Report.html": lambda p: DesignVerificationExporter.generate_html(p, project, summary, dv_report, feeders=f_outs, validations=validations),
             "03_Single_Line_Diagram.svg": lambda p: SldGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "04_Time_Current_Curves.svg": lambda p: TccGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "05_Control_Circuits.svg": lambda p: ControlCircuitGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
@@ -883,7 +883,15 @@ class LVAssistApp(ctk.CTk):
                                             filetypes=[("HTML", "*.html")])
         if not path: return
         report = build_design_verification(self.current_project, f_outs, summary, validations)
-        DesignVerificationExporter.generate_html(path, self.current_project, summary, report)
+        try:
+            DesignVerificationExporter.generate_html(path, self.current_project, summary, report,
+                                                     feeders=f_outs, validations=validations)
+        except ExportSnapshotError:
+            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
+            return
+        except (OSError, UnicodeError):
+            messagebox.showerror(tr("msg_error"), tr("verification_write_failed"))
+            return
         webbrowser.open(f"file://{path}")
         messagebox.showinfo(tr("msg_success"), tr("msg_export_saved"))
 

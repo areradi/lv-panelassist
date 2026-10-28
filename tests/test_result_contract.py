@@ -52,7 +52,7 @@ def test_actual_demo_checks_have_auditable_contract_and_no_assembly_pass(tmp_pat
     assert all(item.source_ref and not item.reviewer and not item.evidence_document for item in report.items)
     from lv_assist.exporters import DesignVerificationExporter
     path = tmp_path / "checklist.html"
-    DesignVerificationExporter.generate_html(str(path), project, summary, report)
+    DesignVerificationExporter.generate_html(str(path), project, summary, report, feeders=outputs, validations=checks)
     content = path.read_text(encoding="utf-8")
     assert "badge-insufficient" in content
     assert 'badge badge-verified' not in content
