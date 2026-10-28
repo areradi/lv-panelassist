@@ -6,6 +6,7 @@ from lv_assist.result_contract import ValidationStatus
 from lv_assist.core_verification import CheckResult, ShortCircuitProfile, TripTimeEstimate
 from lv_assist.run_metadata import RunMetadata
 from lv_assist.i18n import tr
+from lv_assist.evidence_matching import exact_applicability, exact_value, valid_review_date
 
 class EarthingSystem(str, Enum):
     TN_S = "TN-S"
@@ -86,11 +87,24 @@ class PropertySource(BaseModel):
     applicability: dict[str, str] = Field(default_factory=dict)
     quality: DataQuality = DataQuality.ESTIMATED
 
+    @field_validator("value", mode="before")
+    @classmethod
+    def measurement_is_not_a_boolean(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("A property measurement cannot be a boolean numeric substitute")
+        return value
+
     def has_reviewed_evidence(self) -> bool:
         return bool(self.quality == DataQuality.REAL_VERIFIED
                     and self.source_type in (SourceType.MANUFACTURER, SourceType.STANDARD)
                     and self.source_document and self.revision and self.page_or_table
-                    and self.verified_at and self.verified_by and self.applicability)
+                    and valid_review_date(self.verified_at) and self.verified_by and self.applicability
+                    and self.value is not None and str(self.value).strip() and self.unit
+                    and all(key.strip() and value.strip() for key, value in self.applicability.items()))
+
+    def matches(self, value: object, unit: str, conditions: dict[str, object]) -> bool:
+        return (self.has_reviewed_evidence() and self.unit == unit
+                and exact_value(self.value, value) and exact_applicability(self.applicability, conditions))
 
     @model_validator(mode="after")
     def incomplete_source_is_estimated(self):
@@ -220,14 +234,17 @@ class CatalogDevice(BaseModel):
 
     @model_validator(mode="after")
     def unsupported_quality_is_estimated(self):
-        # Whole-device quality cannot be inferred from one reviewed property.
-        critical = {"power_loss_w", "dimensions", "thermal", "ip"}
-        if self.device_type in ("MCB", "MCCB", "MPCB"):
-            critical |= {"icu_ka", "trip_curve"}
-        if not critical <= self.property_sources.keys() or not all(
-                source.has_reviewed_evidence() for source in self.property_sources.values()):
-            self.data_quality = DataQuality.ESTIMATED
+        # There is no aggregate device-review contract in this schema. Named
+        # buckets such as "dimensions"/"thermal" do not bind actual attributes.
+        # Retain property evidence without inferring whole-device certification.
+        self.data_quality = DataQuality.ESTIMATED
         return self
+
+    def has_property_evidence(self, name: str, value: object, unit: str,
+                              conditions: dict[str, object]) -> bool:
+        source = self.property_sources.get(name)
+        expected = {**conditions, "part_number": self.part_number, "manufacturer": self.manufacturer}
+        return source is not None and source.matches(value, unit, expected)
 
 class SelectivityRuleRecord(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)

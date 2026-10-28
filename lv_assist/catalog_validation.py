@@ -62,7 +62,8 @@ def validated_rules(rules: Iterable[SelectivityRuleRecord]) -> list[SelectivityR
         # Two limits for the same conditions must not be resolved by taking max.
         key = (rule.upstream_series, rule.upstream_min_in_a, rule.downstream_series,
                rule.downstream_max_in_a, rule.upstream_part_number, rule.downstream_part_number,
-               rule.operating_voltage_v, rule.upstream_setting_a, rule.downstream_setting_a)
+               rule.operating_voltage_v, rule.upstream_setting_a, rule.downstream_setting_a,
+               tuple(sorted(rule.source.applicability.items())) if rule.source is not None else ())
         if key in seen:
             raise CatalogValidationError("Duplicate/conflicting selectivity rule conditions")
         seen.add(key)

@@ -24,13 +24,12 @@ class CatalogDataProvenance:
     last_audited_date: Optional[str] = None
 
     def is_production_verified(self) -> bool:
-        return (
-            self.confidence == DataConfidenceLevel.REAL_VERIFIED
-            and bool(self.datasheet_title_or_id.strip())
-            and bool(self.datasheet_edition_date.strip())
-            and bool(self.last_audited_by and self.last_audited_by.strip())
-            and bool(self.last_audited_date and self.last_audited_date.strip())
-        )
+        """Legacy bibliography has no values/units/critical scope approval.
+
+        Retained for compatibility, but it cannot establish production approval.
+        Use typed PropertySource matching for a single scoped property instead.
+        """
+        return False
 
 
 def evaluate_selectivity_status(

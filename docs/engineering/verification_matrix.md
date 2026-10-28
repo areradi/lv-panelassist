@@ -17,7 +17,7 @@ not currently available and requested that unverified status be retained.
 | Earthing systems | Unsupported loop/ADS scope explicitly unverified for TN-S/TN-C-S/TT/IT | Validated TN/TT/IT modelling and independent references still required |
 | Trip/motor coordination | Missing curve unknown; known approximate curve/20 ms explicitly estimated | Type 1/2, VFD/soft starter, exact settings/evidence remain open |
 | Selectivity / cascading | Exact parts/voltage/settings/review required; ratio never definite proof/disproof | Synthetic matching tests; no real manufacturer tables reviewed; backup separate and unimplemented |
-| Property provenance | Property fields present; incomplete evidence/device label downgraded | Synthetic metadata tests; reviewed real catalog and import/publish pipeline absent |
+| Property provenance | Exact value/unit/subject/conditions matching used in engine Icu and selectivity; named buckets cannot promote whole device; invalid/duplicate catalog input rejected before results | `test_catalog_input_gate.py`, `test_property_evidence_binding.py`; [property policy](property_evidence_policy.md), [catalog policy](catalog_input_policy.md); real evidence, aggregate review and complete import/publish pipeline still absent |
 | IP | Solid/water digits compared separately; assembly Clause 10 unverified | Dimension comparisons; fan/gland/assembly evidence still absent |
 | Busbar/thermal | Existing calculations retained; not assembly proof in design checklist | Formula/conditions/manufacturer review and validation remain open |
 | Input validity | Finite Pydantic data, whitespace IDs, 1P/3P, unique/nonempty feeder set, revalidation | Invalid/duplicate/mutated-input tests; full overflow and all importer validation still open |

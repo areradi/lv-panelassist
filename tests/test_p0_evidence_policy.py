@@ -117,14 +117,20 @@ def test_manufacturer_rule_requires_exact_pair_voltage_settings_and_recorded_rev
         downstream_series="D", downstream_max_in_a=1000, selectivity_limit_is_ka=36,
         catalog_reference="synthetic test", upstream_part_number="U", downstream_part_number="D",
         operating_voltage_v=400, upstream_setting_a=200, downstream_setting_a=100,
-        source=source(verified_by=None) if mismatch == "reviewer" else source())
+        source=source(verified_by=None if mismatch == "reviewer" else "synthetic-test-reviewer",
+                      applicability={"upstream_part_number": "U", "downstream_part_number": "D",
+                                     "upstream_manufacturer": "T", "downstream_manufacturer": "T",
+                                     "voltage_v": "400", "upstream_setting_a": "200",
+                                     "downstream_setting_a": "100", "frequency_hz": "50",
+                                     "ambient_temp_c": "40"}))
     monkeypatch.setattr(SiemensSelectivityRepository, "get_selectivity_rules", classmethod(lambda cls: [rule]))
     upstream = CatalogDevice(part_number="X" if mismatch == "part" else "U", rated_current_in_a=200,
                              manufacturer="T", series="U", device_type="MCCB")
     downstream = CatalogDevice(part_number="D", rated_current_in_a=100,
                                manufacturer="T", series="D", device_type="MCB")
     state, _, _ = SiemensSelectivityRepository.evaluate_pair(upstream, downstream, 25,
-        415 if mismatch == "voltage" else 400, 160 if mismatch == "setting" else 200, 100)
+        415 if mismatch == "voltage" else 400, 160 if mismatch == "setting" else 200, 100,
+        frequency_hz=50, ambient_temp_c=40)
     assert (state == SelectivityEvalState.VERIFIED_TOTAL) == (mismatch is None)
 
 

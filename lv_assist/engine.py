@@ -289,7 +289,26 @@ class EngineeringEngine:
 
     def _icu_check(self, dev: CatalogDevice, project: ProjectSpec, ik_ka: Optional[float], is_preliminary: bool = False):
         icu = self._device_icu_ka(dev, project)
-        return _audit_verify_icu_status(icu, ik_ka, is_preliminary)
+        matches = dev is not None and dev.has_property_evidence("icu_ka", icu, "kA", {
+            "voltage_v": getattr(project, "nominal_voltage_v", None),
+            "frequency_hz": getattr(project, "frequency_hz", None),
+            "ambient_temp_c": getattr(project, "max_internal_temp_c", None),
+        })
+        check = _audit_verify_icu_status(icu, ik_ka, is_preliminary or not matches)
+        check.method = "Icu >= Ik; exact per-property evidence and operating conditions required"
+        check.input_values.update({"property_evidence_matches": matches})
+        if matches:
+            source = dev.property_sources["icu_ka"]
+            check.source_ref = (f"{source.source_document} | {source.revision} | {source.page_or_table}"
+                                f" | {source.verified_by} | {source.verified_at}")
+            check.measured_or_calc_value = f"{check.measured_or_calc_value or '?'} | {check.source_ref}"
+        else:
+            check.assumptions.append(tr("audit_property_evidence_missing"))
+            check.measured_or_calc_value = (f"{check.measured_or_calc_value or '?'} | "
+                                            + tr("audit_property_evidence_missing"))
+            if check.status == ValidationStatus.WARNING:
+                check.cause = tr("audit_property_evidence_missing")
+        return check
 
     @staticmethod
     def _ik_from_transformer(project: ProjectSpec) -> float | None:
@@ -683,12 +702,11 @@ class EngineeringEngine:
         icu_check = (self._icu_check(sel_prot, project, ik_total_ka, is_preliminary=True)
                      if sel_prot is not None else audit_verify_breaking_capacity_icu(None, ik_total_ka))
         icu_check.title = tr("audit_icu_title")
-        icu_check.input_values = {"icu_ka": protection_icu_ka, "ik_at_device_ka": ik_total_ka,
-                                  "voltage_v": project.nominal_voltage_v}
+        icu_check.input_values.update({"icu_ka": protection_icu_ka, "ik_at_device_ka": ik_total_ka,
+                                      "voltage_v": project.nominal_voltage_v})
         icu_check.result_value = protection_icu_ka
         icu_check.limit = ik_total_ka
         icu_check.unit = "kA"
-        icu_check.method = "Icu >= Ik; manufacturer property evidence not recorded"
         icu_check.recommended_action = tr("audit_icu_action")
         vals.append(ValidationResult.from_check(icu_check, rule_id="RULE-PROT-SC-001",
                     subject_id=f.feeder_id, standard_ref="IEC 60947-2"))
@@ -961,10 +979,9 @@ class EngineeringEngine:
         main_check.title = tr("audit_icu_title")
         main_check.recommended_action = tr("audit_icu_action")
         main_check.scope = "PANEL"
-        main_check.input_values = {"icu_ka": self._device_icu_ka(main_breaker, project) if main_breaker else None,
-                                    "ik_at_device_ka": ik_total_ka, "voltage_v": project.nominal_voltage_v}
+        main_check.input_values.update({"icu_ka": self._device_icu_ka(main_breaker, project) if main_breaker else None,
+                                       "ik_at_device_ka": ik_total_ka, "voltage_v": project.nominal_voltage_v})
         main_check.unit = "kA"
-        main_check.method = "Icu >= Ik; exact manufacturer evidence required"
         vals.append(ValidationResult.from_check(main_check, rule_id="RULE-MAIN-SC-001",
                     subject_id="PANEL", standard_ref="IEC 60947-2"))
 
@@ -1019,7 +1036,8 @@ class EngineeringEngine:
                     continue
                 sel_state, is_limit, ref_doc = SiemensSelectivityRepository.evaluate_pair(
                     main_breaker, f.selected_protection, ik_total_ka,
-                    operating_voltage_v=project.nominal_voltage_v)
+                    operating_voltage_v=project.nominal_voltage_v,
+                    frequency_hz=project.frequency_hz, ambient_temp_c=project.max_internal_temp_c)
                 f.selectivity_state = sel_state; f.selectivity_limit_is_ka = is_limit; f.selectivity_ref_doc = ref_doc
 
                 if sel_state == SelectivityEvalState.VERIFIED_TOTAL:

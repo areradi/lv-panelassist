@@ -3,6 +3,7 @@
 import json
 import sqlite3
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -110,7 +111,7 @@ def test_conflicting_rule_limits_cannot_reach_project_results(monkeypatch):
 def test_catalog_cli_reports_structural_scope_and_fails_without_writing(tmp_path):
     path = database(tmp_path)
     before = path.read_bytes()
-    command = [str(ROOT / ".venv/bin/python"), "scripts/validate_catalog.py", "--db", str(path)]
+    command = [sys.executable, "scripts/validate_catalog.py", "--db", str(path)]
     result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
     assert result.returncode == 0
     assert json.loads(result.stdout)["engineering_verification"] == "NOT_VERIFIED"
@@ -121,3 +122,20 @@ def test_catalog_cli_reports_structural_scope_and_fails_without_writing(tmp_path
     result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
     assert result.returncode == 1 and json.loads(result.stdout)["status"] == "INVALID"
     assert path.read_bytes() == invalid_before
+
+
+@pytest.mark.parametrize("value,expected", [(0, None), (None, None), (36, 36), (-1, "ERROR"),
+                                          (float("inf"), "ERROR"), ("NaN", "ERROR")])
+def test_normalized_icu_lookup_never_returns_an_invalid_positive_candidate(tmp_path, value, expected):
+    path = database(tmp_path)
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE device_breaking_capacities(device_id TEXT, voltage_v REAL, icu_ka REAL)")
+        connection.execute("INSERT INTO device_breaking_capacities VALUES('TEST-PART', 400, ?)", (value,))
+    before = path.read_bytes()
+    repository = CatalogRepository(path)
+    if expected == "ERROR":
+        with pytest.raises(CatalogValidationError, match="Icu"):
+            repository.get_device_icu_at_voltage("TEST-PART", 400)
+    else:
+        assert repository.get_device_icu_at_voltage("TEST-PART", 400) == expected
+    assert path.read_bytes() == before

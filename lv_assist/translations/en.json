@@ -877,5 +877,6 @@
   "audit_ik_feeder_end_min_lpe": "Ik min at feeder end, L-PE",
   "audit_ik_bus_total_source": "Panel-bus total used for comparison includes the separate preliminary motor contribution; no independent verification.",
   "audit_overload_invalid": "The stated setting/device range or cable/current inequalities are inconsistent. Review the actual device and settings.",
-  "audit_ir_frame_proposal": "Actual Ir is unknown. Frame {frame} A is used only for a conservative cable proposal, not overload verification."
+  "audit_ir_frame_proposal": "Actual Ir is unknown. Frame {frame} A is used only for a conservative cable proposal, not overload verification.",
+  "audit_property_evidence_missing": "No reviewed property source matches the exact value, unit, device identity and operating conditions; this remains a numerical candidate."
 }

@@ -42,7 +42,7 @@ def test_icu_check_returns_four_state_results():
     dummy = types.SimpleNamespace(_device_icu_ka=lambda dev, project: 25.0)
     assert eng.EngineeringEngine._icu_check(dummy, None, None, 30.0).status.value == "ERROR"
     assert eng.EngineeringEngine._icu_check(dummy, None, None, None).status.value == "INSUFFICIENT_DATA"
-    assert eng.EngineeringEngine._icu_check(dummy, None, None, 20.0).status.value == "COMPLETED"
+    assert eng.EngineeringEngine._icu_check(dummy, None, None, 20.0).status.value == "WARNING"
 
 
 def test_feeder_ik_profile_separates_source_and_feeder_end():

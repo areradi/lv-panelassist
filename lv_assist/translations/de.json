@@ -877,5 +877,6 @@
   "audit_ik_feeder_end_min_lpe": "Ik min am Abgangsende, L-PE",
   "audit_ik_bus_total_source": "Der Vergleichswert an der Sammelschiene enthält den separat vorläufig geschätzten Motorbeitrag; nicht unabhängig verifiziert.",
   "audit_overload_invalid": "Angegebene Einstellung/Gerätebereich oder Kabel-/Strombedingungen sind widersprüchlich. Tatsächliches Gerät und Einstellungen prüfen.",
-  "audit_ir_frame_proposal": "Tatsächliches Ir unbekannt. Der Bemessungsstrom {frame} A dient nur dem konservativen Kabelvorschlag, nicht dem Überlastnachweis."
+  "audit_ir_frame_proposal": "Tatsächliches Ir unbekannt. Der Bemessungsstrom {frame} A dient nur dem konservativen Kabelvorschlag, nicht dem Überlastnachweis.",
+  "audit_property_evidence_missing": "Keine geprüfte Eigenschaftsquelle stimmt mit exaktem Wert, Einheit, Geräteidentität und Betriebsbedingungen überein; dies bleibt ein rechnerischer Vorschlag."
 }

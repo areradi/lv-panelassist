@@ -365,7 +365,13 @@ class SiemensSelectivityRepository:
     def evaluate_pair(cls, upstream: CatalogDevice, downstream: CatalogDevice,
                       prospective_ik_ka: float | None, operating_voltage_v: float | None = None,
                       upstream_setting_a: float | None = None,
-                      downstream_setting_a: float | None = None):
+                      downstream_setting_a: float | None = None, *,
+                      frequency_hz: float | None = None, ambient_temp_c: float | None = None):
+        for name, value in (("Ik", prospective_ik_ka), ("voltage", operating_voltage_v),
+                            ("upstream setting", upstream_setting_a), ("downstream setting", downstream_setting_a),
+                            ("frequency", frequency_hz), ("ambient temperature", ambient_temp_c)):
+            if value is not None and (not math.isfinite(value) or (name != "ambient temperature" and value <= 0)):
+                raise CatalogValidationError(f"Invalid selectivity {name}")
         ratio = upstream.rated_current_in_a / max(1.0, downstream.rated_current_in_a)
 
         matching_rules = [
@@ -375,16 +381,28 @@ class SiemensSelectivityRepository:
             and operating_voltage_v is not None and r.operating_voltage_v == operating_voltage_v
             and upstream_setting_a is not None and r.upstream_setting_a == upstream_setting_a
             and downstream_setting_a is not None and r.downstream_setting_a == downstream_setting_a
-            and r.source is not None and r.source.has_reviewed_evidence()
-            and r.source.value == r.selectivity_limit_is_ka and r.source.unit == "kA"
+            and r.source is not None and r.source.matches(r.selectivity_limit_is_ka, "kA", {
+                "upstream_part_number": upstream.part_number, "downstream_part_number": downstream.part_number,
+                "upstream_manufacturer": upstream.manufacturer, "downstream_manufacturer": downstream.manufacturer,
+                "voltage_v": operating_voltage_v, "upstream_setting_a": upstream_setting_a,
+                "downstream_setting_a": downstream_setting_a, "frequency_hz": frequency_hz,
+                "ambient_temp_c": ambient_temp_c,
+            })
         ]
 
         if matching_rules and prospective_ik_ka is not None:
-            best_rule = max(matching_rules, key=lambda x: x.selectivity_limit_is_ka)
+            if len(matching_rules) != 1:
+                raise CatalogValidationError("Ambiguous reviewed selectivity rules; reconcile the evidence before use")
+            best_rule = matching_rules[0]
+            proof = best_rule.source
+            if proof is None:
+                raise CatalogValidationError("Matched rule lost its property evidence")
+            reference = (f"{proof.source_document} | {proof.revision} | {proof.page_or_table}"
+                         f" | {proof.verified_by} | {proof.verified_at}")
             if best_rule.selectivity_limit_is_ka >= prospective_ik_ka:
-                return (SelectivityEvalState.VERIFIED_TOTAL, best_rule.selectivity_limit_is_ka, best_rule.catalog_reference)
+                return (SelectivityEvalState.VERIFIED_TOTAL, best_rule.selectivity_limit_is_ka, reference)
             else:
-                return (SelectivityEvalState.VERIFIED_PARTIAL, best_rule.selectivity_limit_is_ka, best_rule.catalog_reference)
+                return (SelectivityEvalState.VERIFIED_PARTIAL, best_rule.selectivity_limit_is_ka, reference)
 
         if ratio >= 1.6:
             curve_limit_ka = TripCurveRepository.current_selectivity_limit_ka(upstream, downstream)

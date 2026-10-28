@@ -179,3 +179,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   `*catalog*` validation files; 450 passed, inherited PDF failure/Windows skip.
 - **Remaining risks:** structural validity is not source correctness or engineering
   verification; full catalog schema/migration and independent references remain open.
+
+## Review unit 7 — Bind property proof to actual values and conditions
+
+- **Observed:** complete-looking source metadata could apply to the wrong value,
+  unit, device or operating conditions, and group labels could promote a device.
+- **Expected:** explicit subject/scope matching before treating a property as
+  evidenced; no whole-device production approval inferred from metadata alone.
+- **Implementation:** exact value/unit/applicability matcher; dated metadata
+  checks; actual Icu and selectivity integration; source reference in reports;
+  no favorable choice between overlapping proofs; aggregate/legacy labels remain
+  unverified. Original catalog bytes remain unchanged.
+- **Tests:** synthetic positive/negative scope cases, actual engine/report checks,
+  overlapping rules, SQL invalid capacity and bibliography-only approval rejection.
+- **Evidence:** [property policy](../engineering/property_evidence_policy.md) and
+  `*evidence*` validation logs; 491 passed, inherited PDF failure and Windows skip.
+- **Remaining risks:** record matching cannot authenticate document/reviewer;
+  actual independent sources, approval workflow and P0 physical verification remain open.
