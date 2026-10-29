@@ -7,6 +7,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord
 from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.i18n import tr
@@ -73,7 +75,10 @@ def device_rows(rows: Iterable[Any], sources=()) -> list[CatalogDevice]:
         payload["data_quality"] = row["data_quality"]
         # An omitted source declaration is unknown, not the generic model IP20.
         payload.setdefault('ip_rating', '')
-        device = CatalogDevice.model_validate(payload)
+        try:
+            device = CatalogDevice.model_validate(payload)
+        except ValidationError as error:
+            raise CatalogValidationError(str(error)) from error
         if device.part_number != row["device_id"]:
             raise CatalogValidationError("Catalog row device_id does not match its part_number")
         try:

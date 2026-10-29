@@ -8,6 +8,7 @@ from lv_assist.run_metadata import RunMetadata
 from lv_assist.i18n import tr
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.evidence_matching import exact_applicability, exact_value, valid_review_date
+from lv_assist.rating_table_validation import number
 
 class EngineeringTextInput(BaseModel):
     @field_validator("*", mode="before")
@@ -228,6 +229,13 @@ class CatalogDevice(EngineeringTextInput):
     spd_poles: str = "4P"
     spd_backup_fuse_a: float = 0.0
     property_sources: dict[str, PropertySource] = Field(default_factory=dict)
+
+    @field_validator('*', mode='before')
+    @classmethod
+    def native_catalog_numbers(cls, value, info):
+        if cls.model_fields[info.field_name].annotation is float:
+            number(value, 'catalog_devices', info.field_name)
+        return value
 
     @model_validator(mode="after")
     def valid_catalog_numbers(self):

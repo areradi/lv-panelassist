@@ -684,3 +684,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** actual source authentication, exact property applicability,
   reviewed values/tolerances, publishing workflow, immutable contexts and independent
   electrical review remain open. Structural linkage cannot close P0.
+
+## Review unit 41 — Native device numeric input boundary
+
+- **Observed:** direct/API/JSON device construction coerced bool/numeric strings,
+  including raw-only coil/SPD fields outside normalized SQL comparisons.
+- **Expected:** all declared device numbers are finite native int/float values;
+  invalid supplied or mutated inputs fail before calculation with a named error.
+- **Implementation:** shared before-validator for 24 float device attributes,
+  existing snapshot revalidation and catalog error wrapping for SQL model failures.
+  Native defaults/zero sentinels, strings/enums and existing range checks remain.
+- **Tests:** 66 new model/JSON/copy/actual-SQL/CLI/engine/three-language GUI cases;
+  392 targeted regressions. Original data/assertions remain unchanged; only a new
+  diagnostic-warning expectation was corrected without removing rejection checks.
+- **Evidence:** [native numeric policy](../engineering/catalog_native_numbers_policy.md).
+- **Remaining risks:** device-specific physical ranges, broader input/import
+  boundaries, source/duty/setting applicability, mutable contexts and independent
+  engineering review remain open. Native input types cannot close P0.
