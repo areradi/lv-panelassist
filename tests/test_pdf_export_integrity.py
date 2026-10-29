@@ -16,6 +16,8 @@ def paths(tmp_path, monkeypatch):
     source.write_text('<html>test</html>')
     target.write_bytes(b'previous document')
     monkeypatch.setattr(PdfExporter, '_find_browser', lambda: 'synthetic-browser')
+    # These cases exercise the explicit browser backend, including its failures.
+    monkeypatch.setattr(PdfExporter, 'DEFAULT_BACKEND', 'browser')
     return source, target
 
 
@@ -42,7 +44,7 @@ def test_failure_never_accepts_or_overwrites_previous_file(paths, monkeypatch, o
         if outcome != 'missing':
             output.write_bytes({'empty': b'', 'html': b'<html>error</html>', 'truncated': b'%PDF-1.4'}[outcome])
 
-    monkeypatch.setattr('lv_assist.outputs.subprocess.run', run)
+    monkeypatch.setattr('lv_assist.outputs.run_pdf_process', run)
     result = PdfExporter.export_html_to_pdf_result(str(source), str(target))
     assert not result.success and result.reason == reason
     assert target.read_bytes() == b'previous document'
@@ -59,7 +61,7 @@ def test_success_replaces_only_with_new_output_and_isolates_attempts(paths, monk
         output.write_bytes(PDF)
         assert '--no-sandbox' not in args
 
-    monkeypatch.setattr('lv_assist.outputs.subprocess.run', run)
+    monkeypatch.setattr('lv_assist.outputs.run_pdf_process', run)
     assert PdfExporter.export_html_to_pdf(str(source), str(target)) is True
     assert PdfExporter.export_html_to_pdf_result(str(source), str(target)).reason == 'ok'
     assert target.read_bytes() == PDF
@@ -96,7 +98,7 @@ def test_publish_failure_preserves_old_document(paths, monkeypatch):
     def replace(*args):
         raise PermissionError('synthetic locked target')
 
-    monkeypatch.setattr('lv_assist.outputs.subprocess.run', run)
+    monkeypatch.setattr('lv_assist.outputs.run_pdf_process', run)
     monkeypatch.setattr('lv_assist.outputs.os.replace', replace)
     assert PdfExporter.export_html_to_pdf_result(str(source), str(target)).reason == 'write_failed'
     assert target.read_bytes() == b'previous document'

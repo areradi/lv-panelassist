@@ -6,6 +6,7 @@ from typing import List, Tuple
 from lv_assist.models import ProjectSpec, FeederCalcOutput, PanelSummaryOutput
 from lv_assist.control_circuits import ControlCircuitGenerator
 from lv_assist.report_export import export_current_text
+from lv_assist.output_notice import output_notice
 
 
 def _ascii(s: str) -> str:
@@ -143,6 +144,7 @@ class ControlLadderDxfExporter:
                 y += 12
 
         doc.text("LV_TEXT_TAGS", 30.0, dy(y + 10.0), 4.0, f"Wires: {len(wires_all)} | drawn by LV-PanelAssist (DXF R12)")
+        doc.text('LV_TEXT_TAGS', 30.0, dy(y + 24.0), 3.0, output_notice(summary))
         cls._add_dimensions(doc, total_h)
         return doc.render()
 

@@ -884,7 +884,7 @@
   "msg_pdf_invalid_input": "Die HTML-Eingabe fehlt oder ist zugleich das PDF-Ziel.",
   "msg_pdf_missing_browser": "Edge/Chrome/Chromium nicht gefunden. Unterstützten Browser installieren oder HTML-Bericht manuell drucken.",
   "msg_pdf_timeout": "Zeitlimit des Browsers erreicht. PDF nicht gespeichert; erneut versuchen oder HTML-Bericht manuell drucken.",
-  "msg_pdf_browser_failed": "Der Browser konnte den Bericht nicht drucken. PDF nicht gespeichert; Browser und Berechtigungen prüfen.",
+  "msg_pdf_browser_failed": "Die PDF-Erzeugung ist fehlgeschlagen. Prüfen Sie Installation und Zugriffsrechte.",
   "msg_pdf_invalid_pdf": "Der Browser erzeugte kein vollständiges PDF. Die bisherige Zieldatei blieb erhalten.",
   "msg_pdf_write_failed": "PDF konnte nicht gespeichert werden. Zielordner, Berechtigungen und freien Speicher prüfen.",
   "csv_target_title": "CSV-Ziel",
@@ -907,5 +907,7 @@
   "audit_curve_invalid": "Auslösekurve {name}: Feld {field} fehlt oder ist ungültig. Katalogdatensatz vor der Berechnung prüfen.",
   "tcc_curve_missing": "Kennlinie nicht verfügbar",
   "audit_catalog_unstable": "Der Katalog änderte sich beim Lesen oder enthält Journal-/WAL-Daten außerhalb der Hauptdatei. Einen geschlossenen, konsistenten Katalogstand verwenden und neu berechnen; keine automatische Reparatur durchgeführt.",
-  "audit_rating_invalid": "Ungültige Hilfsdaten zur Bemessung: {table}, Feld {field}. Katalog/Eingabe prüfen; kein Ersatzwert und keine Reparatur angewendet."
+  "audit_rating_invalid": "Ungültige Hilfsdaten zur Bemessung: {table}, Feld {field}. Katalog/Eingabe prüfen; kein Ersatzwert und keine Reparatur angewendet.",
+  "audit_evidence_source": "Quelldokument und Geltungsbereich",
+  "audit_not_recorded": "Nicht erfasst"
 }

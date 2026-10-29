@@ -884,7 +884,7 @@
   "msg_pdf_invalid_input": "Input HTML is missing or is also the PDF destination.",
   "msg_pdf_missing_browser": "Edge/Chrome/Chromium was not found. Install a supported browser or print the HTML report manually.",
   "msg_pdf_timeout": "The browser timed out. PDF was not saved; retry or print the HTML report manually.",
-  "msg_pdf_browser_failed": "The browser could not print the report. PDF was not saved; check browser availability and permissions.",
+  "msg_pdf_browser_failed": "The PDF rendering engine failed. Check its installation and permissions.",
   "msg_pdf_invalid_pdf": "The browser did not produce a complete PDF. The previous destination was preserved.",
   "msg_pdf_write_failed": "PDF could not be saved. Check the destination folder, permissions and free disk space.",
   "csv_target_title": "CSV destination",
@@ -907,5 +907,7 @@
   "audit_curve_invalid": "Trip curve {name}: missing or invalid {field}. Review the catalog record before calculation.",
   "tcc_curve_missing": "curve unavailable",
   "audit_catalog_unstable": "The catalog changed during reading or has journal/WAL data outside the main file. Use a closed, consistent catalog snapshot and recalculate; no automatic repair was performed.",
-  "audit_rating_invalid": "Invalid auxiliary rating data: {table}, field {field}. Review the catalog/input; no default or repair was applied."
+  "audit_rating_invalid": "Invalid auxiliary rating data: {table}, field {field}. Review the catalog/input; no default or repair was applied.",
+  "audit_evidence_source": "Source document and applicability",
+  "audit_not_recorded": "Not recorded"
 }

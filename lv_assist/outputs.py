@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import math
 import os
+import importlib.util
+import sys
 import shutil
 import subprocess
 import tempfile
@@ -16,6 +18,8 @@ from lv_assist.catalog import TripCurveRepository, catalog_repo
 from lv_assist.i18n import tr
 from lv_assist.csv_export import CsvMode, write_csv
 from lv_assist.report_export import export_current_report, export_current_text
+from lv_assist.pdf_process import run_pdf_process
+from lv_assist.output_notice import output_notice
 
 
 def _esc(s: str) -> str:
@@ -383,7 +387,9 @@ class PdfExportResult:
 
 
 class PdfExporter:
-    """تبدیل گزارش HTML به PDF با استفاده از مرورگر نصب‌شده (بدون وابستگی پایتونی)."""
+    """تولید PDF با موتور صفحه‌بندی HTML یا مرورگر نصب‌شده."""
+
+    DEFAULT_BACKEND = 'auto'
 
     EDGE_CANDIDATES = [
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -410,14 +416,20 @@ class PdfExporter:
         return None
 
     @classmethod
-    def export_html_to_pdf_result(cls, html_path: str, pdf_path: str) -> PdfExportResult:
+    def export_html_to_pdf_result(cls, html_path: str, pdf_path: str, *, backend=None) -> PdfExportResult:
         """Publish only this attempt's PDF; preserve an existing destination on failure."""
         try:
             source, target = Path(html_path).resolve(), Path(pdf_path).resolve()
             if not source.is_file() or source == target:
                 return PdfExportResult(False, "invalid_input")
-            browser = cls._find_browser()
-            if not browser:
+            backend = cls.DEFAULT_BACKEND if backend is None else backend
+            if backend not in ('auto', 'weasyprint', 'browser'):
+                return PdfExportResult(False, 'invalid_input')
+            use_weasyprint = backend == 'weasyprint' or (
+                backend == 'auto' and importlib.util.find_spec('weasyprint') is not None
+                and (sys.platform == 'linux' or cls._find_browser() is None))
+            browser = None if use_weasyprint else cls._find_browser()
+            if not use_weasyprint and not browser:
                 return PdfExportResult(False, "missing_browser")
             # Same filesystem as target for atomic publication; separate profile
             # prevents concurrent exports attaching to a previous browser session.
@@ -426,12 +438,12 @@ class PdfExporter:
                 output = Path(folder) / "report.pdf"
                 profile = Path(folder) / "profile"
                 try:
-                    subprocess.run(
+                    command = ([sys.executable, str(Path(__file__).with_name('pdf_worker.py')), str(source), str(output)]
+                               if use_weasyprint else
                         [browser, "--headless=new", "--disable-gpu", "--no-first-run",
                          "--no-default-browser-check", "--no-pdf-header-footer",
-                         f"--user-data-dir={profile}", f"--print-to-pdf={output}", source.as_uri()],
-                        check=True, capture_output=True, timeout=120,
-                    )
+                         f"--user-data-dir={profile}", f"--print-to-pdf={output}", source.as_uri()])
+                    run_pdf_process(command, timeout=120)
                 except subprocess.TimeoutExpired:
                     return PdfExportResult(False, "timeout")
                 except (subprocess.SubprocessError, OSError):
@@ -442,15 +454,17 @@ class PdfExporter:
                 # Basic format/truncation guard, not a full PDF conformance test.
                 if not data.startswith(b"%PDF-") or b"%%EOF" not in data[-1024:]:
                     return PdfExportResult(False, "invalid_pdf")
+                with output.open('rb') as stream:
+                    os.fsync(stream.fileno())
                 os.replace(output, target)
             return PdfExportResult(True, "ok")
         except OSError:
             return PdfExportResult(False, "write_failed")
 
     @classmethod
-    def export_html_to_pdf(cls, html_path: str, pdf_path: str) -> bool:
+    def export_html_to_pdf(cls, html_path: str, pdf_path: str, *, backend=None) -> bool:
         """Compatibility API; callers needing a message use the structured result."""
-        return cls.export_html_to_pdf_result(html_path, pdf_path).success
+        return cls.export_html_to_pdf_result(html_path, pdf_path, backend=backend).success
 
 
 def _bom_entries(project: ProjectSpec, feeders: List[FeederCalcOutput], summary: PanelSummaryOutput) -> List[tuple]:
@@ -511,7 +525,8 @@ def _bom_entries(project: ProjectSpec, feeders: List[FeederCalcOutput], summary:
 class EplanExporter:
     """خروجی CSV قطعات سازگار با EPLAN Electric P8 Parts Management."""
 
-    HEADERS = ["Part number", "Type number", "Manufacturer", "Description 1", "Device tag", "Function", "Qty", "Unit", "Data quality"]
+    HEADERS = ["Part number", "Type number", "Manufacturer", "Description 1", "Device tag", "Function", "Qty", "Unit", "Data quality",
+               'Selection status', 'Overall check status', 'Run fingerprint']
 
     @staticmethod
     def _tag(func: str, loc: str, bmk: str) -> str:
@@ -532,6 +547,9 @@ class EplanExporter:
                 rows.append([dev.part_number, f"{dev.series} {dev.device_type}", dev.manufacturer,
                              f"{dev.series} ({dev.device_type})", cls._tag(func, loc, bmk), cat, qty, "PCS", dev.data_quality.value])
 
+        for row in rows:
+            row.extend(['PROPOSED' if row[0] else 'TO_BE_SPECIFIED', summary.status.value,
+                        summary.run_metadata.input_fingerprint])
         write_csv(filepath, cls.HEADERS, rows, mode=mode)
 
 
@@ -580,7 +598,7 @@ class EplanPartsExporter:
             if dims:
                 td2 += f" | {dims} mm"
             rows.append([dev.part_number, dev.part_number, "", dev.manufacturer,
-                         f"{dev.series} ({dev.device_type})", "", td1, td2,
+                         f"{dev.series} ({dev.device_type})", output_notice(summary), td1, td2,
                          cls.GROUP_MAP.get(dev.device_type, "Others"), "PCS", qty])
 
         write_csv(filepath, cls.HEADERS, rows, mode=mode)

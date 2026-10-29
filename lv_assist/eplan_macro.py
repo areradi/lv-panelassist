@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Tuple
 
 from lv_assist.report_export import export_current_report
+from lv_assist.output_notice import output_notice
 from lv_assist.models import ProjectSpec, FeederCalcOutput, PanelSummaryOutput, LoadType
 
 
@@ -208,7 +209,7 @@ class EplanMacroExporter:
         plant_str = _struct_safe(project.project_name)
         loc_str = _struct_safe(project.panel_tag)
 
-        return TEMPLATE \
+        return ('// ' + output_notice(summary) + '\n' + TEMPLATE) \
             .replace("__GENERATED_AT__", datetime.now().strftime("%Y-%m-%d %H:%M")) \
             .replace("__SLD_PAGE__", cls.SLD_PAGE) \
             .replace("__EXPECTED_PROJECT__", _cstr(project.project_name)) \

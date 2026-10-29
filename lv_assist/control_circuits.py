@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """اتوماسیون مدارهای کنترلی: دیاگرام نردبانی SVG، لیست سیم‌ها و خروجی اتصالات سازگار با EPLAN."""
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from lv_assist.models import (
     ProjectSpec, FeederCalcOutput, PanelSummaryOutput, ControlWire, LoadType
@@ -38,7 +38,6 @@ class ControlCircuitGenerator:
     @classmethod
     def generate_common_wires(cls, project: ProjectSpec, summary: PanelSummaryOutput) -> List[ControlWire]:
         wires: List[ControlWire] = []
-        tag = project.panel_tag
         n = 1
         def w(fd, ft, td, tt, remark=""):
             nonlocal n
@@ -243,7 +242,8 @@ class ControlCircuitGenerator:
 
     # ---------------------------------------------------------------- EPLAN CSV
     CONN_HEADERS = ["Connection", "From device", "From pin", "To device", "To pin",
-                    "Cross-section (mm²)", "Color", "Remark"]
+                    "Cross-section (mm²)", "Color", "Remark", 'Selection status',
+                    'Overall check status', 'Run fingerprint']
 
     @classmethod
     def export_connections_csv(cls, filepath: str, project: ProjectSpec,
@@ -257,5 +257,6 @@ class ControlCircuitGenerator:
         rows = []
         for w in cls.build_all_wires(project, feeders, summary):
             rows.append([w.wire_no, w.from_dev, w.from_term, w.to_dev, w.to_term,
-                         w.cross_section_mm2, w.color, w.remark])
+                         w.cross_section_mm2, w.color, w.remark, 'PROPOSED',
+                         summary.status.value, summary.run_metadata.input_fingerprint])
         write_csv(filepath, cls.CONN_HEADERS, rows, mode=mode)

@@ -596,8 +596,9 @@ class TestPhase3Eplan:
 
 
 class TestPhase3Pdf:
-    def test_pdf_browser_found(self):
-        assert PdfExporter._find_browser() is not None
+    def test_pdf_renderer_available(self):
+        import importlib.util
+        assert importlib.util.find_spec('weasyprint') is not None or PdfExporter._find_browser() is not None
 
     def test_html_to_pdf_roundtrip(self, tmp_path):
         project, outs, summary, validations = _phase3_project()
@@ -612,7 +613,7 @@ class TestPhase3Pdf:
         monkeypatch.setattr(PdfExporter, "_find_browser", lambda: None)
         html_path = tmp_path / "r.html"
         html_path.write_text("<html></html>", encoding="utf-8")
-        assert PdfExporter.export_html_to_pdf(str(html_path), str(tmp_path / "r.pdf")) is False
+        assert PdfExporter.export_html_to_pdf(str(html_path), str(tmp_path / "r.pdf"), backend='browser') is False
 
 # -*- coding: utf-8 -*-
 
