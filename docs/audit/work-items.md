@@ -503,3 +503,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [cache epoch policy](../engineering/catalog_cache_epoch_policy.md).
 - **Remaining risks:** immutable transactions, races/retained references, full
   auxiliary validation and independent engineering verification remain open.
+
+## Review unit 30 — Consumed ampacity/derating numeric domains
+
+- **Observed:** raw SQL numbers/dictionary overwrites and nearest-higher thermal
+  lookup could supply malformed or inapplicable data to selection arithmetic.
+- **Expected:** invalid rows/duplicates fail before use; exact missing conditions
+  remain unknown and cannot be repaired by implicit higher-temperature lookup.
+- **Implementation:** shared consumed-row validation, unified exact ampacity APIs,
+  runtime argument checks and existing-schema derating domains; localized errors.
+- **Tests:** 54 new helper/SQL/engine/three-language GUI cases plus prior regressions;
+  corrupted copied fixtures only, original database untouched.
+- **Evidence:** [rating domain policy](../engineering/auxiliary_rating_domain_policy.md).
+- **Remaining risks:** existing proposal bins/device fallbacks, full auxiliary CLI
+  coverage, reviewed sources and independent engineering verification stay open.

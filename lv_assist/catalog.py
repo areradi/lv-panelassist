@@ -12,6 +12,7 @@ import math
 import sqlite3
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
+from lv_assist.rating_table_validation import ampacity_table, derating_table, number, identity, invalid
 from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.run_metadata import catalog_file_hash
@@ -120,24 +121,17 @@ class CatalogRepository:
     # ------------------------------------------------------------------
     def get_device_derating_factor(self, device_id: str, internal_temp_c: float) -> Optional[float]:
         """ضریب derating از جدول دما؛ برای دماهای بالای ۵۰ درجه بدون داده معتبر، None برمی‌گردد."""
-        if internal_temp_c <= 40.0:
-            target_temp = 40.0
-        elif internal_temp_c <= 50.0:
-            target_temp = 50.0
-        else:
-            target_temp = internal_temp_c
-
+        identity(device_id, "device_thermal_derating", "device_id")
+        temperature = number(internal_temp_c, "device_thermal_derating", "internal_temp_c")
+        target_temp = 40.0 if temperature <= 40 else (50.0 if temperature <= 50 else temperature)
         with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT derating_factor FROM device_thermal_derating
-                WHERE device_id = ? AND temp_c >= ?
-                ORDER BY temp_c ASC
-                LIMIT 1
-                """,
-                (device_id, target_temp),
-            ).fetchone()
-            return float(row["derating_factor"]) if row else None
+            rows = conn.execute(
+                "SELECT temp_c, derating_factor FROM device_thermal_derating WHERE device_id = ?",
+                (device_id,),
+            ).fetchall()
+        # Retain the legacy <=40/<=50 proposal bins, but never borrow an
+        # unrecorded higher-temperature row for a missing requested condition.
+        return derating_table(rows).get(target_temp)
 
     # ------------------------------------------------------------------
     # ۴. بدنه تابلو با شرط IP هدف (رفع F-007)
@@ -155,16 +149,7 @@ class CatalogRepository:
     # ------------------------------------------------------------------
     def get_cable_iz0_table_cu_pvc_c(self, loaded_conductors: int = 3) -> Dict[float, float]:
         """جدول کامل جریان‌دهی پایه Cu/PVC/روش C از دیتابیس استاندارد."""
-        with self._connect() as conn:
-            rows = conn.execute(
-                """
-                SELECT section_mm2, iz0_a FROM cable_ampacity_reference
-                WHERE material = 'CU' AND insulation = 'PVC' AND installation_method = 'C'
-                  AND loaded_conductors = ?
-                """,
-                (loaded_conductors,),
-            ).fetchall()
-            return {float(r["section_mm2"]): float(r["iz0_a"]) for r in rows}
+        return self.get_cable_iz0_table("CU", "PVC", "C", loaded_conductors)
 
     def get_base_cable_iz0(
         self,
@@ -175,32 +160,24 @@ class CatalogRepository:
         loaded_conductors: int = 3,
     ) -> Optional[float]:
         """جریان‌دهی پایه یک مقطع خاص؛ برای مقطع غیراستاندارد None برمی‌گردد (هرگز مقدار ساختگی)."""
-        with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT iz0_a FROM cable_ampacity_reference
-                WHERE section_mm2 = ?
-                  AND UPPER(material) = UPPER(?)
-                  AND UPPER(insulation) = UPPER(?)
-                  AND UPPER(installation_method) = UPPER(?)
-                  AND loaded_conductors = ?
-                """,
-                (section_mm2, material, insulation, installation_method, loaded_conductors),
-            ).fetchone()
-            if row:
-                return float(row["iz0_a"])
-            return None
+        section = number(section_mm2, "cable_ampacity_reference", "section_mm2", positive=True)
+        return self.get_cable_iz0_table(material, insulation, installation_method, loaded_conductors).get(section)
 
     def get_cable_iz0_table(self, material: str, insulation: str,
                             installation_method: str, loaded_conductors: int) -> dict[float, float]:
         """Exact combination only. An absent table is not a scaled Cu/PVC/C table."""
+        material = identity(material, "cable_ampacity_reference", "material")
+        insulation = identity(insulation, "cable_ampacity_reference", "insulation")
+        installation_method = identity(installation_method, "cable_ampacity_reference", "installation_method")
+        if not isinstance(loaded_conductors, int) or isinstance(loaded_conductors, bool) or not 0 < loaded_conductors <= 2**63 - 1:
+            invalid("cable_ampacity_reference", "loaded_conductors")
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT section_mm2, iz0_a FROM cable_ampacity_reference "
-                "WHERE material=? AND insulation=? AND installation_method=? AND loaded_conductors=?",
-                (material.upper(), insulation.upper(), installation_method.upper(), loaded_conductors),
+                "WHERE UPPER(material)=? AND UPPER(insulation)=? AND UPPER(installation_method)=? AND loaded_conductors=?",
+                (material, insulation, installation_method, loaded_conductors),
             ).fetchall()
-        return {float(row[0]): float(row[1]) for row in rows}
+        return ampacity_table(rows)
 
     def get_pe_standard_sections(self) -> List[float]:
         """فهرست مقاطع استاندارد PE از دیتابیس (بدون سقف مصنوعی)."""

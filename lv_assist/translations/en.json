@@ -906,5 +906,6 @@
   "audit_text_invalid": "Text contains unsupported character {code}. Remove this character before calculation or export.",
   "audit_curve_invalid": "Trip curve {name}: missing or invalid {field}. Review the catalog record before calculation.",
   "tcc_curve_missing": "curve unavailable",
-  "audit_catalog_unstable": "The catalog changed during reading or has journal/WAL data outside the main file. Use a closed, consistent catalog snapshot and recalculate; no automatic repair was performed."
+  "audit_catalog_unstable": "The catalog changed during reading or has journal/WAL data outside the main file. Use a closed, consistent catalog snapshot and recalculate; no automatic repair was performed.",
+  "audit_rating_invalid": "Invalid auxiliary rating data: {table}, field {field}. Review the catalog/input; no default or repair was applied."
 }
