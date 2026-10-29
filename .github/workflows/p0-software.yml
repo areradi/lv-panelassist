@@ -1,0 +1,30 @@
+name: P0 software checks
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  software:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: PDF and Tk native libraries
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core python3-tk xvfb
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Full software suite including actual PDF rendering
+        run: python -m pytest -q --tb=short
+      - name: Synthetic three-language regression scenarios
+        run: python scripts/run_regression_scenarios.py > software-scenarios.json
+      - name: Actual GUI launch and calculation
+        run: xvfb-run -a python scripts/gui_smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: software-scenarios
+          path: software-scenarios.json

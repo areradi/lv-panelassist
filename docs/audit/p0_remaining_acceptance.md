@@ -1,5 +1,11 @@
 # P0 remaining acceptance and consolidated software pass
 
+Update after this checkpoint: [continuous software delivery](p0_software_delivery.md)
+adds immutable export/catalog/locale snapshots, actual working PDF rendering,
+atomic invalid-import handling, secondary IEC guards, evidence columns and CI.
+The validation figures and PDF diagnosis below describe review unit 42; they
+are historical and are superseded by the newer delivery report.
+
 وضعیت به زبان ساده: فاز P0 هنوز تمام نشده و برای اعلام درصد دقیق مبنای
 قابل‌اعتماد نداریم. شش گروه کار اصلی در جدول زیر باقی است؛ بخشی از خود مدل‌های
 محاسباتی نیز هنوز تکمیل و اعتبارسنجی نشده‌اند. اصلاحات نرم‌افزاری را می‌توان
@@ -25,7 +31,7 @@ The detailed topic matrix remains [verification_matrix.md](../engineering/verifi
 | Assembly behavior | Review busbar Icw/Ipk/support geometry, thermal model/limits/ventilation and assembled IP; complete the evidence/reviewer fields for all 13 checklist rows. | Applicable assembly/manufacturer/test evidence. Current calculated recommendations do not prove IEC 61439 compliance. |
 | Property evidence and ingestion | Complete authentication, exact property applicability, review and safe publication of critical catalog/standard data. Existing structural SQL/JSON consistency and source links cannot authenticate it. | Document/revision/page/table, units/conditions, exact subject/value and named reviewer/date. No fabricated VERIFIED records. |
 | Independent numerical acceptance | Supply and automate the original reference pack: at least ten controlled cases with independently obtained expected results, justified tolerances and electrical review. | **Zero** independent cases currently available. Ten synthetic scenarios across three locales do not count as independent cases. |
-| Software and target-runtime acceptance | Complete remaining immutable context/transaction and all-format parity coverage, broader overflow/import/state behavior and reliable PDF rendering. Actual Windows/EPLAN acceptance is separate target-environment work. | Full checks with disclosed failures, working target PDF roundtrip and reviewable export agreement. No beta/construction/EPLAN-ready claim based on Linux smoke tests. |
+| Software and target-runtime acceptance | Shared immutable run/catalog/locale context, invalid-input/import protections, current-run file guards and working Linux PDF are now delivered in unit 43. Remaining evidence-dependent model coverage and actual Windows/EPLAN acceptance require their inputs/target environments. | See the newer software delivery report for current executed checks. No beta/construction/EPLAN-ready claim based on Linux tests. |
 
 Work that does not require invented engineering values can continue in batches.
 Engineering-sensitive completion must wait for actual applicable evidence and

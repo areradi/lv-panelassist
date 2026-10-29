@@ -729,3 +729,30 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
   and actual PDF/runtime acceptance. PDF diagnostics did not resolve rendering;
   no unsafe browser workaround was introduced. P0 remains OPEN; this batch is
   not completion of all software or engineering requirements.
+
+## Review unit 43 — Continuous P0 software delivery
+
+- **Observed:** output copies remained mutable and reads used live catalog/global
+  language state; PDF rendering failed; IEC preview/file paths bypassed public
+  preflight; invalid Excel imports replaced the current project; helper types
+  could coerce/crash, and evidence ownership was hidden in checklist exports.
+- **Expected:** immutable accepted context, consistent output scope/status and
+  safe publication, actual PDF output, unchanged user state on invalid import,
+  explicit evidence gaps and repeatable automated checks.
+- **Implementation:** shared frozen export/context-local source/locale sessions,
+  isolated paged PDF worker/process cleanup, shared project validation and
+  atomic GUI import, secondary IEC export guards, all-format notices, explicit
+  checklist evidence columns, blocked reference inventory/comparison tool and CI.
+- **Tests:** actual three-language bundles with readable PDFs, source
+  change/restore race, private cache/model isolation, spawned-child timeout,
+  invalid GUI imports and helper boundaries, reference-schema/difference checks,
+  full inherited suite, synthetic scenarios and actual Tk launch. Final outcomes
+  are recorded in the linked delivery report; no success is inferred from code.
+  Final full suite: **1874 passed, 1 Windows compiler skip, zero failures**;
+  63 new cases. All 30 synthetic scenarios and the four-feeder/71-check real Tk
+  smoke pass. The default independent-reference pack remains BLOCKED / exit 2.
+- **Evidence:** [software delivery and remaining blocks](p0_software_delivery.md),
+  raw `/workspace/audit-evidence/p0-completion-*` logs.
+- **Remaining risks:** evidence-dependent physical implementation and independent
+  sources/review still block P0; Windows/EPLAN acceptance is not available here.
+  No authentication, engineering approval, merge or release is claimed.

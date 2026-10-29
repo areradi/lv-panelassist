@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"case_id": "dol_15kw", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "vfd_37kw", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "distribution", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "lighting_1p", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "tt_rcd", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "feeder_200m", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "missing_ik", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "motor_contribution", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "mccb_derating", "state": "AWAITING_INDEPENDENT_REFERENCE"},
+    {"case_id": "ip_assembly", "state": "AWAITING_INDEPENDENT_REFERENCE"}
+  ]
+}
