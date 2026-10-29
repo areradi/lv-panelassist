@@ -10,13 +10,14 @@ from __future__ import annotations
 import json
 import math
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
 from lv_assist.rating_table_validation import ampacity_table, derating_table, pe_sections, number, identity, invalid
 from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.run_metadata import catalog_file_hash
-from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves
+from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
 from typing import Any, Dict, List, Optional
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState
@@ -96,25 +97,23 @@ class CatalogRepository:
         tolerance_v: float = 0.0,
     ) -> Optional[float]:
         """بازیابی Icu متناسب با ولتاژ نامی؛ در نبود داده دیتاشیت برای آن ولتاژ، None برمی‌گردد."""
-        if tolerance_v != 0:
+        identity(device_id, "device_breaking_capacities", "device_id")
+        tolerance = number(tolerance_v, "device_breaking_capacities", "tolerance_v")
+        if tolerance != 0:
             raise ValueError("Nearby-voltage Icu lookup requires explicit manufacturer applicability; unsupported.")
-        if not math.isfinite(nominal_voltage_v) or nominal_voltage_v <= 0:
-            raise CatalogValidationError("Operating voltage must be finite and positive")
-        with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT icu_ka FROM device_breaking_capacities
-                WHERE device_id = ? AND voltage_v = ?
-                LIMIT 1
-                """,
-                (device_id, nominal_voltage_v),
-            ).fetchone()
-            if row is None or row["icu_ka"] is None:
-                return None
-            value = float(row["icu_ka"])
-            if not math.isfinite(value) or value < 0:
-                raise CatalogValidationError("Icu catalog value must be finite and non-negative")
-            return value if value > 0 else None
+        voltage = number(nominal_voltage_v, "device_breaking_capacities", "nominal_voltage_v", positive=True)
+        before_hash = catalog_file_hash(self.db_path)
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT device_id, voltage_v, icu_ka, ics_ka FROM device_breaking_capacities WHERE device_id = ?",
+                (device_id,),
+            ).fetchall()
+            known_ids = {row[0] for row in conn.execute("SELECT device_id FROM catalog_devices WHERE device_id = ?", (device_id,))}
+        ratings = breaking_capacity_rows(rows, known_ids)
+        if catalog_file_hash(self.db_path) != before_hash:
+            raise CatalogValidationError(tr("audit_catalog_unstable"))
+        value = ratings.get((device_id, voltage))
+        return value[0] if value is not None else None
 
     # ------------------------------------------------------------------
     # ۳. ضریب کاهش ظرفیت دمایی با کنترل سقف دما (رفع F-017)

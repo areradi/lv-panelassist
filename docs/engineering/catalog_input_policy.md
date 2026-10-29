@@ -23,8 +23,10 @@ repairing data or interpreting structural validity as engineering approval.
   Conflicting limits cannot be resolved by taking the largest favorable value.
 - Missing catalogs fail with a recovery error; no database is generated or
   migrated automatically. Explicit migration tooling remains separate work.
-- Invalid operating voltages and negative/nonfinite Icu table values are rejected;
-  missing/legacy zero Icu is unknown, never an accepted positive capacity.
+- Invalid operating voltages and negative/nonfinite Icu table values are rejected.
+  Review unit 33 further rejects stored zero/null Icu according to the normalized
+  table's existing positive/NOT NULL schema; an absent exact-voltage row remains
+  unknown. General device-model zero sentinels above are unchanged.
 - `python scripts/validate_catalog.py [--db PATH]` reads only and returns nonzero
   on invalid input. Its successful structural result explicitly states
   `engineering_verification: NOT_VERIFIED`.

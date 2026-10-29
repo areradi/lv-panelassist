@@ -10,7 +10,7 @@ from typing import Any
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord
 from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.i18n import tr
-from lv_assist.rating_table_validation import pe_sections, validate_rating_inventory
+from lv_assist.rating_table_validation import identity, invalid, number, pe_sections, validate_rating_inventory
 from lv_assist.run_metadata import catalog_file_hash
 
 
@@ -92,6 +92,30 @@ def validated_curves(curves):
     return {name: validated_curve(name, curve, CatalogValidationError) for name, curve in curves.items()}
 
 
+def breaking_capacity_rows(rows, device_ids):
+    """Exact device/voltage ratings; optional Ics is never inferred from Icu."""
+    result = {}
+    table = 'device_breaking_capacities'
+    try:
+        for row in rows:
+            device_id = row['device_id']
+            identity(device_id, table, 'device_id')
+            if device_id not in device_ids:
+                invalid(table, 'unknown device_id')
+            voltage = number(row['voltage_v'], table, 'voltage_v', positive=True)
+            icu = number(row['icu_ka'], table, 'icu_ka', positive=True)
+            ics = row['ics_ka']
+            if ics is not None:
+                ics = number(ics, table, 'ics_ka', positive=True)
+            key = (device_id, voltage)
+            if key in result:
+                invalid(table, 'duplicate device_id/voltage_v')
+            result[key] = (icu, ics)
+    except ValueError as error:
+        raise CatalogValidationError(str(error)) from error
+    return result
+
+
 def validate_catalog_database(path: Path) -> dict[str, Any]:
     """Read-only structural checks; scope and file identity accompany the result."""
     if not path.is_file():
@@ -112,9 +136,14 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             {device.part_number for device in devices},
             [row[0] for row in connection.execute("SELECT standard_id FROM standards_registry")])
         protective_sections = pe_sections(connection.execute("SELECT section_mm2 FROM pe_standard_sections"))
+        breaking = breaking_capacity_rows(
+            connection.execute("SELECT device_id, voltage_v, icu_ka, ics_ka FROM device_breaking_capacities"),
+            {device.part_number for device in devices})
     if catalog_file_hash(path) != before_hash:
         raise CatalogValidationError(tr("audit_catalog_unstable"))
     return {"devices": len(devices), "selectivity_rules": len(rules), "trip_curves": len(curves),
             **ratings, "pe_sections": len(protective_sections), "catalog_hash": before_hash,
-            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory and PE sections",
+            "breaking_capacity_rows": len(breaking),
+            "breaking_capacity_devices": len({key[0] for key in breaking}),
+            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory, PE sections and breaking capacity inventory",
             "engineering_verification": "NOT_VERIFIED"}

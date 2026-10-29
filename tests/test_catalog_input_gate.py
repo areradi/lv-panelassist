@@ -36,6 +36,7 @@ def database(tmp_path, *, identifier="TEST-PART", raw=None):
         connection.execute("CREATE TABLE cable_ampacity_reference(standard_id TEXT, table_ref TEXT, material TEXT, insulation TEXT, installation_method TEXT, loaded_conductors INTEGER, section_mm2 REAL, iz0_a REAL)")
         connection.execute("CREATE TABLE device_thermal_derating(device_id TEXT, temp_c REAL, derating_factor REAL)")
         connection.execute("CREATE TABLE pe_standard_sections(section_mm2 REAL)")
+        connection.execute("CREATE TABLE device_breaking_capacities(device_id TEXT, voltage_v REAL, icu_ka REAL, ics_ka REAL)")
         payload = raw if raw is not None else device().model_dump_json()
         connection.execute("INSERT INTO catalog_devices VALUES (?, ?, 'ESTIMATED')", (identifier, payload))
     return path
@@ -129,17 +130,16 @@ def test_catalog_cli_reports_structural_scope_and_fails_without_writing(tmp_path
     assert path.read_bytes() == invalid_before
 
 
-@pytest.mark.parametrize("value,expected", [(0, None), (None, None), (36, 36), (-1, "ERROR"),
+@pytest.mark.parametrize("value,expected", [(0, "ERROR"), (None, "ERROR"), (36, 36), (-1, "ERROR"),
                                           (float("inf"), "ERROR"), ("NaN", "ERROR")])
 def test_normalized_icu_lookup_never_returns_an_invalid_positive_candidate(tmp_path, value, expected):
     path = database(tmp_path)
     with sqlite3.connect(path) as connection:
-        connection.execute("CREATE TABLE device_breaking_capacities(device_id TEXT, voltage_v REAL, icu_ka REAL)")
-        connection.execute("INSERT INTO device_breaking_capacities VALUES('TEST-PART', 400, ?)", (value,))
+        connection.execute("INSERT INTO device_breaking_capacities VALUES('TEST-PART', 400, ?, NULL)", (value,))
     before = path.read_bytes()
     repository = CatalogRepository(path)
     if expected == "ERROR":
-        with pytest.raises(CatalogValidationError, match="Icu"):
+        with pytest.raises(CatalogValidationError, match="icu_ka"):
             repository.get_device_icu_at_voltage("TEST-PART", 400)
     else:
         assert repository.get_device_icu_at_voltage("TEST-PART", 400) == expected

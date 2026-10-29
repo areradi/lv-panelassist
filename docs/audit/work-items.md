@@ -547,3 +547,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [PE section policy](../engineering/pe_section_data_gate_policy.md).
 - **Remaining risks:** PE applicability/thermal/ADS evidence, immutable snapshots,
   other auxiliary tables and independent engineering review remain open. P0 OPEN.
+
+## Review unit 33 — Breaking capacity inventory and exact lookup gate
+
+- **Observed:** first-row SQL selection and numeric coercion omitted duplicate,
+  reference, other-voltage and whole-inventory validation.
+- **Expected:** malformed normalized ratings fail before use; only explicitly
+  recorded exact conditions can supply a capacity; missing conditions stay unknown.
+- **Implementation:** shared device/voltage/Icu/optional-Ics parser, reference and
+  duplicate checks, runtime request domains and pre/post file identity, explicit
+  read-only connection closure, complete CLI inventory/counts. Stored zero/null
+  Icu assertions are strengthened to the existing SQL contract; no tests disabled.
+- **Tests:** 61 new parser/SQL/CLI/engine/GUI/version/sidecar cases and 258 targeted
+  regressions. Copied/weak fixtures only; package database unchanged.
+- **Evidence:** [breaking capacity policy](../engineering/breaking_capacity_data_gate_policy.md).
+- **Remaining risks:** inherited migration/rating assumptions, manufacturer and
+  Ics/duty/backup applicability, immutable snapshots and independent review remain
+  open. P0 OPEN; numerical structure alone cannot approve a protection rating.
