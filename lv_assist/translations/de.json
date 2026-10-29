@@ -903,5 +903,6 @@
   "drawing_write_failed": "Die Zeichnung konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Ordnerrechte und eine mögliche Dateisperre prüfen.",
   "library_exists": "Der Ausgabeordner enthält bereits Dateien. Einen anderen übergeordneten Ordner für eine neue Bibliothek wählen; vorhandene Dateien und ausgefüllte Checklisten wurden nicht überschrieben.",
   "verification_write_failed": "Die vorläufige Design-Checkliste konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Schreibrechte und eine mögliche Dateisperre prüfen.",
-  "audit_text_invalid": "Der Text enthält das nicht unterstützte Zeichen {code}. Dieses Zeichen vor Berechnung oder Export entfernen."
+  "audit_text_invalid": "Der Text enthält das nicht unterstützte Zeichen {code}. Dieses Zeichen vor Berechnung oder Export entfernen.",
+  "audit_curve_invalid": "Auslösekurve {name}: Feld {field} fehlt oder ist ungültig. Katalogdatensatz vor der Berechnung prüfen."
 }

@@ -459,3 +459,17 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [text input policy](../engineering/exportable_input_text_policy.md).
 - **Remaining risks:** auxiliary data schemas, tag grammar, font/RTL field tests
   and independent numerical/engineering verification remain open. P0 stays OPEN.
+
+## Review unit 27 — Auxiliary curve/rule data gate
+
+- **Observed:** raw trip-curve JSON/mutable caches bypassed consumed-field domain
+  checks; duplicate records/keys could replace data and rule free text was unchecked.
+- **Expected:** malformed data fails before arithmetic, without catalog repair or
+  engineering approval inferred from a source label.
+- **Implementation:** shared curve loader/domain validator, engine precheck,
+  detached/revalidated lookup, read-only CLI curve scope and rule text policy.
+- **Tests:** 62 new curve/cache/CLI/rule/GUI cases; 138 targeted regressions. The
+  prior 20 ms fixture supplies explicit parameters with original assertions intact.
+- **Evidence:** [curve data policy](../engineering/trip_curve_data_gate_policy.md).
+- **Remaining risks:** source authentication, interpolation/runtime applicability,
+  remaining auxiliary tables and independent engineering review stay open. P0 OPEN.

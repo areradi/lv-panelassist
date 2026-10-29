@@ -255,7 +255,7 @@ class CatalogDevice(EngineeringTextInput):
         expected = {**conditions, "part_number": self.part_number, "manufacturer": self.manufacturer}
         return source is not None and source.matches(value, unit, expected)
 
-class SelectivityRuleRecord(BaseModel):
+class SelectivityRuleRecord(EngineeringTextInput):
     model_config = ConfigDict(allow_inf_nan=False)
 
     upstream_series: str

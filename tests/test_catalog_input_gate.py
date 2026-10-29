@@ -31,6 +31,7 @@ def database(tmp_path, *, identifier="TEST-PART", raw=None):
     with sqlite3.connect(path) as connection:
         connection.execute("CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT)")
         connection.execute("CREATE TABLE selectivity_rules(raw_json TEXT)")
+        connection.execute("CREATE TABLE trip_curves(curve_id TEXT, raw_json TEXT)")
         payload = raw if raw is not None else device().model_dump_json()
         connection.execute("INSERT INTO catalog_devices VALUES (?, ?, 'ESTIMATED')", (identifier, payload))
     return path

@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord
+from lv_assist.trip_curve_validation import validated_curve
+from lv_assist.i18n import tr
 
 
 class CatalogValidationError(ValueError):
@@ -71,6 +73,22 @@ def validated_rules(rules: Iterable[SelectivityRuleRecord]) -> list[SelectivityR
     return result
 
 
+def curve_rows(rows):
+    curves = {}
+    for row in rows:
+        name = row["curve_id"]
+        if name in curves:
+            raise CatalogValidationError("Duplicate trip curve identity")
+        curves[name] = validated_curve(name, catalog_object(row["raw_json"]), CatalogValidationError)
+    return curves
+
+
+def validated_curves(curves):
+    if not isinstance(curves, dict):
+        raise CatalogValidationError(tr("audit_curve_invalid", name="?", field="curve_map"))
+    return {name: validated_curve(name, curve, CatalogValidationError) for name, curve in curves.items()}
+
+
 def validate_catalog_database(path: Path) -> dict[str, Any]:
     """Read-only structural scope: device identities/numbers and selectivity rows."""
     if not path.is_file():
@@ -82,6 +100,7 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
         devices = device_rows(connection.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices"))
         rules = validated_rules(SelectivityRuleRecord.model_validate(catalog_object(row[0]))
                                 for row in connection.execute("SELECT raw_json FROM selectivity_rules"))
-    return {"devices": len(devices), "selectivity_rules": len(rules),
-            "structural_scope": "device identity/numbers and selectivity conditions",
+        curves = curve_rows(connection.execute("SELECT curve_id, raw_json FROM trip_curves"))
+    return {"devices": len(devices), "selectivity_rules": len(rules), "trip_curves": len(curves),
+            "structural_scope": "device identity/numbers, selectivity conditions and trip curve structure",
             "engineering_verification": "NOT_VERIFIED"}

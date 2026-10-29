@@ -12,8 +12,9 @@ import math
 import sqlite3
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
+from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.run_metadata import catalog_file_hash
-from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules
+from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves
 from typing import Any, Dict, List, Optional
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState
@@ -229,7 +230,7 @@ class CatalogRepository:
         if self._curves_cache is None:
             with self._connect() as conn:
                 rows = conn.execute("SELECT curve_id, raw_json FROM trip_curves").fetchall()
-                self._curves_cache = {r["curve_id"]: json.loads(r["raw_json"]) for r in rows}
+                self._curves_cache = curve_rows(rows)
         return self._curves_cache
 
     @property
@@ -267,7 +268,12 @@ class TripCurveRepository:
     @staticmethod
     def get_curve(series: str) -> dict:
         curves = catalog_repo.trip_curves
-        return curves.get(series, curves.get("DEFAULT", {}))
+        if not isinstance(curves, dict):
+            validated_curves(curves)
+        name = series if series in curves else "DEFAULT"
+        if name not in curves:
+            return {}
+        return validated_curve(name, curves[name], CatalogValidationError)
 
     @classmethod
     def datasheet_points(cls, series: str) -> Optional[List[tuple]]:

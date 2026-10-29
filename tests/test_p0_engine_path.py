@@ -57,7 +57,8 @@ def test_engine_trip_estimate_uses_real_helper_without_cap(monkeypatch, time):
 
 
 def test_engine_missing_curve_has_no_default_and_20ms_is_only_an_estimate(monkeypatch):
-    monkeypatch.setattr(catalog_repo, "_curves_cache", {"TEST": {"im_max_mult": 12}})
+    monkeypatch.setattr(catalog_repo, "_curves_cache", {"TEST": {"thermal_k": 90, "alpha": 2,
+                                                               "im_min_mult": 8, "im_max_mult": 12}})
     unknown = SimpleNamespace(series="UNKNOWN", rated_current_in_a=100)
     assert EngineeringEngine._estimate_trip_time(unknown, 2).time_s is None
     known = SimpleNamespace(series="TEST", rated_current_in_a=100)
