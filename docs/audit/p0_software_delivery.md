@@ -1,5 +1,11 @@
 # P0 software delivery and remaining technical blocks
 
+Later product scope: the user has retired macro/script/DXF output and replaced
+physical panel drawings with conceptual architecture. See the
+[current product decisions](../product/direction.md) and
+[companion-scope delivery](companion_scope_delivery.md). The test counts and
+macro/Windows acceptance notes below describe the earlier unit 43 checkpoint.
+
 وضعیت ساده: اصلاحات مستقل از مرجع مهندسی در این بسته پیوسته انجام شده‌اند،
 از جمله PDF واقعی، ثابت‌بودن داده و زبان خروجی، حفظ پروژه در ورود نامعتبر و
 کنترل مسیرهای فرعی نقشه. پایان کل P0 هنوز اعلام نمی‌شود: بخشی از پیاده‌سازی

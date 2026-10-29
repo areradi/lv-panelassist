@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from lv_assist.catalog import CatalogRepository
-from lv_assist.control_circuits import ControlCircuitGenerator
+from lv_assist.functional_connections import FunctionalConnections
 from lv_assist.csv_export import CsvMode
 from lv_assist.engine import EngineeringEngine
 from lv_assist.export_preflight import ExportSnapshotError
@@ -14,9 +14,9 @@ from lv_assist.i18n import i18n, tr
 from lv_assist.models import FeederInput, LoadType, ProjectSpec
 from lv_assist.outputs import EplanExporter, EplanPartsExporter
 
-EXPORTERS = [EplanExporter.export_csv, EplanPartsExporter.export_csv, ControlCircuitGenerator.export_connections_csv]
+EXPORTERS = [EplanExporter.export_csv, EplanPartsExporter.export_csv, FunctionalConnections.export_csv]
 RENDERERS = [(EplanExporter, '_render_csv'), (EplanPartsExporter, '_render_csv'),
-             (ControlCircuitGenerator, '_render_connections_csv')]
+             (FunctionalConnections, '_render_csv')]
 
 
 def results():

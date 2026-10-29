@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 from lv_assist.export_context import ExportContext
-from lv_assist.output_notice import output_notice
 
 
 def export_current_library(folder, project, outputs, summary, checks, render):
@@ -29,12 +28,6 @@ def export_current_library(folder, project, outputs, summary, checks, render):
             if path.parent.resolve() != staging.resolve() or not path.is_file() or path.is_symlink():
                 raise OSError('Invalid library output path')
             names.append(path.name)
-            if path.suffix.lower() in ('.ema', '.emp'):
-                text = path.read_text(encoding='utf-8')
-                declaration, separator, body = text.partition('?>')
-                notice = '<!-- ' + output_notice(snapshot[2]) + ' -->\n'
-                path.write_text(declaration + separator + '\n' + notice + body if separator else notice + text,
-                                encoding='utf-8')
             with path.open('r+b') as stream:
                 if not path.stat().st_size:
                     raise OSError('Empty library output')

@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from lv_assist.gui import LVAssistApp, build_demo_project
+from lv_assist.functional_connections import FunctionalConnections
 
 
 def main():
@@ -19,6 +20,8 @@ def main():
         assert len(outputs) == 4 and checks
         assert summary.run_metadata is not None
         assert app._results_are_current()
+        assert len(app.tree_wires_preview.get_children()) == len(
+            FunctionalConnections.build(app.current_project, outputs, summary))
         print(f'GUI rendered and recalculated: {len(outputs)} feeders; {len(checks)} validation results')
     finally:
         app.destroy()

@@ -10,7 +10,7 @@ from lv_assist.models import (
     DesignVerificationReport, VerificationStatus
 )
 from lv_assist.catalog import StandardsRegistry
-from lv_assist.control_circuits import ControlCircuitGenerator
+from lv_assist.functional_connections import FunctionalConnections
 from lv_assist.engine import build_design_verification
 from lv_assist.i18n import tr, i18n
 from lv_assist.xlsx_export import save_workbook_atomic
@@ -167,10 +167,11 @@ class ExcelExporter:
             if summary.cap_bank_suggested_str:
                 _append_safe(ws4, [f"=PFC{project.panel_tag}-SUGcap", "=PFC", project.panel_tag, "-SUGcap", tr("bom_suggested"), "To be purchased", summary.cap_bank_suggested_str, tr("bom_suggested"), 1, "PCS", 0.0, DataQuality.ESTIMATED.value])
 
-        ws5 = wb.create_sheet("05_Control_Circuits")
-        _append_safe(ws5, ["Wire No.", "From device", "From terminal", "To device", "To terminal", "Color", "Section (mm2)", "Remark"])
-        for w in ControlCircuitGenerator.build_all_wires(project, feeders, summary):
-            _append_safe(ws5, [w.wire_no, w.from_dev, w.from_term, w.to_dev, w.to_term, w.color, w.cross_section_mm2, w.remark])
+        ws5 = wb.create_sheet("05_Functional_Connections")
+        _append_safe(ws5, FunctionalConnections.headers())
+        for connection in FunctionalConnections.build(project, feeders, summary):
+            _append_safe(ws5, connection.cells())
+        _append_safe(ws5, [tr('fc_scope_note')])
 
         # فاز ۱۲: برگه گزارش تأیید طراحی IEC 61439-1 بند ۱۰
         ws6 = wb.create_sheet("06_Design_Verification")
@@ -476,6 +477,7 @@ pre {{ white-space: pre-wrap; overflow-wrap: anywhere; direction: ltr; text-alig
 <h2>{_h(tr("html_s5"))}</h2><table>
 <thead><tr><th>{_h(tr("html_v_status"))}</th><th>{_h(tr("html_v_code"))}</th><th>{_h(tr("html_v_std"))}</th><th>{_h(tr("html_v_desc"))}</th><th>{_h(tr("html_v_evidence"))}</th><th>{_h(tr("html_v_action"))}</th></tr></thead>
 <tbody>{val_rows}</tbody></table>
+{FunctionalConnections.html_section(project, feeders, summary)}
 <h2>{_h(tr("rpt_refs"))}</h2><table>
 <thead><tr><th>{_h(tr("rpt_ref_std"))}</th><th>{_h(tr("rpt_ref_scope"))}</th></tr></thead>
 <tbody>{ref_rows}</tbody></table>

@@ -18,6 +18,8 @@ from lv_assist.library_export import export_current_library
 from lv_assist.report_export import export_current_text, export_current_report
 from lv_assist.export_preflight import ExportSnapshotError
 from lv_assist.output_notice import annotate_svg
+from lv_assist.functional_connections import FunctionalConnections
+from lv_assist.catalog import catalog_repo
 
 from lv_assist.iec_sld_svg import (
     SLDPanelDTO,
@@ -117,7 +119,7 @@ class GuiOutputBridge:
         psu_a = getattr(summary, "ctrl_24v_design_current_with_spare_a", 0.0)
         psu_str = f"24VDC Load = {psu_w}W ({psu_a}A w/Spare)" if psu_w else "24VDC Control Circuit"
 
-        ik_val = getattr(summary, "ik_total_ka", None) or getattr(project, "prospective_ik_ka", 25.0) or 25.0
+        ik_val = getattr(summary, 'ik_bus_total_ka', None)
 
         return SLDPanelDTO(
             project_name=str(getattr(project, "project_name", "LV Switchboard")),
@@ -126,11 +128,12 @@ class GuiOutputBridge:
             nominal_voltage_v=float(getattr(project, "nominal_voltage_v", 400.0)),
             frequency_hz=float(getattr(project, "frequency_hz", 50.0)),
             earthing_system=cls._val_str(getattr(project, "earthing_system", "TN-S")),
-            prospective_ik_ka=float(ik_val),
+            prospective_ik_ka=ik_val,
             main_breaker_tag="-Q0",
             main_breaker_part=str(getattr(main_brk, "part_number", "Main Breaker")),
             main_breaker_in_a=float(getattr(main_brk, "rated_current_in_a", 0.0)),
-            main_breaker_icu_ka=float(getattr(main_brk, "icu_ka_400v", 0.0)),
+            main_breaker_icu_ka=catalog_repo.get_device_icu_at_voltage(main_brk.part_number, project.nominal_voltage_v)
+                if main_brk is not None else None,
             design_main_current_a=float(getattr(summary, "design_main_current_a", 0.0)),
             busbar_spec=str(bus_spec),
             pe_busbar_spec=str(pe_spec),
@@ -301,7 +304,6 @@ class GuiOutputBridge:
 
         sld_svg = cls.generate_sld_svg(project, feeders_out, summary)
         ladder_map = cls.generate_all_ladder_svgs(project, feeders_out, summary)
-        wires, terminals = cls.generate_all_wire_and_terminal_schedules(project, feeders_out, summary)
 
         esc = lambda s: html.escape(str(s or ""))
 
@@ -317,56 +319,9 @@ class GuiOutputBridge:
             </div>
             """)
 
-        wire_rows_html = "".join(
-            f"<tr><td dir='ltr'><b>{esc(w['wire_no'])}</b></td>"
-            f"<td dir='ltr'><b>{esc(w['feeder_id'])}</b></td>"
-            f"<td>{esc(w['potential_role'])}</td>"
-            f"<td dir='ltr'><b>{esc(w['from_pin'])}</b></td>"
-            f"<td dir='ltr'><b>{esc(w['to_pin'])}</b></td>"
-            f"<td dir='ltr'>{esc(w['wire_spec'])}</td></tr>"
-            for w in wires
-        )
-
-        term_rows_html = "".join(
-            f"<tr><td dir='ltr'><b>{esc(t['feeder_id'])}</b></td>"
-            f"<td dir='ltr'><b>{esc(t['terminal_strip'])}{esc(t['terminal_pin'])}</b></td>"
-            f"<td dir='ltr'>{esc(t['internal_wire_no'])} ({esc(t['internal_target'])})</td>"
-            f"<td dir='ltr'><b>{esc(t['cable_tag'])} ({esc(t['cable_core'])})</b></td>"
-            f"<td dir='ltr'>{esc(t['cable_spec'])}</td>"
-            f"<td dir='ltr'><b>{esc(t['external_location'])} / {esc(t['external_target'])}</b></td></tr>"
-            for t in terminals
-        )
-
-        injected_block = f"""
-        <div style="page-break-before: always; margin-top: 18px;">
-            <h2>نقشه تک‌خطی مهندسی تابلو (IEC 60617 Single-Line Diagram — Dynamic SLD)</h2>
-            {sld_svg}
-        </div>
-        {"".join(ladder_sections_html)}
-        <div style="page-break-before: always; margin-top: 18px;">
-            <h2>جدول جامع شماره‌گذاری سیم‌ها و وایرشو (From-To Wire Ferrule Schedule)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>شماره سیم (در بیضی آبی)</th><th>فیدر</th><th>نقش پتانسیل</th>
-                        <th>مبدأ اتصال (From Device:Pin)</th><th>مقصد اتصال (To Device:Pin)</th><th>مشخصات سیم</th>
-                    </tr>
-                </thead>
-                <tbody>{wire_rows_html}</tbody>
-            </table>
-
-            <h2>جدول سرسیم‌بندی ریل‌های ترمینال (-X) و کابل‌های فرمان سایت (-W)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>فیدر</th><th>ترمینال تابلو</th><th>سیم و اتصال داخلی</th>
-                        <th>تگ کابل و شماره رشته</th><th>مشخصات کابل</th><th>محل نصب و تجهیز بیرونی</th>
-                    </tr>
-                </thead>
-                <tbody>{term_rows_html}</tbody>
-            </table>
-        </div>
-        """
+        injected_block = (f'<div style="page-break-before: always; margin-top: 18px;">{sld_svg}</div>'
+                          + ''.join(ladder_sections_html)
+                          + FunctionalConnections.html_section(project, feeders_out, summary))
 
         with open(html_filepath, "r", encoding="utf-8") as fp:
             content = fp.read()

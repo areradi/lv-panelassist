@@ -7,7 +7,6 @@ import pytest
 
 from lv_assist.catalog import CatalogRepository
 from lv_assist.control_circuits import ControlCircuitGenerator
-from lv_assist.dxf_export import ControlLadderDxfExporter
 from lv_assist.engine import EngineeringEngine
 from lv_assist.export_preflight import ExportSnapshotError
 from lv_assist.gui import LVAssistApp
@@ -21,7 +20,6 @@ CASES = [
     (TccGenerator, 'generate_svg_file', 'generate_svg', '.svg', 'action_export_tcc'),
     (ControlCircuitGenerator, 'generate_svg_file', 'generate_svg', '.svg', 'action_export_ctrl_svg'),
     (PanelLayoutGenerator, 'generate_svg_file', 'generate_svg', '.svg', 'action_export_layout'),
-    (ControlLadderDxfExporter, 'export_file', 'generate', '.dxf', 'action_export_dxf'),
 ]
 
 

@@ -28,11 +28,8 @@ from lv_assist.export_preflight import ExportSnapshotError, require_current_bund
 from lv_assist.bundle_export import BundleExportResult, build_bundle_atomic, export_manifest
 from lv_assist.outputs import SldGenerator, TccGenerator, PdfExporter, EplanExporter, EplanPartsExporter
 from lv_assist.control_circuits import ControlCircuitGenerator
-from lv_assist.dxf_export import ControlLadderDxfExporter
 from lv_assist.layout import PanelLayoutGenerator
-from lv_assist.eplan_macro import EplanMacroExporter
-from lv_assist.eplan_macro_files import EplanMacroFileExporter, EplanPageMacroExporter
-from lv_assist.eplan_field_test import EplanFieldTestKit
+from lv_assist.functional_connections import FunctionalConnections
 from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
 from lv_assist.result_contract import STATUS_SEVERITY_ORDER
@@ -581,17 +578,12 @@ class LVAssistApp(ctk.CTk):
             (tr("btn_sld"), "#117A65", self.action_export_sld),
             (tr("btn_tcc"), "#7D3C98", self.action_export_tcc),
             (tr("btn_layout"), "#8E44AD", self.action_export_layout),
-            (tr("btn_dxf"), "#B7950B", self.action_export_dxf),
             (tr("btn_ctrl"), "#566573", self.action_export_ctrl_svg),
         ])
         _group("grp_data", [
             (tr("btn_eplan"), "#1F4E78", self.action_export_eplan),
             (tr("btn_parts"), "#117A65", self.action_export_parts),
             (tr("btn_conn"), "#2980B9", self.action_export_connections),
-            (tr("btn_eplan_script"), "#5D6D7E", self.action_export_eplan_script),
-            (tr("btn_eplan_macros"), "#2874A6", self.action_export_eplan_macros),
-            (tr("btn_eplan_page_macros"), "#1A5276", self.action_export_eplan_page_macros),
-            (tr("btn_eplan_test_kit"), "#7B241C", self.action_export_eplan_test_kit),
         ])
         b_all = _add_btn(out_frame, tr("btn_export_all"), "#1E8449", self.action_export_all, "tip_export_all")
         b_all.pack(side="right", padx=8, pady=3)
@@ -626,7 +618,7 @@ class LVAssistApp(ctk.CTk):
         self.tree_rules.pack(fill="both", expand=True, padx=6, pady=6)
 
         self._apply_status()
-        tab_schematics = self.tabs.add("۵. پیش‌نمایش SLD و مدار فرمان (IEC SVG)")
+        tab_schematics = self.tabs.add(tr('fc_tab'))
         self._build_schematics_preview_tab(tab_schematics)
 
     def _apply_tree_style(self, font_family: str):
@@ -722,6 +714,13 @@ class LVAssistApp(ctk.CTk):
         self._stale = False
         self._last_calc_time = datetime.now().strftime("%H:%M:%S")
         self._apply_status()
+        if hasattr(self, 'cmb_sheet_selector'):
+            choices = ['SLD: ' + tr('fc_all_scopes')] + [
+                f'{tr("fc_feeder_choice")} {f.feeder_id} — {f.description}' for f in f_outs]
+            self.cmb_sheet_selector.configure(values=choices)
+            if self.cmb_sheet_selector.get() not in choices:
+                self.cmb_sheet_selector.set(choices[0])
+            self.action_refresh_schematic_preview()
 
     def action_generate_template(self):
         path = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile="Input_Load_List_Template.xlsx", filetypes=[("Excel", "*.xlsx")])
@@ -853,12 +852,10 @@ class LVAssistApp(ctk.CTk):
             "03_Single_Line_Diagram.svg": lambda p: SldGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "04_Time_Current_Curves.svg": lambda p: TccGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "05_Control_Circuits.svg": lambda p: ControlCircuitGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
-            "06_Control_Connections_EPLAN.csv": lambda p: ControlCircuitGenerator.export_connections_csv(p, project, f_outs, summary, validations=validations),
-            "07_Panel_Layout.svg": lambda p: PanelLayoutGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
-            "08_Control_Circuits.dxf": lambda p: ControlLadderDxfExporter.export_file(p, project, f_outs, summary, validations=validations),
+            "06_Functional_Connections.csv": lambda p: FunctionalConnections.export_csv(p, project, f_outs, summary, validations=validations),
+            "07_Architecture_Overview.svg": lambda p: PanelLayoutGenerator.generate_svg_file(p, project, f_outs, summary, validations=validations),
             "09_EPLAN_Parts_Import.csv": lambda p: EplanExporter.export_csv(p, project, f_outs, summary, validations=validations),
             "10_EPLAN_Parts_Management.csv": lambda p: EplanPartsExporter.export_csv(p, project, f_outs, summary, validations=validations),
-            "11_EPLAN_Generate_Pages.cs": lambda p: EplanMacroExporter.export_file(p, project, f_outs, summary, validations=validations),
         }
         count = 0
         with tempfile.TemporaryDirectory(prefix="lvassist_bundle_") as tmp:
@@ -869,18 +866,6 @@ class LVAssistApp(ctk.CTk):
                     p = os.path.join(tmp, name)
                     fn(p)
                     zf.write(p, arcname=name)
-                    count += 1
-                macros_dir = os.path.join(tmp, "EPLAN_Macros")
-                for path in EplanMacroFileExporter.export_library(macros_dir, project, f_outs, summary, validations=validations):
-                    zf.write(path, arcname="12_EPLAN_Macros/" + os.path.basename(path))
-                    count += 1
-                pages_dir = os.path.join(tmp, "EPLAN_Page_Macros")
-                for path in EplanPageMacroExporter.export_library(pages_dir, project, f_outs, summary, validations=validations):
-                    zf.write(path, arcname="13_EPLAN_Page_Macros/" + os.path.basename(path))
-                    count += 1
-                field_dir = os.path.join(tmp, "EPLAN_FieldTest")
-                for path in EplanFieldTestKit.export_kit(field_dir, project, f_outs, summary, validations=validations):
-                    zf.write(path, arcname="14_EPLAN_FieldTest/" + os.path.basename(path))
                     count += 1
                 pdf_status, pdf_reason = "NOT_REQUESTED", None
                 if include_pdf:
@@ -998,7 +983,7 @@ class LVAssistApp(ctk.CTk):
         choice = messagebox.askyesnocancel(tr("csv_target_title"), tr("csv_target_prompt"))
         if choice is None: return
         mode = CsvMode.SPREADSHEET if choice else CsvMode.MACHINE
-        prefix = "Spreadsheet_" if choice else "EPLAN_"
+        prefix = "Spreadsheet_" if choice else "Interchange_"
         path = filedialog.asksaveasfilename(defaultextension=".csv", initialfile=prefix + filename,
                                           filetypes=[("CSV", "*.csv")])
         if path:
@@ -1015,36 +1000,10 @@ class LVAssistApp(ctk.CTk):
     def action_export_eplan(self):
         self._export_csv_for_target(EplanExporter.export_csv, "Parts_Import.csv")
 
-    def action_export_eplan_script(self):
-        self._export_drawing(EplanMacroExporter.export_file, "EPLAN_Generate_Pages.cs", ".cs", open_after=False)
 
-    def _export_eplan_library(self, exporter, dirname, title, done):
-        res = self._get_results()
-        if not res: return
-        folder = filedialog.askdirectory(title=tr(title))
-        if not folder: return
-        try:
-            written = exporter(os.path.join(folder, dirname), self.current_project,
-                               res[0], res[1], validations=res[2])
-        except ExportSnapshotError:
-            messagebox.showwarning(tr("msg_warning"), tr("lbl_stale"))
-            return
-        except FileExistsError:
-            messagebox.showwarning(tr("msg_warning"), tr("library_exists"))
-            return
-        except OSError:
-            messagebox.showerror(tr("msg_error"), tr("drawing_write_failed"))
-            return
-        messagebox.showinfo(tr("msg_success"), tr(done, n=len(written)))
 
-    def action_export_eplan_macros(self):
-        self._export_eplan_library(EplanMacroFileExporter.export_library, "EPLAN_Macros", "btn_eplan_macros", "msg_macros_done")
 
-    def action_export_eplan_page_macros(self):
-        self._export_eplan_library(EplanPageMacroExporter.export_library, "EPLAN_Page_Macros", "btn_eplan_page_macros", "msg_page_macros_done")
 
-    def action_export_eplan_test_kit(self):
-        self._export_eplan_library(EplanFieldTestKit.export_kit, "EPLAN_FieldTest", "btn_eplan_test_kit", "msg_test_kit_done")
 
     def _on_mfg_change(self, display_value: str):
         if self.current_project is None: return
@@ -1062,13 +1021,10 @@ class LVAssistApp(ctk.CTk):
         self._export_drawing(ControlCircuitGenerator.generate_svg_file, "Control_Circuits.svg", ".svg")
 
     def action_export_connections(self):
-        self._export_csv_for_target(ControlCircuitGenerator.export_connections_csv, "Control_Connections.csv")
+        self._export_csv_for_target(FunctionalConnections.export_csv, "Functional_Connections.csv")
 
     def action_export_layout(self):
-        self._export_drawing(PanelLayoutGenerator.generate_svg_file, "Panel_Layout.svg", ".svg")
-
-    def action_export_dxf(self):
-        self._export_drawing(ControlLadderDxfExporter.export_file, "Control_Circuits.dxf", ".dxf", open_after=False)
+        self._export_drawing(PanelLayoutGenerator.generate_svg_file, "Architecture_Overview.svg", ".svg")
 
     def action_export_parts(self):
         self._export_csv_for_target(EplanPartsExporter.export_csv, "Parts_Management.csv")
@@ -1102,17 +1058,15 @@ class LVAssistApp(ctk.CTk):
         ).pack(side="left", padx=6, pady=8)
 
         # Split view: Top = Wire/Terminal Schedule of selected sheet, Bottom = Live SVG Source & Summary
-        lbl_w = ctk.CTkLabel(parent, text="جدول پویا شماره‌گذاری سیم‌ها (From-To Wire Schedule) و ترمینال‌های نقشه انتخابی:", font=ctk.CTkFont(size=12))
+        lbl_w = ctk.CTkLabel(parent, text=tr('fc_title') + '\n' + tr('fc_scope_note'),
+                            wraplength=1150, justify='right', font=ctk.CTkFont(size=12))
         lbl_w.pack(anchor="e", padx=10, pady=(4, 2))
 
         self.tree_wires_preview = ttk.Treeview(
-            parent, columns=("wire", "feeder", "role", "from_pin", "to_pin", "spec"), show="headings", height=8
+            parent, columns=FunctionalConnections.HEADER_KEYS, show="headings", height=8
         )
-        for col, txt, w in [
-            ("wire", "شماره سیم (بیضی آبی)", 130), ("feeder", "فیدر", 75),
-            ("role", "نقش پتانسیل الکتریکی", 250), ("from_pin", "مبدأ اتصال (Device:Pin)", 230),
-            ("to_pin", "مقصد اتصال (Device:Pin)", 260), ("spec", "مشخصات سیم", 180)
-        ]:
+        for col, txt, w in zip(FunctionalConnections.HEADER_KEYS, FunctionalConnections.headers(),
+                              (85, 100, 190, 190, 270, 150, 150, 105)):
             self.tree_wires_preview.heading(col, text=txt)
             self.tree_wires_preview.column(col, width=w, anchor="center")
         self.tree_wires_preview.pack(fill="x", padx=8, pady=4)
@@ -1143,16 +1097,14 @@ class LVAssistApp(ctk.CTk):
         f_outs, summary, _ = self.last_results
         svg_str, fname = self._get_selected_svg_and_name()
 
-        wires, _ = GuiOutputBridge.generate_all_wire_and_terminal_schedules(self.current_project, f_outs, summary)
+        connections = FunctionalConnections.build(self.current_project, f_outs, summary)
         choice = self.cmb_sheet_selector.get()
 
         for item in self.tree_wires_preview.get_children():
             self.tree_wires_preview.delete(item)
-        for w in wires:
-            if choice.startswith("SLD:") or f" {w['feeder_id']} " in choice:
-                self.tree_wires_preview.insert("", "end", values=(
-                    w["wire_no"], w["feeder_id"], w["potential_role"], w["from_pin"], w["to_pin"], w["wire_spec"]
-                ))
+        for connection in connections:
+            if choice.startswith("SLD:") or (connection.scope_type == 'FEEDER' and f" {connection.scope} " in choice):
+                self.tree_wires_preview.insert('', 'end', values=connection.cells())
 
         self.txt_svg_inspector.delete("1.0", "end")
         self.txt_svg_inspector.insert(

@@ -23,7 +23,7 @@ def fail(*args, **kwargs):
     raise OSError('synthetic disk/permission error')
 
 
-@pytest.mark.parametrize('stage', ['ExcelExporter.export_to_excel', 'EplanFieldTestKit.export_kit'])
+@pytest.mark.parametrize('stage', ['ExcelExporter.export_to_excel', 'FunctionalConnections.export_csv'])
 def test_actual_generation_failure_preserves_previous_bundle(tmp_path, monkeypatch, stage):
     project, (feeders, summary, checks) = results()
     path = tmp_path / 'old.zip'
@@ -42,7 +42,7 @@ def test_actual_success_replaces_bundle_and_retains_expected_assets(tmp_path):
     count = LVAssistApp.build_document_bundle(str(path), project, feeders, summary, checks, include_pdf=False)
     with ZipFile(path) as archive:
         assert archive.testzip() is None
-        assert count == len(archive.namelist()) == 21
+        assert count == len(archive.namelist()) == 13
         assert archive.read('00_CSV_README.txt').decode() == tr('csv_bundle_note')
         assert '01_Design_Output.xlsx' in archive.namelist()
         assert '02_Engineering_Report.html' in archive.namelist()
@@ -103,7 +103,7 @@ def test_gui_late_generation_failure_has_localized_message_no_success(tmp_path, 
     monkeypatch.setattr('lv_assist.gui.filedialog.asksaveasfilename', lambda **kwargs: str(path))
     monkeypatch.setattr('lv_assist.gui.messagebox.showerror', lambda title, message: errors.append(message))
     monkeypatch.setattr('lv_assist.gui.messagebox.showinfo', lambda *args: successes.append(args))
-    monkeypatch.setattr('lv_assist.gui.EplanFieldTestKit.export_kit', fail)
+    monkeypatch.setattr('lv_assist.gui.FunctionalConnections.export_csv', fail)
     app = SimpleNamespace(_results_are_current=lambda: True, last_results=result, current_project=project)
     try:
         i18n.set_language(locale)

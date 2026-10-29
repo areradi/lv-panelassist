@@ -1,5 +1,10 @@
 # Audit work register
 
+Current output/product scope follows the user's
+[companion-product decisions](../product/direction.md). Macro/DXF generation and
+physical layout drawing are retired or replaced as recorded there; historical
+audit units below describe their earlier state. Engineering evidence gates remain.
+
 Statuses refer to software delivery, never engineering certification. Every item
 uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 
@@ -756,3 +761,27 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** evidence-dependent physical implementation and independent
   sources/review still block P0; Windows/EPLAN acceptance is not available here.
   No authentication, engineering approval, merge or release is claimed.
+
+## Review unit 44 — Companion scope and functional handoff
+
+- **Observed:** macro/CAD generation and fabricated numeric wiring lists did
+  not match the user's desired preliminary-design companion product.
+- **Expected:** retire the explicitly rejected outputs; show functional
+  connections and the separately approved architecture blocks; preserve remaining
+  outputs pending one-at-a-time user review.
+- **Implementation:** removed active macro/script/DXF/kit generators and UI/ZIP
+  paths; shared equipment-level connection model in GUI/CSV/XLSX/HTML/PDF;
+  conceptual block architecture with readable Persian labels and run status.
+  Retained preview fault/rating fallback corrected; calculation models/data kept.
+- **Tests:** new scope/absence/connection/architecture/locale/typography cases;
+  retained library/CSV/atomic/report guards, full regression suite and GUI smoke.
+  Final full suite: **1833 passed**, no failures/skips; all 30 synthetic scenario
+  runs pass. Actual Tk smoke recalculates four feeders/71 checks and verifies
+  displayed functional rows. Source DB is unchanged. The linked report records
+  deliberate retirement of obsolete tests and the actual rendered sample review.
+- **Evidence:** [delivery and limitations](companion_scope_delivery.md),
+  [product decisions](../product/direction.md), actual architecture and connection
+  samples under `/workspace/audit-evidence/companion-samples/`.
+- **Remaining risks:** other outputs await explicit discussion; functional
+  connections are not final wiring, and independent engineering/data review
+  remains open. No target-tool compatibility, construction approval or release.

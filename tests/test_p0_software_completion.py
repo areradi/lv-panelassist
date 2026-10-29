@@ -106,7 +106,7 @@ def test_actual_bundle_language_and_pdf_stay_consistent_during_language_change(t
                     assert run[1].run_metadata.input_fingerprint in drawing
             import csv
             import io
-            for name in ('06_Control_Connections_EPLAN.csv', '09_EPLAN_Parts_Import.csv'):
+            for name in ('06_Functional_Connections.csv', '09_EPLAN_Parts_Import.csv'):
                 records = list(csv.DictReader(io.StringIO(archive.read(name).decode('utf-8-sig'))))
                 assert records
                 assert {row['Overall check status'] for row in records} == {run[1].status.value}

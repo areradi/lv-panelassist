@@ -6,7 +6,7 @@ No hardcoded project or feeder values.
 """
 
 import html
-from typing import List, Dict, Any, Optional
+from typing import List
 from pydantic import BaseModel
 
 
@@ -40,11 +40,11 @@ class SLDPanelDTO(BaseModel):
     nominal_voltage_v: float
     frequency_hz: float
     earthing_system: str
-    prospective_ik_ka: float
+    prospective_ik_ka: float | None = None
     main_breaker_tag: str = "-Q0"
     main_breaker_part: str
     main_breaker_in_a: float
-    main_breaker_icu_ka: float
+    main_breaker_icu_ka: float | None = None
     design_main_current_a: float
     busbar_spec: str
     pe_busbar_spec: str
@@ -87,7 +87,7 @@ class IECSldSvgGenerator:
                 IEC 60617 SINGLE-LINE DIAGRAM (SLD) | {esc(data.project_name)} ({esc(data.panel_tag)})
             </text>
             <text x="{svg_w - 20}" y="21" fill="#AED6F1" font-size="11" text-anchor="end">
-                {esc(data.nominal_voltage_v)}V {esc(data.frequency_hz)}Hz | {esc(data.earthing_system)} | Ik'' = {esc(data.prospective_ik_ka)} kA
+                {esc(data.nominal_voltage_v)}V {esc(data.frequency_hz)}Hz | {esc(data.earthing_system)} | Ik'' = {esc(data.prospective_ik_ka if data.prospective_ik_ka is not None else '?')} kA
             </text>
 
             <!-- Incoming Supply & Cable -->
@@ -109,7 +109,7 @@ class IECSldSvgGenerator:
                 {esc(data.main_breaker_part)}
             </text>
             <text x="{main_x + 16}" y="143" fill="#4B5563" font-size="10">
-                In = {esc(data.main_breaker_in_a)} A | Icu = {esc(data.main_breaker_icu_ka)} kA
+                In = {esc(data.main_breaker_in_a)} A | Icu = {esc(data.main_breaker_icu_ka if data.main_breaker_icu_ka is not None else '?')} kA
             </text>
             <!-- X symbol + contacts for Main Breaker -->
             <line x1="{main_x - 5}" y1="112" x2="{main_x + 5}" y2="122" stroke="#C0392B" stroke-width="2"/>

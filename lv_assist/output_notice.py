@@ -10,14 +10,17 @@ def output_notice(summary):
     return f'PRELIMINARY - NOT FOR CONSTRUCTION | PROPOSED | STATUS={status} | RUN={identity}'
 
 
-def annotate_svg(svg, summary):
+def annotate_svg(svg, summary, *, watermark=True):
     if 'id="lvassist-run-notice"' in svg:
         return svg
     notice = escape(output_notice(summary))
     metadata = getattr(summary, 'run_metadata', None)
     record = escape(metadata.model_dump_json() if metadata is not None else 'NOT_RECORDED')
-    addition = (f'<metadata id="lvassist-run-notice">{notice}\n{record}</metadata>'
-                f'<text x="50%" y="50%" text-anchor="middle" fill="#B7950B" '
+    addition = f'<metadata id="lvassist-run-notice">{notice}\n{record}</metadata>'
+    if not watermark:
+        addition += f'<text x="30" y="118" fill="#856404" font-size="10">{notice}</text>'
+        return svg.replace('</svg>', addition + '</svg>', 1)
+    addition += (f'<text x="50%" y="50%" text-anchor="middle" fill="#B7950B" '
                 f'opacity="0.22" font-size="24">PRELIMINARY - NOT FOR CONSTRUCTION</text>'
                 f'<text x="50%" y="54%" text-anchor="middle" fill="#566573" '
                 f'opacity="0.6" font-size="12">STATUS={escape(getattr(getattr(summary, "status", None), "value", "INSUFFICIENT_DATA"))}</text>')
