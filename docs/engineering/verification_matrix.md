@@ -22,6 +22,7 @@ not currently available and requested that unverified status be retained.
 | Busbar/thermal | Existing calculations retained; not assembly proof in design checklist | Formula/conditions/manufacturer review and validation remain open |
 | Input validity | Finite Pydantic data, whitespace IDs, 1P/3P, unique/nonempty feeder set, revalidation | Invalid/duplicate/mutated-input tests; full overflow and all importer validation still open |
 | Independent references | No invented results or numerical tolerances | All requested independent reference acceptance is BLOCKED |
+| Reproducible software scenarios | Ten synthetic policy cases across EN/FA/DE, engine/HTML/XLSX validation parity and explicit difference/error JSON | [Runner policy](software_scenario_runner_policy.md); zero independent reference cases; does not change the blocked engineering acceptance above |
 | UI/report status | Four counters, severity order, proposed BOM, preliminary HTML/XLSX, missing data preserved | GUI smoke + locale/export integration; immutable export context and all format parity remain open |
 
 ## Required independent reference pack (not executed)

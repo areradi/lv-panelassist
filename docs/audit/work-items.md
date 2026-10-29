@@ -616,3 +616,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** source/range/setting/time/coordination applicability,
   inherited interpolation/clamping, immutable snapshots and independent review
   remain open. Approximate-only data cannot close P0 or prove protection safety.
+
+## Review unit 37 — Reproducible synthetic scenario runner
+
+- **Observed:** policy regressions existed as separate tests without a single
+  repeatable scenario/report command and explicit per-case difference output.
+- **Expected:** reviewable fixed software expectations run in three locales,
+  compare actual HTML/XLSX validation rows and fail clearly on drift/error without
+  generating or claiming independently approved reference answers.
+- **Implementation:** ten JSON-defined scenarios, CLI structured results and
+  exit status, numeric/status locale comparison, public report generation/parity,
+  source identity checks, temporary cleanup and strict definition validation.
+- **Tests:** 19 new actual-CLI/corrupted-document/drift/error/schema cases;
+  78 targeted regressions. Definitions, catalog and user files remain unchanged.
+- **Evidence:** [scenario runner policy](../engineering/software_scenario_runner_policy.md).
+- **Remaining risks:** zero independent engineering cases; physical models,
+  source applicability/tolerances, other formats, immutable contexts and electrical
+  review remain open. A synthetic software PASS cannot close P0.

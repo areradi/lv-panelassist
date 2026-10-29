@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "SYNTHETIC_SOFTWARE_REGRESSION",
+  "base_project": {"project_name": "Synthetic regression / آزمایشی / Prüfung"},
+  "base_feeder": {
+    "feeder_id": "F1", "description": "=INCOMING +MCC1 -Q1 / پمپ / Lüfter <>&",
+    "load_type": "SUB_FEEDER", "power_kw": 5, "cos_phi": 0.9, "efficiency": 1,
+    "cable_section_mm2": 16
+  },
+  "common_expected": {
+    "pe_unknown": true, "lpe_unknown": true, "end_fault_unknown": true,
+    "proposed_only": true, "assembly_not_pass": true, "run_identity_matches": true,
+    "html_validation_matches": true, "xlsx_validation_matches": true,
+    "report_identity_matches": true, "report_preliminary": true,
+    "literal_text_preserved": true, "xlsx_power_numeric": true
+  },
+  "scenarios": [
+    {"id": "missing_network", "project": {}, "feeder": {},
+     "expected": {"bus_input_ka": null, "bus_total_known": false, "transformer_diagnostic_present": false, "voltage_drop_known": false}},
+    {"id": "transformer_only", "project": {"transformer_kva": 1000}, "feeder": {"cable_length_m": 100},
+     "expected": {"bus_input_ka": null, "bus_total_known": false, "transformer_diagnostic_present": true}},
+    {"id": "explicit_bus", "project": {"prospective_ik_ka": 22}, "feeder": {"cable_length_m": 100},
+     "expected": {"bus_input_ka": 22, "bus_equals_input": true, "voltage_drop_known": true, "ampacity_known": true}},
+    {"id": "bus_with_transformer", "project": {"prospective_ik_ka": 22, "transformer_kva": 2000}, "feeder": {"cable_length_m": 100},
+     "expected": {"bus_input_ka": 22, "bus_equals_input": true, "transformer_diagnostic_present": true}},
+    {"id": "motor_contribution", "project": {"prospective_ik_ka": 22}, "feeder": {"load_type": "MOTOR_DOL", "power_kw": 15, "cable_length_m": 100},
+     "expected": {"motor_contribution_present": true, "bus_greater_than_input": true}},
+    {"id": "missing_al_xlpe_table", "project": {"prospective_ik_ka": 22}, "feeder": {"conductor_material": "AL", "insulation": "XLPE", "installation_method": "E", "cable_length_m": 100},
+     "expected": {"ampacity_known": false}},
+    {"id": "single_phase_table_gap", "project": {"prospective_ik_ka": 22}, "feeder": {"phases": 1, "cable_length_m": 100},
+     "expected": {"ampacity_known": false}},
+    {"id": "tt_without_loop", "project": {"earthing_system": "TT", "prospective_ik_ka": 22}, "feeder": {"cable_length_m": 100},
+     "expected": {"bus_input_ka": 22, "bus_equals_input": true}},
+    {"id": "it_without_loop", "project": {"earthing_system": "IT", "prospective_ik_ka": 22}, "feeder": {"cable_length_m": 100},
+     "expected": {"bus_input_ka": 22, "bus_equals_input": true}},
+    {"id": "long_tncs_feeder", "project": {"earthing_system": "TN-C-S", "prospective_ik_ka": 22}, "feeder": {"cable_length_m": 200},
+     "expected": {"bus_input_ka": 22, "bus_equals_input": true, "voltage_drop_known": true}}
+  ]
+}
