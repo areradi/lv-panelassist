@@ -13,6 +13,11 @@ from lv_assist.i18n import tr
 from lv_assist.rating_table_validation import identity, invalid, number, pe_sections, validate_rating_inventory
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.registry_validation import registry_entries, registry_rows
+from lv_assist.text_validation import require_exportable_text
+
+SELECTIVITY_COLUMNS = ('rule_id, upstream_series, downstream_series, upstream_in_min_a, '
+                       'upstream_in_max_a, downstream_in_max_a, min_ratio, limit_ka, '
+                       'selectivity_type, voltage_v, is_verified_manufacturer_rule, raw_json')
 
 
 class CatalogValidationError(ValueError):
@@ -35,6 +40,7 @@ def validated_devices(devices: Iterable[CatalogDevice]) -> list[CatalogDevice]:
 def _unique_object(pairs):
     result = {}
     for key, value in pairs:
+        require_exportable_text(key)
         if key in result:
             raise CatalogValidationError(f"Duplicate JSON catalog key: {key}")
         result[key] = value
@@ -42,6 +48,8 @@ def _unique_object(pairs):
 
 
 def catalog_object(raw: str) -> dict[str, Any]:
+    if not isinstance(raw, str):
+        raise CatalogValidationError('Catalog raw_json must be text')
     payload = json.loads(raw, object_pairs_hook=_unique_object)
     if not isinstance(payload, dict):
         raise CatalogValidationError("Catalog record must be a JSON object")
@@ -60,11 +68,21 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
     return validated_devices(devices)
 
 
-def validated_rules(rules: Iterable[SelectivityRuleRecord]) -> list[SelectivityRuleRecord]:
+def validated_rules(rules: Iterable[SelectivityRuleRecord], devices=None) -> list[SelectivityRuleRecord]:
     result = []
     seen = set()
+    parts = {device.part_number: device for device in devices} if devices is not None else None
+    series = {device.series for device in parts.values()} if parts is not None else None
     for source in rules:
         rule = SelectivityRuleRecord.model_validate(source.model_dump())
+        if parts is not None:
+            for side in ('upstream', 'downstream'):
+                name = getattr(rule, side + '_series')
+                part = getattr(rule, side + '_part_number')
+                if name not in series:
+                    raise CatalogValidationError('Unknown selectivity series: ' + name)
+                if part is not None and (part not in parts or parts[part].series != name):
+                    raise CatalogValidationError('Selectivity part/series reference mismatch: ' + side)
         # Two limits for the same conditions must not be resolved by taking max.
         key = (rule.upstream_series, rule.upstream_min_in_a, rule.downstream_series,
                rule.downstream_max_in_a, rule.upstream_part_number, rule.downstream_part_number,
@@ -75,6 +93,55 @@ def validated_rules(rules: Iterable[SelectivityRuleRecord]) -> list[SelectivityR
         seen.add(key)
         result.append(rule)
     return result
+
+
+def selectivity_rows(rows, devices):
+    """Check complete SQL/JSON inventory before applying the activation flag."""
+    rules, flags, seen = [], [], set()
+    table = 'selectivity_rules'
+    try:
+        for row in rows:
+            rule_id = row['rule_id']
+            if type(rule_id) is not int or not 0 < rule_id <= 2**63 - 1 or rule_id in seen:
+                invalid(table, 'rule_id')
+            seen.add(rule_id)
+            flag = row['is_verified_manufacturer_rule']
+            if type(flag) is not int or flag not in (0, 1):
+                invalid(table, 'is_verified_manufacturer_rule')
+            payload = catalog_object(row['raw_json'])
+            require_exportable_text(payload)
+            rule = SelectivityRuleRecord.model_validate(payload)
+            for sql_field, field in (('upstream_series', 'upstream_series'),
+                                     ('downstream_series', 'downstream_series')):
+                identity(row[sql_field], table, sql_field)
+                if row[sql_field] != getattr(rule, field):
+                    invalid(table, sql_field + ' SQL/JSON mismatch')
+            for sql_field, field, positive in (
+                    ('upstream_in_min_a', 'upstream_min_in_a', False),
+                    ('downstream_in_max_a', 'downstream_max_in_a', True),
+                    ('limit_ka', 'selectivity_limit_is_ka', True)):
+                value = number(row[sql_field], table, sql_field, positive=positive)
+                if value < 0 or value != getattr(rule, field):
+                    invalid(table, sql_field + ' SQL/JSON mismatch')
+            voltage = number(row['voltage_v'], table, 'voltage_v', positive=True)
+            if rule.operating_voltage_v is not None and voltage != rule.operating_voltage_v:
+                invalid(table, 'voltage_v SQL/JSON mismatch')
+            upper = row['upstream_in_max_a']
+            if upper is not None and number(upper, table, 'upstream_in_max_a', positive=True) < rule.upstream_min_in_a:
+                invalid(table, 'upstream current range')
+            if row['min_ratio'] is not None:
+                number(row['min_ratio'], table, 'min_ratio', positive=True)
+            if upper is not None or row['min_ratio'] is not None:
+                invalid(table, 'unsupported upstream_in_max_a/min_ratio applicability')
+            kinds = ('VERIFIED_TOTAL', 'TOTAL') if rule.is_total_up_to_icu else ('VERIFIED_PARTIAL', 'PARTIAL')
+            if row['selectivity_type'] not in kinds:
+                invalid(table, 'selectivity_type SQL/JSON mismatch')
+            rules.append(rule)
+            flags.append(flag)
+        rules = validated_rules(rules, devices)
+    except ValueError as error:
+        raise CatalogValidationError(str(error)) from error
+    return rules, [rule for rule, flag in zip(rules, flags) if flag == 1]
 
 
 def curve_rows(rows):
@@ -128,8 +195,7 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
         if integrity != "ok":
             raise CatalogValidationError("Catalog integrity_check failed: " + integrity)
         devices = device_rows(connection.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices"))
-        rules = validated_rules(SelectivityRuleRecord.model_validate(catalog_object(row[0]))
-                                for row in connection.execute("SELECT raw_json FROM selectivity_rules"))
+        rules, enabled_rules = selectivity_rows(connection.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules'), devices)
         curves = curve_rows(connection.execute("SELECT curve_id, raw_json FROM trip_curves"))
         standards = registry_rows(connection.execute("SELECT standard_id, raw_json FROM standards_registry"))
         ratings = validate_rating_inventory(
@@ -143,11 +209,12 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             {device.part_number for device in devices})
     if catalog_file_hash(path) != before_hash:
         raise CatalogValidationError(tr("audit_catalog_unstable"))
-    return {"devices": len(devices), "selectivity_rules": len(rules), "trip_curves": len(curves),
+    return {"devices": len(devices), "selectivity_rules": len(rules),
+            "enabled_selectivity_rules": len(enabled_rules), "trip_curves": len(curves),
             **ratings, "pe_sections": len(protective_sections), "catalog_hash": before_hash,
             "breaking_capacity_rows": len(breaking),
             "breaking_capacity_devices": len({key[0] for key in breaking}),
             "standards_registry_rows": len(standards),
             "localized_standard_entries": len(registry_entries(standards)),
-            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
+            "structural_scope": "device identity/numbers, selectivity SQL/JSON conditions/references, trip curve structure, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

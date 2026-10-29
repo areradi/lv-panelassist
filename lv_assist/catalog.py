@@ -17,7 +17,8 @@ from lv_assist.trip_curve_validation import validated_curve, positive_curve_argu
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.registry_validation import registry_entries, registry_identifier, registry_rows
 from lv_assist.run_metadata import catalog_file_hash
-from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
+from lv_assist.catalog_validation import CatalogValidationError, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
+from lv_assist.catalog_validation import SELECTIVITY_COLUMNS, selectivity_rows
 from typing import Any, Dict, List, Optional
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState
@@ -200,11 +201,11 @@ class CatalogRepository:
     # ۶. قواعد سلکتیویته، منحنی‌های قطع و رجیستری استانداردها
     # ------------------------------------------------------------------
     def load_selectivity_rules(self) -> List[SelectivityRuleRecord]:
-        with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT raw_json FROM selectivity_rules WHERE is_verified_manufacturer_rule = 1"
-            ).fetchall()
-            return validated_rules(SelectivityRuleRecord.model_validate(catalog_object(r["raw_json"])) for r in rows)
+        with closing(self._connect()) as conn:
+            devices = device_rows(conn.execute('SELECT device_id, raw_json, data_quality FROM catalog_devices'))
+            rows = conn.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules').fetchall()
+            _, enabled = selectivity_rows(rows, devices)
+            return enabled
 
     @property
     def selectivity_rules(self) -> List[SelectivityRuleRecord]:

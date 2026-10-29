@@ -256,7 +256,7 @@ class CatalogDevice(EngineeringTextInput):
         return source is not None and source.matches(value, unit, expected)
 
 class SelectivityRuleRecord(EngineeringTextInput):
-    model_config = ConfigDict(allow_inf_nan=False)
+    model_config = ConfigDict(allow_inf_nan=False, strict=True, extra='forbid')
 
     upstream_series: str
     upstream_min_in_a: float = Field(ge=0)
@@ -271,6 +271,14 @@ class SelectivityRuleRecord(EngineeringTextInput):
     upstream_setting_a: float | None = Field(default=None, gt=0)
     downstream_setting_a: float | None = Field(default=None, gt=0)
     source: PropertySource | None = None
+
+    @field_validator('upstream_series', 'downstream_series', 'catalog_reference',
+                     'upstream_part_number', 'downstream_part_number')
+    @classmethod
+    def nonblank_rule_identifiers(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError('Selectivity identity/reference must not be blank')
+        return value
 
 class ValidationResult(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False)

@@ -581,3 +581,21 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** normalized SQL fields, source/edition/applicability and
   reference completeness, immutable snapshots and electrical review remain open.
   Structural success cannot validate a source or close P0.
+
+## Review unit 35 — Selectivity SQL/JSON row and reference gate
+
+- **Observed:** pre-validation flag filtering, unchecked SQL/JSON divergence and
+  references, permissive coercion and silently ignored extra conditions.
+- **Expected:** all stored rules checked before activation; malformed, dangling
+  or unsupported conditions cannot enter calculation or imply reviewed evidence.
+- **Implementation:** strict rule models, shared row identity/domain/consistency
+  parser, full-inventory series/part linkage, explicit rejection of unrepresented
+  restrictions, engine precheck and read-only CLI enabled/total counts.
+- **Tests:** 58 new model/row/cache/actual-CLI/engine/three-language GUI cases;
+  358 targeted regressions, including mutable caller catalog/source separation.
+  Prior minimal fixtures add SQL columns without
+  invented records, removed assertions or disabled tests. Package DB unchanged.
+- **Evidence:** [selectivity row policy](../engineering/selectivity_rule_row_gate_policy.md).
+- **Remaining risks:** actual source/duty/range/coordination applicability,
+  inherited migration claims, immutable snapshots and independent electrical
+  review remain open. SQL labels/flags cannot close P0 or authenticate a rule.

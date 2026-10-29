@@ -12,7 +12,7 @@ from lv_assist.ip_rating import ip_meets, ip_upper_bound
 from lv_assist.i18n import tr
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 from lv_assist.run_metadata import create_run_metadata, catalog_file_hash, result_fingerprint
-from lv_assist.catalog_validation import validated_devices, validated_curves
+from lv_assist.catalog_validation import validated_devices, validated_curves, validated_rules
 # --- [AUDIT SAFE IMPORTS] ---
 from lv_assist.core_verification import (
     TripTimeEstimate as AuditTripTimeEstimate,
@@ -389,6 +389,9 @@ class EngineeringEngine:
             raise ValueError(tr("audit_input_invalid"))
         self.catalog = validated_devices(self._full_catalog)
         validated_curves(catalog_repo.trip_curves)
+        # Rule references belong to the SQL source inventory, independent of
+        # caller-modified device objects or a project-specific selection list.
+        validated_rules(catalog_repo.selectivity_rules, catalog_repo.load_devices())
         if project.preferred_manufacturer != "ANY":
             filtered = [d for d in self.catalog if d.manufacturer == project.preferred_manufacturer]
             if filtered:

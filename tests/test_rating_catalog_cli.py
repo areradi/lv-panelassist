@@ -22,7 +22,7 @@ def database(tmp_path):
         with connection:
             for statement in (
                 'CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT)',
-                'CREATE TABLE selectivity_rules(raw_json TEXT)',
+                'CREATE TABLE selectivity_rules(rule_id INTEGER, upstream_series TEXT, downstream_series TEXT, upstream_in_min_a REAL, upstream_in_max_a REAL, downstream_in_max_a REAL, min_ratio REAL, limit_ka REAL, selectivity_type TEXT, voltage_v REAL, is_verified_manufacturer_rule INTEGER, raw_json TEXT)',
                 'CREATE TABLE trip_curves(curve_id TEXT, raw_json TEXT)',
                 'CREATE TABLE standards_registry(standard_id TEXT, raw_json TEXT)',
                 'CREATE TABLE cable_ampacity_reference(standard_id TEXT, table_ref TEXT, material TEXT, insulation TEXT, installation_method TEXT, loaded_conductors INTEGER, section_mm2 REAL, iz0_a REAL)',
