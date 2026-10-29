@@ -15,6 +15,7 @@ from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.registry_validation import registry_entries, registry_rows
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.device_aux_validation import validate_device_aux
+from lv_assist.datasheet_validation import DATASHEET_COLUMNS, datasheet_rows, validate_source_reference
 
 SELECTIVITY_COLUMNS = ('rule_id, upstream_series, downstream_series, upstream_in_min_a, '
                        'upstream_in_max_a, downstream_in_max_a, min_ratio, limit_ka, '
@@ -23,7 +24,7 @@ TRIP_CURVE_COLUMNS = ('curve_id, curve_name, device_category, inst_min_mult, ins
                       'is_approximate, allow_for_verification, raw_json')
 DEVICE_COLUMNS = ('device_id, category, manufacturer, series, model, in_a, icu_ka_400v, '
                   'power_loss_w, derating_40c, derating_50c, width_mm, height_mm, depth_mm, '
-                  'airflow_m3h, kvar_rating, ip_rating, ip_numeric, poles, data_quality, raw_json')
+                  'airflow_m3h, kvar_rating, ip_rating, ip_numeric, poles, data_quality, source_id, raw_json')
 
 
 class CatalogValidationError(ValueError):
@@ -62,7 +63,7 @@ def catalog_object(raw: str) -> dict[str, Any]:
     return payload
 
 
-def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
+def device_rows(rows: Iterable[Any], sources=()) -> list[CatalogDevice]:
     devices = []
     for row in rows:
         payload = catalog_object(row["raw_json"])
@@ -76,6 +77,7 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
         if device.part_number != row["device_id"]:
             raise CatalogValidationError("Catalog row device_id does not match its part_number")
         try:
+            validate_source_reference(row, payload, sources)
             for sql_field, expected in (('category', device.device_type),
                                         ('manufacturer', device.manufacturer), ('series', device.series),
                                         ('model', payload.get('model', device.part_number))):
@@ -249,7 +251,9 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
         integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
         if integrity != "ok":
             raise CatalogValidationError("Catalog integrity_check failed: " + integrity)
-        devices = device_rows(connection.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices'))
+        sources = datasheet_rows(connection.execute('SELECT ' + DATASHEET_COLUMNS + ' FROM datasheet_sources'))
+        stored_devices = connection.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices').fetchall()
+        devices = device_rows(stored_devices, sources)
         rules, enabled_rules = selectivity_rows(connection.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules'), devices)
         curves = curve_rows(connection.execute('SELECT ' + TRIP_CURVE_COLUMNS + ' FROM trip_curves'))
         standards = registry_rows(connection.execute("SELECT standard_id, raw_json FROM standards_registry"))
@@ -265,6 +269,8 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
     if catalog_file_hash(path) != before_hash:
         raise CatalogValidationError(tr("audit_catalog_unstable"))
     return {"devices": len(devices), "selectivity_rules": len(rules),
+            "datasheet_sources": len(sources),
+            "device_source_links": sum(row['source_id'] is not None for row in stored_devices),
             "enabled_selectivity_rules": len(enabled_rules), "trip_curves": len(curves),
             **ratings, "pe_sections": len(protective_sections), "catalog_hash": before_hash,
             "breaking_capacity_rows": len(breaking),
@@ -272,5 +278,5 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             "standards_registry_rows": len(standards),
             "localized_standard_entries": len(registry_entries(standards)),
             "trip_curve_policy": "APPROXIMATE_ONLY",
-            "structural_scope": "device core SQL/JSON identities/numbers/quality consistency plus airflow/kvar/IP/poles, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
+            "structural_scope": "device core SQL/JSON identities/numbers/quality consistency plus airflow/kvar/IP/poles and datasheet source links/records, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

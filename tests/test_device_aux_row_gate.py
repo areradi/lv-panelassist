@@ -35,6 +35,7 @@ def row(payload=None, **changes):
             'model': 'TEST', 'in_a': None, 'icu_ka_400v': None, 'power_loss_w': 0,
             'derating_40c': 1, 'derating_50c': 1, 'width_mm': None, 'height_mm': None, 'depth_mm': None,
             'airflow_m3h': 105, 'kvar_rating': 25, 'ip_rating': 'IP54', 'ip_numeric': 54, 'poles': 4,
+            'source_id': None,
             'data_quality': 'ESTIMATED', 'raw_json': json.dumps(BASE if payload is None else payload), **changes}
 
 

@@ -667,3 +667,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** datasheet/FK provenance, physical pole/fan/capacitor/IP
   applicability, broader model coercion, immutable contexts and independent review
   remain open. No manufacturer/assembly approval or P0 closure is implied.
+
+## Review unit 40 — Datasheet source records and device links
+
+- **Observed:** source table shape and device source_id links were not checked,
+  including unused corrupt records, duplicate IDs and dangling references.
+- **Expected:** all source records and exact links are structurally valid before
+  device/rule use, with absent links unverified and generic labels never proof.
+- **Implementation:** shared source parser/reference checker, same-connection
+  runtime/rule/CLI loading, source/link counts and existing cache/hash safeguards.
+  Optional revision and legacy labels are preserved without inventing review.
+- **Tests:** 44 new domain/record/link/cache/actual-CLI/engine/three-language GUI
+  cases; 285 targeted regressions. Prior fixtures add empty source tables/null
+  links with existing assertions intact; original database remains unchanged.
+- **Evidence:** [datasheet source policy](../engineering/datasheet_source_gate_policy.md).
+- **Remaining risks:** actual source authentication, exact property applicability,
+  reviewed values/tolerances, publishing workflow, immutable contexts and independent
+  electrical review remain open. Structural linkage cannot close P0.

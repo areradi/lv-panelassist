@@ -16,6 +16,7 @@ from lv_assist.rating_table_validation import ampacity_table, derating_table, pe
 from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.registry_validation import registry_entries, registry_identifier, registry_rows
+from lv_assist.datasheet_validation import DATASHEET_COLUMNS, datasheet_rows
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.catalog_validation import CatalogValidationError, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
 from lv_assist.catalog_validation import DEVICE_COLUMNS, SELECTIVITY_COLUMNS, TRIP_CURVE_COLUMNS, selectivity_rows
@@ -59,8 +60,9 @@ class CatalogRepository:
     # ------------------------------------------------------------------
     def load_devices(self) -> List[CatalogDevice]:
         with closing(self._connect()) as conn:
+            sources = datasheet_rows(conn.execute('SELECT ' + DATASHEET_COLUMNS + ' FROM datasheet_sources'))
             rows = conn.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices').fetchall()
-            return device_rows(rows)
+            return device_rows(rows, sources)
 
     def _invalidate_caches(self):
         self._devices_cache = self._rules_cache = self._curves_cache = None
@@ -202,7 +204,8 @@ class CatalogRepository:
     # ------------------------------------------------------------------
     def load_selectivity_rules(self) -> List[SelectivityRuleRecord]:
         with closing(self._connect()) as conn:
-            devices = device_rows(conn.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices'))
+            sources = datasheet_rows(conn.execute('SELECT ' + DATASHEET_COLUMNS + ' FROM datasheet_sources'))
+            devices = device_rows(conn.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices'), sources)
             rows = conn.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules').fetchall()
             _, enabled = selectivity_rows(rows, devices)
             return enabled
