@@ -599,3 +599,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** actual source/duty/range/coordination applicability,
   inherited migration claims, immutable snapshots and independent electrical
   review remain open. SQL labels/flags cannot close P0 or authenticate a rule.
+
+## Review unit 36 — Trip-curve SQL/JSON and approximation policy gate
+
+- **Observed:** normalized thresholds, labels and approximation/verification
+  flags were ignored by the reader; cached JSON policy claims were unchecked.
+- **Expected:** full rows agree before use and cannot promote approximate curves;
+  malformed or conflicting records fail without fallback or data repair.
+- **Implementation:** shared complete row query/parser, exact threshold/metadata
+  matching, existing SQL policy enforcement, cached JSON policy checks, explicit
+  read-only connection closure and CLI approximation-policy/scope reporting.
+- **Tests:** 59 new model/SQL/cache/actual-CLI/engine/three-language GUI cases;
+  320 targeted regressions. Prior row fixtures gain required fields and valid
+  cache-refresh data updates both representations; all assertions remain active.
+- **Evidence:** [curve row policy](../engineering/trip_curve_row_gate_policy.md).
+- **Remaining risks:** source/range/setting/time/coordination applicability,
+  inherited interpolation/clamping, immutable snapshots and independent review
+  remain open. Approximate-only data cannot close P0 or prove protection safety.

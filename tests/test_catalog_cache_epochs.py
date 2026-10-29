@@ -58,6 +58,7 @@ def test_each_cache_reloads_actual_changed_data_without_device_access(repo, name
             payload['series'] += ' SYNTHETIC CACHE REVISION'
         elif name == 'trip_curves':
             payload['im_max_mult'] += 1
+            connection.execute('UPDATE trip_curves SET inst_max_mult=? WHERE rowid=?', (payload['im_max_mult'], rowid))
         elif name == 'standards':
             payload['synthetic_cache_revision'] = 1
         else:

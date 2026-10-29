@@ -28,6 +28,12 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = {'thermal_k': 90.0, 'alpha': 2.0, 'im_min_mult': 8.0, 'im_max_mult': 12.0}
 
 
+def sql_row(raw):
+    return {'curve_id': 'TEST', 'curve_name': 'TEST', 'device_category': None,
+            'inst_min_mult': 8.0, 'inst_max_mult': 12.0, 'is_approximate': 1,
+            'allow_for_verification': 0, 'raw_json': raw}
+
+
 @pytest.mark.parametrize('field', list(BASE))
 @pytest.mark.parametrize('value', [None, True, 0, -1, float('nan'), float('inf'), '8'])
 def test_bad_numeric_curve_fields_never_enter_lookup(field, value):
@@ -50,11 +56,11 @@ def test_invalid_points_ranges_or_source_shape_are_not_repaired(changes):
 @pytest.mark.parametrize('raw', ['[]', '{"alpha":2,"alpha":3}', '{bad json'])
 def test_invalid_json_shape_or_duplicate_keys_are_rejected(raw):
     with pytest.raises(ValueError):
-        curve_rows([{'curve_id': 'TEST', 'raw_json': raw}])
+        curve_rows([sql_row(raw)])
 
 
 def test_duplicate_curve_ids_cannot_silently_replace_a_record():
-    row = {'curve_id': 'TEST', 'raw_json': json.dumps(BASE)}
+    row = sql_row(json.dumps(BASE))
     with pytest.raises(CatalogValidationError):
         curve_rows([row, row])
 

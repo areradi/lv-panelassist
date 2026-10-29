@@ -18,6 +18,8 @@ from lv_assist.text_validation import require_exportable_text
 SELECTIVITY_COLUMNS = ('rule_id, upstream_series, downstream_series, upstream_in_min_a, '
                        'upstream_in_max_a, downstream_in_max_a, min_ratio, limit_ka, '
                        'selectivity_type, voltage_v, is_verified_manufacturer_rule, raw_json')
+TRIP_CURVE_COLUMNS = ('curve_id, curve_name, device_category, inst_min_mult, inst_max_mult, '
+                      'is_approximate, allow_for_verification, raw_json')
 
 
 class CatalogValidationError(ValueError):
@@ -145,12 +147,30 @@ def selectivity_rows(rows, devices):
 
 
 def curve_rows(rows):
+    """SQL and JSON must agree; this table permits approximate curves only."""
     curves = {}
     for row in rows:
         name = row["curve_id"]
+        curve = validated_curve(name, catalog_object(row["raw_json"]), CatalogValidationError)
         if name in curves:
             raise CatalogValidationError("Duplicate trip curve identity")
-        curves[name] = validated_curve(name, catalog_object(row["raw_json"]), CatalogValidationError)
+        try:
+            for field, expected in (('is_approximate', 1), ('allow_for_verification', 0)):
+                if type(row[field]) is not int or row[field] != expected:
+                    invalid('trip_curves', field)
+            identity(row['curve_name'], 'trip_curves', 'curve_name')
+            if row['device_category'] is not None:
+                identity(row['device_category'], 'trip_curves', 'device_category')
+            for sql_field, field in (('curve_name', 'name'), ('device_category', 'category')):
+                if field in curve and row[sql_field] != curve[field]:
+                    invalid('trip_curves', sql_field + ' SQL/JSON mismatch')
+            for sql_field, field in (('inst_min_mult', 'im_min_mult'), ('inst_max_mult', 'im_max_mult')):
+                value = number(row[sql_field], 'trip_curves', sql_field, positive=True)
+                if value != curve[field]:
+                    invalid('trip_curves', sql_field + ' SQL/JSON mismatch')
+        except ValueError as error:
+            raise CatalogValidationError(str(error)) from error
+        curves[name] = curve
     return curves
 
 
@@ -196,7 +216,7 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             raise CatalogValidationError("Catalog integrity_check failed: " + integrity)
         devices = device_rows(connection.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices"))
         rules, enabled_rules = selectivity_rows(connection.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules'), devices)
-        curves = curve_rows(connection.execute("SELECT curve_id, raw_json FROM trip_curves"))
+        curves = curve_rows(connection.execute('SELECT ' + TRIP_CURVE_COLUMNS + ' FROM trip_curves'))
         standards = registry_rows(connection.execute("SELECT standard_id, raw_json FROM standards_registry"))
         ratings = validate_rating_inventory(
             connection.execute("SELECT * FROM cable_ampacity_reference"),
@@ -216,5 +236,6 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             "breaking_capacity_devices": len({key[0] for key in breaking}),
             "standards_registry_rows": len(standards),
             "localized_standard_entries": len(registry_entries(standards)),
-            "structural_scope": "device identity/numbers, selectivity SQL/JSON conditions/references, trip curve structure, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
+            "trip_curve_policy": "APPROXIMATE_ONLY",
+            "structural_scope": "device identity/numbers, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

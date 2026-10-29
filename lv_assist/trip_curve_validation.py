@@ -20,6 +20,14 @@ def validated_curve(name, curve, error_type=ValueError):
         invalid('curve_id')
     if not isinstance(curve, dict):
         invalid('record')
+    for field in ('name', 'category', 'id'):
+        if field in curve and (not isinstance(curve[field], str) or not curve[field].strip()):
+            invalid(field)
+    if 'id' in curve and curve['id'] != name:
+        invalid('id mismatch')
+    for field, expected in (('is_approximate', 1), ('allow_for_verification', 0)):
+        if field in curve and (type(curve[field]) not in (bool, int) or curve[field] != expected):
+            invalid(field)
     def positive(value, field):
         try:
             valid = isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0

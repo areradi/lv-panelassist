@@ -18,7 +18,7 @@ from lv_assist.text_validation import require_exportable_text
 from lv_assist.registry_validation import registry_entries, registry_identifier, registry_rows
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.catalog_validation import CatalogValidationError, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
-from lv_assist.catalog_validation import SELECTIVITY_COLUMNS, selectivity_rows
+from lv_assist.catalog_validation import SELECTIVITY_COLUMNS, TRIP_CURVE_COLUMNS, selectivity_rows
 from typing import Any, Dict, List, Optional
 
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord, SelectivityEvalState
@@ -214,8 +214,8 @@ class CatalogRepository:
     @property
     def trip_curves(self) -> Dict[str, dict]:
         def load():
-            with self._connect() as conn:
-                rows = conn.execute("SELECT curve_id, raw_json FROM trip_curves").fetchall()
+            with closing(self._connect()) as conn:
+                rows = conn.execute('SELECT ' + TRIP_CURVE_COLUMNS + ' FROM trip_curves').fetchall()
                 return curve_rows(rows)
         return self._cached("_curves_cache", load)
 
