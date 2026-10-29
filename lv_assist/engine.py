@@ -255,7 +255,7 @@ class EngineeringEngine:
         # 20 ms is a visible estimate only; the maximum threshold is conservative
         # relative to the stored instantaneous band. Settings/evidence are absent.
         instantaneous_min, instantaneous_max = TripCurveRepository.instantaneous_band_a(prot.series, prot.rated_current_in_a)
-        if not (math.isfinite(instantaneous_max) and 0 < instantaneous_min <= instantaneous_max):
+        if instantaneous_min is None or instantaneous_max is None or not (math.isfinite(instantaneous_max) and 0 < instantaneous_min <= instantaneous_max):
             return AuditTripTimeEstimate(None, True, False, ValidationStatus.INSUFFICIENT_DATA,
                                          tr("audit_trip_missing"))
         if current_a >= instantaneous_max:

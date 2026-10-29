@@ -54,3 +54,15 @@ def validated_curve(name, curve, error_type=ValueError):
     if curve.get('curve_source') == 'DATASHEET_POINTS' and ('points' not in curve or not curve.get('datasheet_ref')):
         invalid('points/datasheet_ref')
     return copy.deepcopy(curve)
+
+
+def positive_curve_argument(series, value, field, error_type=ValueError):
+    try:
+        valid = (isinstance(value, (int, float)) and not isinstance(value, bool)
+                 and math.isfinite(value) and value > 0)
+    except OverflowError:
+        valid = False
+    if not valid:
+        message = tr('audit_curve_invalid', name='__NAME__', field='__FIELD__')
+        raise error_type(message.replace('__NAME__', str(series)).replace('__FIELD__', field))
+    return value

@@ -247,12 +247,17 @@ class TccGenerator:
     def _curve_points(cls, dev: CatalogDevice) -> List[Tuple[float, float]]:
         curve = TripCurveRepository.get_curve(dev.series)
         in_a = dev.rated_current_in_a
-        im_max_mult = curve.get("im_max_mult", 12.0)
-        im = in_a * im_max_mult
+        if not curve:
+            return []
+        _, im = TripCurveRepository.instantaneous_band_a(dev.series, in_a)
+        if im is None:
+            return []
         pts = []
         i = in_a * 1.13
         while i <= im:
             t = TripCurveRepository.thermal_time_s(dev.series, i / in_a)
+            if t is None:
+                return []
             pts.append((i, t))
             i *= 1.06
         pts.append((im, 0.01))
@@ -261,12 +266,16 @@ class TccGenerator:
     @classmethod
     def _instantaneous_band(cls, dev: CatalogDevice, color: str) -> str:
         im_min_a, im_max_a = TripCurveRepository.instantaneous_band_a(dev.series, dev.rated_current_in_a)
+        if im_min_a is None or im_max_a is None:
+            return ""
         x1, x2 = cls._px(im_min_a), cls._px(im_max_a)
         y1, y2 = cls._py(0.02), cls._py(0.01)
         return f'<rect x="{x1:.1f}" y="{y2:.1f}" width="{max(x2 - x1, 2.0):.1f}" height="{max(y1 - y2, 2.0):.1f}" fill="{color}" opacity="0.35"/>'
 
     @classmethod
     def _polyline(cls, pts: List[Tuple[float, float]], color: str, width: float = 2.2, dash: str = "") -> str:
+        if not pts:
+            return ""
         coords = " ".join(f"{cls._px(i):.1f},{cls._py(t):.1f}" for i, t in pts)
         d = f' stroke-dasharray="{dash}"' if dash else ""
         return f'<polyline points="{coords}" fill="none" stroke="{color}" stroke-width="{width}"{d}/>'
@@ -308,11 +317,13 @@ class TccGenerator:
         # Main breaker curve
         any_estimated = False
         def _est_mark(dev: Optional[CatalogDevice]) -> str:
+            if dev is not None and not TripCurveRepository.get_curve(dev.series):
+                return " — " + tr("tcc_curve_missing")
             return "" if (dev is None or TripCurveRepository.is_datasheet_points(dev.series)) else " ≈"
 
         if summary.main_breaker:
             mb_mark = _est_mark(summary.main_breaker)
-            any_estimated = any_estimated or bool(mb_mark)
+            any_estimated = any_estimated or mb_mark == " ≈"
             parts.append(TccGenerator._polyline(TccGenerator._curve_points(summary.main_breaker), "#1F4E78", 3.0))
             parts.append(TccGenerator._instantaneous_band(summary.main_breaker, "#1F4E78"))
             parts.append(_legend("#1F4E78", f'{tr("tcc_main")}: {summary.main_breaker.part_number} ({summary.main_breaker.rated_current_in_a:g}A){mb_mark}'))
@@ -325,7 +336,7 @@ class TccGenerator:
             dev = f.selected_protection
             if not dev: continue
             f_mark = _est_mark(dev)
-            any_estimated = any_estimated or bool(f_mark)
+            any_estimated = any_estimated or f_mark == " ≈"
             color = TccGenerator.PALETTE[(i + 1) % len(TccGenerator.PALETTE)]
             parts.append(TccGenerator._polyline(TccGenerator._curve_points(dev), color))
             parts.append(TccGenerator._instantaneous_band(dev, color))

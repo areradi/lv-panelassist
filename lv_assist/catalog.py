@@ -12,7 +12,8 @@ import math
 import sqlite3
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
-from lv_assist.trip_curve_validation import validated_curve
+from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
+from lv_assist.text_validation import require_exportable_text
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves
 from typing import Any, Dict, List, Optional
@@ -270,10 +271,12 @@ class TripCurveRepository:
         curves = catalog_repo.trip_curves
         if not isinstance(curves, dict):
             validated_curves(curves)
-        name = series if series in curves else "DEFAULT"
-        if name not in curves:
+        require_exportable_text(series)
+        if not isinstance(series, str) or not series.strip():
+            raise CatalogValidationError(tr("audit_curve_invalid", name="?", field="series"))
+        if series not in curves:
             return {}
-        return validated_curve(name, curves[name], CatalogValidationError)
+        return validated_curve(series, curves[series], CatalogValidationError)
 
     @classmethod
     def datasheet_points(cls, series: str) -> Optional[List[tuple]]:
@@ -305,23 +308,38 @@ class TripCurveRepository:
         return pts[-1][1]
 
     @classmethod
-    def thermal_time_s(cls, series: str, current_mult: float) -> float:
+    def thermal_time_s(cls, series: str, current_mult: float) -> Optional[float]:
+        positive_curve_argument(series, current_mult, "current_mult", CatalogValidationError)
+        c = cls.get_curve(series)
+        if not c:
+            return None
         pts = cls.datasheet_points(series)
         if pts:
             return cls._interp_log(pts, current_mult)
-        c = cls.get_curve(series)
-        k, alpha = c.get("thermal_k", 90.0), c.get("alpha", 2.0)
-        return min(1000.0, max(0.01, k / max(current_mult, 1e-3) ** alpha))
+        try:
+            time_s = c["thermal_k"] / current_mult ** c["alpha"]
+        except (OverflowError, ZeroDivisionError) as error:
+            raise CatalogValidationError(tr("audit_curve_invalid", name=series, field="thermal_time_s")) from error
+        positive_curve_argument(series, time_s, "thermal_time_s", CatalogValidationError)
+        return min(1000.0, max(0.01, time_s))
 
     @classmethod
     def instantaneous_band_a(cls, series: str, rated_in_a: float):
+        positive_curve_argument(series, rated_in_a, "rated_in_a", CatalogValidationError)
         c = cls.get_curve(series)
-        return (c.get("im_min_mult", 8.0) * rated_in_a, c.get("im_max_mult", 12.0) * rated_in_a)
+        if not c:
+            return (None, None)
+        low, high = c["im_min_mult"] * rated_in_a, c["im_max_mult"] * rated_in_a
+        positive_curve_argument(series, low, "instantaneous_min_a", CatalogValidationError)
+        positive_curve_argument(series, high, "instantaneous_max_a", CatalogValidationError)
+        return (low, high)
 
     @classmethod
-    def current_selectivity_limit_ka(cls, upstream: CatalogDevice, downstream: CatalogDevice) -> float:
+    def current_selectivity_limit_ka(cls, upstream: CatalogDevice, downstream: CatalogDevice) -> Optional[float]:
         up_min_a, _ = cls.instantaneous_band_a(upstream.series, upstream.rated_current_in_a)
         _, down_max_a = cls.instantaneous_band_a(downstream.series, downstream.rated_current_in_a)
+        if up_min_a is None or down_max_a is None:
+            return None
         if down_max_a >= up_min_a:
             return 0.0
         return round(up_min_a / 1000.0, 1)
@@ -412,7 +430,7 @@ class SiemensSelectivityRepository:
 
         if ratio >= 1.6:
             curve_limit_ka = TripCurveRepository.current_selectivity_limit_ka(upstream, downstream)
-            if curve_limit_ka > 0.0:
+            if curve_limit_ka is not None and curve_limit_ka > 0.0:
                 # منحنی تقریبی هرگز VERIFIED صادر نمی‌کند؛ صرفاً تخمین مقدماتی (رفع F-003)
                 return (SelectivityEvalState.PRELIMINARY, curve_limit_ka, tr("sel_ref_curve_prelim", a=curve_limit_ka))
             return (SelectivityEvalState.PRELIMINARY_RATIO_ONLY, None, tr("sel_ref_ratio_only", ratio=f"{ratio:.2f}"))

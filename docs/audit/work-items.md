@@ -473,3 +473,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [curve data policy](../engineering/trip_curve_data_gate_policy.md).
 - **Remaining risks:** source authentication, interpolation/runtime applicability,
   remaining auxiliary tables and independent engineering review stay open. P0 OPEN.
+
+## Review unit 28 — Exact curve lookup and runtime domains
+
+- **Observed:** unknown protective series silently inherited DEFAULT; invalid
+  arguments/clamping could produce plausible times/bands and TCC/current limits.
+- **Expected:** missing curves remain unknown; invalid numeric arguments fail;
+  DEFAULT is used only when explicitly selected.
+- **Implementation:** exact lookup/optional results, named runtime/overflow checks,
+  missing-band engine handling, ratio-only selectivity and unavailable-curve TCC.
+- **Tests:** 44 new domain/lookup/selectivity/engine/SVG cases plus 62 structural
+  cases; explicit approximation fixtures retained and unsafe unknown expectations
+  corrected without disabling tests.
+- **Evidence:** [lookup policy](../engineering/explicit_trip_curve_lookup_policy.md).
+- **Remaining risks:** reviewed ranges/tolerances, legacy known-curve clamping and
+  endpoint behavior, source/setting applicability and engineering sign-off stay open.

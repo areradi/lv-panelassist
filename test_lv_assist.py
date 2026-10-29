@@ -503,7 +503,7 @@ class TestPhase3Tcc:
         assert "55" in svg
 
     def test_tcc_curve_geometry_within_plot_area(self):
-        dev = CatalogDevice(part_number="T", manufacturer="T", series="T", device_type="MCCB",
+        dev = CatalogDevice(part_number="T", manufacturer="T", series="DEFAULT", device_type="MCCB",
                             rated_current_in_a=100.0, icu_ka_400v=36.0)
         for i, t in TccGenerator._curve_points(dev):
             assert TccGenerator.X0 <= TccGenerator._px(i) <= TccGenerator.X1
@@ -747,7 +747,7 @@ class TestPhase4Scenarios:
 
 
 class TestPhase4CurveSelectivity:
-    def _pair(self, up_in=250.0, down_in=25.0, up_series="SERIES_X", down_series="SERIES_Y"):
+    def _pair(self, up_in=250.0, down_in=25.0, up_series="DEFAULT", down_series="DEFAULT"):
         up = CatalogDevice(part_number="U", manufacturer="X", series=up_series, device_type="MCCB",
                            rated_current_in_a=up_in, icu_ka_400v=36.0)
         down = CatalogDevice(part_number="D", manufacturer="X", series=down_series, device_type="MCB",
@@ -791,7 +791,7 @@ class TestPhase4TccManufacturerData:
         assert abs(TripCurveRepository.thermal_time_s("SIRIUS 3RV20", 2.0) - 30.0) < 0.01
         assert abs(TripCurveRepository.thermal_time_s("SIRIUS 3RV20", 6.0) - 1.5) < 0.01
         assert abs(TripCurveRepository.thermal_time_s("DEFAULT", 2.0) - 90.0 / 2.0 ** 2) < 0.01
-        assert TripCurveRepository.thermal_time_s("SERIES_Z", 100.0) == 0.01
+        assert TripCurveRepository.thermal_time_s("SERIES_Z", 100.0) is None
 
     def test_mpcb_curve_uses_15_6_band(self):
         dev = CatalogDevice(part_number="M", manufacturer="S", series="SIRIUS 3RV20", device_type="MPCB",
@@ -885,15 +885,15 @@ class TestAuditDataLayer:
         assert catalog_repo.get_device_derating_factor(mccb.part_number, 55.0) is None
 
     def test_f003_preliminary_state_reported(self):
-        # زوج بدون جدول سازنده با منحنی تقریبی → وضعیت PRELIMINARY و اعتبارسنجی WARNING
+        # Unknown series: a ratio alone supplies no numerical current limit.
         up = CatalogDevice(part_number="U", manufacturer="X", series="SERIES_X", device_type="MCCB",
                            rated_current_in_a=250.0, icu_ka_400v=36.0)
         down = CatalogDevice(part_number="D", manufacturer="X", series="SERIES_Y", device_type="MCB",
                              rated_current_in_a=25.0, icu_ka_400v=15.0)
         state, limit, ref = SiemensSelectivityRepository.evaluate_pair(up, down, 22.0)
-        assert state == SelectivityEvalState.PRELIMINARY
-        assert state.value == "PRELIMINARY"
-        assert limit == 2.0
+        assert state == SelectivityEvalState.PRELIMINARY_RATIO_ONLY
+        assert state.value == "PRELIMINARY_RATIO"
+        assert limit is None
 
     def test_nontable_cable_section_reports_insufficient_data(self):
         # F-001 در سطح موتور: مقطع غیرجدولی → RULE-CABLE-010 با وضعیت INSUFFICIENT_DATA
@@ -1110,7 +1110,8 @@ class TestPhase6OfficialCurves:
     def test_parametric_series_fall_back_to_formula(self):
         assert not TripCurveRepository.is_datasheet_points("Siemens SENTRON 3VA")
         assert TripCurveRepository.datasheet_points("Siemens SENTRON 3VA") is None
-        t = TripCurveRepository.thermal_time_s("Siemens SENTRON 3VA", 2.0)
+        assert TripCurveRepository.thermal_time_s("Siemens SENTRON 3VA", 2.0) is None
+        t = TripCurveRepository.thermal_time_s("DEFAULT", 2.0)
         assert 0.01 <= t <= 1000.0
 
     def test_interpolation_matches_datasheet_landmarks(self):
