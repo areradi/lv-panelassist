@@ -175,7 +175,9 @@ class ExcelExporter:
         # فاز ۱۲: برگه گزارش تأیید طراحی IEC 61439-1 بند ۱۰
         ws6 = wb.create_sheet("06_Design_Verification")
         _append_safe(ws6, [tr("dv_h_clause"), tr("dv_h_item"), tr("dv_h_method"), tr("dv_h_status"),
-                           tr("dv_h_value"), tr("dv_h_req"), tr("dv_h_evidence"), tr("dv_h_rules")])
+                           tr("dv_h_value"), tr("dv_h_req"), tr("dv_h_evidence"), tr("dv_h_rules"),
+                           tr('audit_evidence_source'), tr('dv_h_evidence'),
+                           tr('html_sign_reviewer'), tr('html_sign_date')])
         dv_report = build_design_verification(project, feeders, summary, validations)
         dv_status_colors = {
             VerificationStatus.PASS: PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid"),
@@ -186,10 +188,13 @@ class ExcelExporter:
         for it in dv_report.items:
             _append_safe(ws6, [it.clause_ref, it.title, tr(f"dv_method_{it.method.value.lower()}"),
                                tr(f"dv_status_{it.status.value.lower()}"), it.computed_value, it.requirement,
-                               it.evidence, ", ".join(it.rule_ids) if it.rule_ids else "-"])
+                               it.evidence, ", ".join(it.rule_ids) if it.rule_ids else "-",
+                               it.source_ref, it.evidence_document or tr('audit_not_recorded'),
+                               it.reviewer or tr('audit_not_recorded'),
+                               it.reviewed_at or tr('audit_not_recorded')])
             fill = dv_status_colors.get(it.status)
             if fill:
-                for c in range(1, 9): ws6.cell(row=ws6.max_row, column=c).fill = fill
+                for c in range(1, 13): ws6.cell(row=ws6.max_row, column=c).fill = fill
         _append_safe(ws6, ["", tr("dv_conclusion_title"), "", tr(f"dv_status_{dv_report.conclusion_status.value.lower()}"),
                            dv_report.conclusion_text, tr("dv_note_scope"), "", dv_report.standard_ref])
 
@@ -420,13 +425,15 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 .sign-cell {{ border-top: 1.5px solid #1F4E78; padding-top: 6px; font-size: 11px; min-height: 44px; }}
 .sign-cell b {{ display: block; font-size: 10px; color: #566573; margin-bottom: 10px; }}
 .page-footer {{ display: none; }}
+pre {{ white-space: pre-wrap; overflow-wrap: anywhere; direction: ltr; text-align: left; }}
+.run-identity {{ font-size: 9px; direction: ltr; text-align: left; overflow-wrap: anywhere; }}
 @media print {{
   body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 9pt; background: #FFF; margin: 0; }}
   table {{ page-break-inside: auto; width: 100%; border-collapse: collapse; }}
   tr {{ page-break-inside: avoid; page-break-after: auto; }}
   thead {{ display: table-header-group; }}
   .section-card {{ break-inside: avoid; box-shadow: none !important; border: 1px solid #CBD5E1; }}
-  .no-print {{ display: none !important; }}
+  .no-print, .run-manifest {{ display: none !important; }}
   .container {{ border: none; padding: 0; }}
   .kpi-card, .sign-block {{ break-inside: avoid; }}
   .page-footer {{ display: block; position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #7F8C8D; border-top: 1px solid #BDC3C7; padding: 4px 0; text-align: center; background: #FFF; }}
@@ -434,7 +441,8 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 </style></head>
 <body><div class="container">
 <p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
-<details><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
+<p class="run-identity">Run: {_h(summary.run_metadata.input_fingerprint if summary.run_metadata else 'NOT RECORDED')}</p>
+<details class="run-manifest"><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
 <div class="header-box"><div><h1>{_h(tr("html_title"))}</h1><p>{_h(tr("html_project"))} <b>{_h(project.project_name)}</b> | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>
 {kpi_html}
@@ -519,7 +527,11 @@ class DesignVerificationExporter:
                 <td><b>{_h(it.title)}</b><br><small>{_h(it.requirement)}</small></td>
                 <td style="text-align:center;">{_h(method)}</td>
                 <td dir="ltr"><b>{_h(it.computed_value)}</b></td>
-                <td dir="ltr"><small>{_h(it.evidence)}</small></td>
+                <td><small>{_h(it.evidence)}<br>
+                {_h(tr('audit_evidence_source'))}: {_h(it.source_ref)}<br>
+                {_h(tr('dv_h_evidence'))}: {_h(it.evidence_document or tr('audit_not_recorded'))}<br>
+                {_h(tr('html_sign_reviewer'))}: {_h(it.reviewer or tr('audit_not_recorded'))}<br>
+                {_h(tr('html_sign_date'))}: {_h(it.reviewed_at or tr('audit_not_recorded'))}</small></td>
                 <td dir="ltr"><small>{_h(rules)}</small></td>
                 <td style="text-align:center;"><span class="badge {cls}">{_h(label)}</span></td>
             </tr>"""
@@ -552,11 +564,13 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 .sign-cell {{ border-top: 1.5px solid #1F4E78; padding-top: 6px; font-size: 11px; min-height: 44px; }}
 .sign-cell b {{ display: block; font-size: 10px; color: #566573; margin-bottom: 10px; }}
 .page-footer {{ display: none; }}
+pre {{ white-space: pre-wrap; overflow-wrap: anywhere; direction: ltr; text-align: left; }}
+.run-identity {{ font-size: 9px; direction: ltr; text-align: left; overflow-wrap: anywhere; }}
 @media print {{
   body {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 9pt; background: #FFF; margin: 0; }}
   tr {{ page-break-inside: avoid; }}
   thead {{ display: table-header-group; }}
-  .no-print {{ display: none !important; }}
+  .no-print, .run-manifest {{ display: none !important; }}
   .container {{ border: none; padding: 0; }}
   .sign-block, .conclusion-box {{ break-inside: avoid; }}
   .page-footer {{ display: block; position: fixed; bottom: 0; left: 0; right: 0; font-size: 8px; color: #7F8C8D; border-top: 1px solid #BDC3C7; padding: 4px 0; text-align: center; background: #FFF; }}
@@ -564,7 +578,8 @@ th {{ background: #EBF5FB; color: #1F4E78; text-align: center; }}
 </style></head>
 <body><div class="container">
 <p class="review-notice"><b>PRELIMINARY — NOT FOR CONSTRUCTION</b><br>{_h(tr("audit_preliminary"))}</p>
-<details><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
+<p class="run-identity">Run: {_h(summary.run_metadata.input_fingerprint if summary.run_metadata else 'NOT RECORDED')}</p>
+<details class="run-manifest"><summary>Calculation manifest</summary><pre>{_h(summary.run_metadata.model_dump_json() if summary.run_metadata else "NOT RECORDED")}</pre></details>
 <div class="header-box"><div><h1>{_h(tr("dv_title"))}</h1>
 <p>{_h(tr("dv_subtitle"))} — {_h(report.standard_ref)} / {_h(report.clause_ref)} | {_h(tr("html_date"))} {_h(now_str)}</p></div>
 <div class="no-print"><button class="print-btn" onclick="window.print()">{_h(tr("html_print"))}</button></div></div>

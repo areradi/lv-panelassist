@@ -10,6 +10,7 @@ from lv_assist.catalog import SiemensSelectivityRepository, TripCurveRepository,
 from lv_assist.busbar import BusbarEngine
 from lv_assist.ip_rating import ip_meets, ip_upper_bound
 from lv_assist.i18n import tr
+from lv_assist.project_validation import validated_project_inputs
 from lv_assist.result_contract import worst_status, VERIFICATION_STATUS
 from lv_assist.run_metadata import create_run_metadata, catalog_file_hash, result_fingerprint
 from lv_assist.catalog_validation import validated_devices, validated_curves, validated_rules
@@ -383,10 +384,7 @@ class EngineeringEngine:
         if catalog_file_hash(catalog_repo.db_path) != self._catalog_file_hash:
             raise ValueError(tr("audit_source_gap"))
         # Revalidate mutable API/UI models before doing arithmetic.
-        project = ProjectSpec.model_validate(project.model_dump())
-        feeders = [FeederInput.model_validate(feeder.model_dump()) for feeder in feeders]
-        if not feeders or len({feeder.feeder_id for feeder in feeders}) != len(feeders):
-            raise ValueError(tr("audit_input_invalid"))
+        project, feeders = validated_project_inputs(project, feeders)
         self.catalog = validated_devices(self._full_catalog)
         validated_curves(catalog_repo.trip_curves)
         # Rule references belong to the SQL source inventory, independent of

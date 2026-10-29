@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import math
 import sqlite3
-from contextlib import closing
+import copy
+from contextlib import closing, contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
 from lv_assist.rating_table_validation import ampacity_table, derating_table, pe_sections, number, identity, invalid
@@ -27,6 +29,7 @@ from lv_assist.i18n import tr, i18n
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DB_PATH = DATA_DIR / "lv_assist.db"
+_READ_SNAPSHOT = ContextVar('lvassist_catalog_read_snapshot', default=None)
 
 
 def _ensure_database(db_path: Path = DB_PATH) -> Path:
@@ -51,9 +54,20 @@ class CatalogRepository:
 
     def _connect(self) -> sqlite3.Connection:
         # Packaged engineering data is never a project store or migration target.
-        conn = sqlite3.connect(self.db_path.resolve().as_uri() + "?mode=ro", uri=True)
+        scope = _READ_SNAPSHOT.get()
+        path = scope[1].db_path if scope is not None and scope[0] is self else self.db_path
+        conn = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
         return conn
+
+    @contextmanager
+    def read_snapshot(self, path):
+        repository = CatalogRepository(path)
+        token = _READ_SNAPSHOT.set((self, repository))
+        try:
+            yield
+        finally:
+            _READ_SNAPSHOT.reset(token)
 
     # ------------------------------------------------------------------
     # ۱. تجهیزات کاتالوگ با اعمال صریح کیفیت داده (رفع F-016)
@@ -70,6 +84,10 @@ class CatalogRepository:
         self._cache_file_hash = None
 
     def _cached(self, attribute, load):
+        scope = _READ_SNAPSHOT.get()
+        if scope is not None and scope[0] is self:
+            # A renderer never receives another renderer's mutable cached objects.
+            return copy.deepcopy(scope[1]._cached(attribute, load))
         try:
             current_hash = catalog_file_hash(self.db_path)
             if current_hash != self._cache_file_hash:
@@ -126,7 +144,7 @@ class CatalogRepository:
         identity(device_id, "device_thermal_derating", "device_id")
         temperature = number(internal_temp_c, "device_thermal_derating", "internal_temp_c")
         target_temp = 40.0 if temperature <= 40 else (50.0 if temperature <= 50 else temperature)
-        with self._connect() as conn:
+        with closing(self._connect()) as conn:
             rows = conn.execute(
                 "SELECT temp_c, derating_factor FROM device_thermal_derating WHERE device_id = ?",
                 (device_id,),
@@ -173,7 +191,7 @@ class CatalogRepository:
         installation_method = identity(installation_method, "cable_ampacity_reference", "installation_method")
         if not isinstance(loaded_conductors, int) or isinstance(loaded_conductors, bool) or not 0 < loaded_conductors <= 2**63 - 1:
             invalid("cable_ampacity_reference", "loaded_conductors")
-        with self._connect() as conn:
+        with closing(self._connect()) as conn:
             rows = conn.execute(
                 "SELECT section_mm2, iz0_a FROM cable_ampacity_reference "
                 "WHERE UPPER(material)=? AND UPPER(insulation)=? AND UPPER(installation_method)=? AND loaded_conductors=?",
@@ -184,7 +202,7 @@ class CatalogRepository:
     def get_pe_standard_sections(self) -> List[float]:
         """فهرست مقاطع استاندارد PE از دیتابیس (بدون سقف مصنوعی)."""
         def load():
-            with self._connect() as conn:
+            with closing(self._connect()) as conn:
                 rows = conn.execute(
                     "SELECT section_mm2 FROM pe_standard_sections ORDER BY section_mm2 ASC"
                 ).fetchall()

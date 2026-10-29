@@ -6,6 +6,15 @@ import math
 from lv_assist.result_contract import ValidationStatus, worst_status
 
 
+def _positive_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value) and value > 0
+    except OverflowError:
+        return False
+
+
 @dataclass
 class CheckResult:
     check_id: str
@@ -50,7 +59,7 @@ def estimate_clear_time_s(
     thermal_curve_lookup: Callable[[str, float], Optional[float]],
     is_approximated_curve: bool = True,
 ) -> TripTimeEstimate:
-    if fault_multiple is None or not math.isfinite(fault_multiple) or fault_multiple <= 0:
+    if not _positive_number(fault_multiple):
         return TripTimeEstimate(
             time_s=None,
             is_curve_estimated=is_approximated_curve,
@@ -60,7 +69,7 @@ def estimate_clear_time_s(
         )
 
     raw_time_s = thermal_curve_lookup(series, fault_multiple)
-    if raw_time_s is None or not math.isfinite(raw_time_s) or raw_time_s <= 0:
+    if not _positive_number(raw_time_s):
         return TripTimeEstimate(
             time_s=None,
             is_curve_estimated=is_approximated_curve,
@@ -101,8 +110,7 @@ def calculate_adiabatic_pe_mm2(
     trip_estimate: TripTimeEstimate,
     k_factor: float = 143.0,
 ) -> Tuple[Optional[float], CheckResult]:
-    if (fault_current_a is None or not math.isfinite(fault_current_a)
-            or fault_current_a <= 0 or trip_estimate.time_s is None):
+    if not _positive_number(fault_current_a) or trip_estimate.time_s is None:
         return None, CheckResult(
             check_id="PE_ADIABATIC_SIZING",
             title="سایزینگ آدیاباتیک هادی حفاظتی (PE)",
@@ -112,8 +120,7 @@ def calculate_adiabatic_pe_mm2(
             recommended_action="طول کابل، امپدانس منبع و مشخصات منحنی کلید را تکمیل کنید."
         )
 
-    if (not math.isfinite(k_factor) or k_factor <= 0
-            or not math.isfinite(trip_estimate.time_s) or trip_estimate.time_s <= 0):
+    if not _positive_number(k_factor) or not _positive_number(trip_estimate.time_s):
         return None, CheckResult(
             check_id="PE_ADIABATIC_SIZING", title="PE", status=ValidationStatus.ERROR,
             cause="Invalid time or k factor; finite positive values are required.",
@@ -132,10 +139,15 @@ def calculate_adiabatic_pe_mm2(
         )
 
     s_min_mm2 = (fault_current_a * math.sqrt(trip_estimate.time_s)) / k_factor
+    if not _positive_number(s_min_mm2) or round(s_min_mm2, 2) <= 0:
+        return None, CheckResult(
+            check_id='PE_ADIABATIC_SIZING', title='PE', status=ValidationStatus.ERROR,
+            cause='Numerical overflow/underflow; no representable positive PE result.',
+            recommended_action='Review the input units, magnitude and method applicability.')
     return round(s_min_mm2, 2), CheckResult(
         check_id="PE_ADIABATIC_SIZING",
         title="سایزینگ آدیاباتیک هادی حفاظتی (PE)",
-        status=trip_estimate.status,
+        status=worst_status((trip_estimate.status, ValidationStatus.WARNING)),
         measured_or_calc_value=f"S_min = {s_min_mm2:.2f} mm²",
         limit_or_reference=f"k = {k_factor} (IEC 60364-5-54)",
         cause=trip_estimate.note if trip_estimate.is_curve_estimated else "",
@@ -196,7 +208,7 @@ def calculate_network_ik_profile(
     required = {"line_voltage_v", "voltage_factor_c_max", "voltage_factor_c_min"}
     invalid = [name for name, value in named.items()
                if (value is None and name in required)
-               or (value is not None and (not math.isfinite(value) or value <= 0))]
+               or (value is not None and not _positive_number(value))]
     ik_transformer = None
     if not invalid and transformer_kva is not None and uk_percent is not None:
         try:
@@ -255,9 +267,7 @@ def verify_breaking_capacity_icu(
     prospective_ik_ka: Optional[float],
     is_ik_preliminary: bool = False,
 ) -> CheckResult:
-    if (prospective_ik_ka is None or device_icu_ka is None
-            or not math.isfinite(prospective_ik_ka) or not math.isfinite(device_icu_ka)
-            or prospective_ik_ka <= 0 or device_icu_ka <= 0):
+    if not _positive_number(prospective_ik_ka) or not _positive_number(device_icu_ka):
         return CheckResult(
             check_id="BREAKING_CAPACITY_ICU",
             title="بررسی قدرت قطع کلید حفاظتی (Icu >= Ik)",
@@ -297,8 +307,8 @@ def verify_overload_coordination(ib_a: float, ir_a: float | None, iz_a: float | 
     """Check the requested inequalities only, without inventing device settings."""
     values = {"ib_a": ib_a, "ir_a": ir_a, "iz_a": iz_a, "i2_a": i2_a}
     present = [value for value in values.values() if value is not None]
-    invalid = any(not math.isfinite(value) or value <= 0 for value in present)
-    violated = ((iz_a is not None and ib_a > iz_a)
+    invalid = not _positive_number(ib_a) or any(not _positive_number(value) for value in present)
+    violated = not invalid and ((iz_a is not None and ib_a > iz_a)
                 or (ir_a is not None and ir_a < ib_a)
                 or (ir_a is not None and iz_a is not None and ir_a > iz_a)
                 or (i2_a is not None and iz_a is not None and i2_a > 1.45 * iz_a))
@@ -307,7 +317,9 @@ def verify_overload_coordination(ib_a: float, ir_a: float | None, iz_a: float | 
               ValidationStatus.WARNING)
     return CheckResult(
         check_id="OVERLOAD_COORDINATION", title="Ib <= Ir <= Iz; I2 <= 1.45 Iz",
-        status=status, input_values=values, unit="A", result_value=ir_a, limit=iz_a,
+        status=status, input_values=values, unit="A",
+        result_value=ir_a if _positive_number(ir_a) else None,
+        limit=iz_a if _positive_number(iz_a) else None,
         method="Ib <= Ir <= Iz AND I2 <= 1.45 Iz",
         source_ref="IEC 60364-4-43; device-specific applicability requires review",
         cause="Actual settings/ampacity/I2 required; inequalities alone do not verify equipment.",

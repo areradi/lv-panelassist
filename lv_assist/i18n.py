@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+_EXPORT_LANGUAGE = ContextVar('lvassist_export_language', default=None)
 
 SUPPORTED_LANGUAGES = ("fa", "en", "de")
 
@@ -51,7 +55,18 @@ class I18n:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def get_language(self):
+        scope = _EXPORT_LANGUAGE.get()
+        if scope is not None and scope[0] is self:
+            return scope[1]
         return self._language
+
+    @contextmanager
+    def export_language(self, language, tables):
+        token = _EXPORT_LANGUAGE.set((self, language, tables))
+        try:
+            yield
+        finally:
+            _EXPORT_LANGUAGE.reset(token)
 
     def set_language(self, lang):
         if lang in SUPPORTED_LANGUAGES:
@@ -69,12 +84,15 @@ class I18n:
         self.save_config(extra={"theme": theme})
 
     def direction(self):
-        return LANGUAGE_META[self._language]["direction"]
+        return LANGUAGE_META[self.get_language()]["direction"]
 
     def font_family(self):
-        return LANGUAGE_META[self._language]["font"]
+        return LANGUAGE_META[self.get_language()]["font"]
 
     def _table(self, lang):
+        scope = _EXPORT_LANGUAGE.get()
+        if scope is not None and scope[0] is self:
+            return scope[2][lang]
         if lang not in self._tables:
             try:
                 with open(os.path.join(_TRANSLATIONS_DIR, f"{lang}.json"), encoding="utf-8") as f:
@@ -85,8 +103,10 @@ class I18n:
 
     def tr(self, key, **fmt):
         text = None
-        for lang in (self._language, "fa", "en"):
-            text = self._table(lang).get(key)
+        scope = _EXPORT_LANGUAGE.get()
+        for lang in (self.get_language(), "fa", "en"):
+            table = scope[2][lang] if scope is not None and scope[0] is self else self._table(lang)
+            text = table.get(key)
             if text is not None:
                 break
         if text is None:
@@ -95,7 +115,7 @@ class I18n:
             text = text.format(**fmt)
         except (KeyError, IndexError):
             pass
-        if self._language == "fa":
+        if self.get_language() == "fa":
             text = text.translate(_FA_DIGITS)
         return text
 

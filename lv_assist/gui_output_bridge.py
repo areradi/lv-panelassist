@@ -10,7 +10,14 @@ Transforms live calculation outputs from gui.py / engine.py into:
 
 import os
 import html
-from typing import List, Dict, Any, Optional, Tuple
+from pathlib import Path
+from urllib.parse import quote
+from typing import List, Dict, Any, Tuple
+
+from lv_assist.library_export import export_current_library
+from lv_assist.report_export import export_current_text, export_current_report
+from lv_assist.export_preflight import ExportSnapshotError
+from lv_assist.output_notice import annotate_svg
 
 from lv_assist.iec_sld_svg import (
     SLDPanelDTO,
@@ -43,7 +50,6 @@ class GuiOutputBridge:
         for idx, f in enumerate(feeders_out, start=1):
             prot = getattr(f, "selected_protection", None)
             cont_main = getattr(f, "selected_contactor_main", None) or getattr(f, "selected_contactor", None)
-            cont_delta = getattr(f, "selected_contactor_delta", None)
             cont_star = getattr(f, "selected_contactor_star", None)
             bimetal = getattr(f, "selected_bimetal", None) or getattr(f, "selected_overload", None)
             vfd = getattr(f, "selected_vfd", None) or getattr(f, "selected_soft_starter", None)
@@ -187,7 +193,7 @@ class GuiOutputBridge:
     def generate_sld_svg(cls, project: Any, feeders_out: List[Any], summary: Any) -> str:
         """تولید کد برداری SVG نقشه تک‌خطی کل تابلو"""
         dto = cls.to_sld_dto(project, feeders_out, summary)
-        return IECSldSvgGenerator.render_sld_svg(dto)
+        return annotate_svg(IECSldSvgGenerator.render_sld_svg(dto), summary)
 
     @classmethod
     def generate_feeder_ladder_svg(
@@ -195,7 +201,7 @@ class GuiOutputBridge:
     ) -> str:
         """تولید کد برداری SVG نقشه مدار فرمان برای یک فیدر مشخص"""
         dto = cls.to_feeder_ladder_dto(project, feeder_out, summary, feeder_index=feeder_index)
-        return IECLadderSvgGenerator.render_feeder_ladder_svg(dto)
+        return annotate_svg(IECLadderSvgGenerator.render_feeder_ladder_svg(dto), summary)
 
     @classmethod
     def generate_all_ladder_svgs(
@@ -223,11 +229,37 @@ class GuiOutputBridge:
         return all_wires, all_terminals
 
     @classmethod
+    def export_selected_svg(cls, filepath, project, feeders_out, summary, *, validations=None, feeder_id=None):
+        return export_current_text(filepath, project, feeders_out, summary, validations,
+            lambda p, f, s: cls._selected_svg(p, f, s, feeder_id))
+
+    @classmethod
+    def _selected_svg(cls, project, feeders, summary, feeder_id):
+        if feeder_id is None:
+            return cls.generate_sld_svg(project, feeders, summary)
+        for index, feeder in enumerate(feeders, start=1):
+            if feeder.feeder_id == feeder_id:
+                return cls.generate_feeder_ladder_svg(project, feeder, summary, feeder_index=index)
+        raise ValueError('Selected feeder does not belong to the current run')
+
+    @classmethod
+    def export_selected_preview(cls, filepath, project, feeders_out, summary, *, validations=None, feeder_id=None):
+        def render(p, f, s):
+            svg = cls._selected_svg(p, f, s, feeder_id)
+            return ("<!DOCTYPE html><html><head><meta charset='utf-8'><title>" + html.escape(p.project_name)
+                    + "</title></head><body>" + svg + '</body></html>')
+        return export_current_text(filepath, project, feeders_out, summary, validations, render)
+
+    @classmethod
     def export_all_svgs_to_folder(
-        cls, folder_path: str, project: Any, feeders_out: List[Any], summary: Any
+        cls, folder_path: str, project: Any, feeders_out: List[Any], summary: Any, *, validations=None
     ) -> List[str]:
         """ذخیره فایل‌های مستقل .svg برای نقشه تک‌خطی و مدار فرمان تمام فیدرها"""
-        os.makedirs(folder_path, exist_ok=True)
+        return export_current_library(folder_path, project, feeders_out, summary, validations,
+                                      cls._render_all_svgs)
+
+    @classmethod
+    def _render_all_svgs(cls, folder_path, project, feeders_out, summary, checks):
         saved_files: List[str] = []
 
         sld_path = os.path.join(folder_path, "01_IEC_Single_Line_Diagram.svg")
@@ -236,7 +268,7 @@ class GuiOutputBridge:
         saved_files.append(sld_path)
 
         for idx, f in enumerate(feeders_out, start=1):
-            fid = str(getattr(f, "feeder_id", f"F{idx:02d}"))
+            fid = quote(str(f.feeder_id), safe='')
             lad_path = os.path.join(folder_path, f"{idx + 1:02d}_IEC_Control_Ladder_{fid}.svg")
             with open(lad_path, "w", encoding="utf-8") as fp:
                 fp.write(cls.generate_feeder_ladder_svg(project, f, summary, feeder_index=idx))
@@ -246,8 +278,20 @@ class GuiOutputBridge:
 
     @classmethod
     def inject_schematics_into_html_report(
-        cls, html_filepath: str, project: Any, feeders_out: List[Any], summary: Any
+        cls, html_filepath: str, project: Any, feeders_out: List[Any], summary: Any, *, validations=None
     ) -> None:
+        def render(path, p, f, s, checks):
+            base = Path(html_filepath).read_text(encoding='utf-8')
+            metadata = s.run_metadata
+            if any(value not in base for value in (metadata.input_fingerprint,
+                    metadata.result_fingerprint, metadata.calculation_timestamp)):
+                raise ExportSnapshotError('Regenerate the base HTML report from this run')
+            Path(path).write_text(base, encoding='utf-8')
+            cls._inject_schematics(path, p, f, s)
+        return export_current_report(html_filepath, project, feeders_out, summary, validations, render)
+
+    @classmethod
+    def _inject_schematics(cls, html_filepath, project, feeders_out, summary):
         """
         تزریق خودکار نقشه تک‌خطی (SLD)، نقشه‌های مدار فرمان تمام فیدرها و جداول سیم‌کشی/ترمینال
         به درون فایل گزارش چاپی HTML

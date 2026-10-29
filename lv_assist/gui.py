@@ -2,11 +2,11 @@
 import os
 import csv
 import json
-import copy
 import sys
 import webbrowser
 import zipfile
 import tempfile
+from urllib.parse import quote
 from datetime import datetime
 from typing import Tuple, List
 import tkinter as tk
@@ -37,6 +37,8 @@ from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
 from lv_assist.result_contract import STATUS_SEVERITY_ORDER
 from lv_assist.input_numbers import invalid_input, spreadsheet_number
+from lv_assist.export_context import ExportContext
+from lv_assist.project_validation import validated_project_inputs
 from lv_assist.run_metadata import result_fingerprint, run_is_current
 from lv_assist.catalog import catalog_repo
 
@@ -247,8 +249,18 @@ class ExcelInputManager:
 
     @staticmethod
     def _load_workbook(wb):
+        missing = {'Project_Spec', 'Feeders_List'} - set(wb.sheetnames)
+        if missing:
+            raise ValueError('Missing worksheet: ' + ', '.join(sorted(missing)))
         ws_proj = wb["Project_Spec"]
-        proj_dict = {str(row[0]).strip(): row[1] for row in ws_proj.iter_rows(min_row=2, values_only=True) if row[0]}
+        proj_dict = {}
+        for row in ws_proj.iter_rows(min_row=2, values_only=True):
+            if not row[0]:
+                continue
+            key = str(row[0]).strip()
+            if key in proj_dict:
+                raise ValueError('Project_Spec duplicate key: ' + key)
+            proj_dict[key] = row[1] if len(row) > 1 else None
         errors: List[str] = []
 
         def _f(key, default):
@@ -344,6 +356,8 @@ class ExcelInputManager:
                 thdi_pct=_quantity(17),
                 fire_pump_service=_boolean(18),
             ))
+        if not errors:
+            project, feeders = validated_project_inputs(project, feeders)
         return project, feeders, errors
 
 class ToolTip:
@@ -717,12 +731,13 @@ class LVAssistApp(ctk.CTk):
         path = filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx")])
         if path:
             try:
-                self.current_project, self.current_feeders, errors = ExcelInputManager.load_from_excel(path)
-                self._mark_stale()
+                project, feeders, errors = ExcelInputManager.load_from_excel(path)
                 if errors:
                     messagebox.showwarning(tr("msg_warn"), tr("msg_load_with_errors", n=len(errors)) + "\n\n" + "\n".join(errors[:15]) + "\n\n" + tr("msg_load_stale_hint"))
-                else:
-                    messagebox.showinfo(tr("msg_success"), tr("msg_load_stale_hint"))
+                    return
+                self.current_project, self.current_feeders = project, feeders
+                self._mark_stale()
+                messagebox.showinfo(tr("msg_success"), tr("msg_load_stale_hint"))
             except Exception as ex: messagebox.showerror(tr("msg_error"), str(ex))
 
     def _mark_stale(self):
@@ -813,15 +828,16 @@ class LVAssistApp(ctk.CTk):
 
     @staticmethod
     def build_document_bundle_result(zip_path: str, project: ProjectSpec, f_outs, summary, validations, include_pdf: bool = True) -> BundleExportResult:
-        # Render every file from a private copy of one accepted run.
-        project, f_outs, summary, validations = copy.deepcopy((project, f_outs, summary, validations))
-        require_current_bundle(project, f_outs, summary, validations, catalog_repo.db_path)
+        context = ExportContext.capture(project, f_outs, summary, validations)
+        project, f_outs, summary, validations = context.materialize()
         result: BundleExportResult | None = None
         def build(path):
             nonlocal result
-            result = LVAssistApp._build_document_bundle(path, project, f_outs, summary, validations, include_pdf)
+            with context.render_session():
+                result = LVAssistApp._build_document_bundle(path, project, f_outs, summary, validations, include_pdf)
             # A source/catalog change during rendering must abort publication.
             require_current_bundle(project, f_outs, summary, validations, catalog_repo.db_path)
+            context.require_current()
             return result.file_count
         build_bundle_atomic(zip_path, build)
         assert result is not None
@@ -1111,12 +1127,12 @@ class LVAssistApp(ctk.CTk):
         choice = self.cmb_sheet_selector.get()
         if choice.startswith("SLD:"):
             svg_str = GuiOutputBridge.generate_sld_svg(self.current_project, f_outs, summary)
-            return svg_str, f"SLD_{self.current_project.panel_tag.strip('+')}.svg"
+            return svg_str, f"SLD_{quote(self.current_project.panel_tag.strip('+'), safe='')}.svg"
 
         for idx, f in enumerate(f_outs, start=1):
             if f" {f.feeder_id} " in choice:
                 svg_str = GuiOutputBridge.generate_feeder_ladder_svg(self.current_project, f, summary, feeder_index=idx)
-                return svg_str, f"Ladder_{f.feeder_id}.svg"
+                return svg_str, f"Ladder_{quote(f.feeder_id, safe='')}.svg"
 
         svg_str = GuiOutputBridge.generate_sld_svg(self.current_project, f_outs, summary)
         return svg_str, "SLD.svg"
@@ -1150,9 +1166,19 @@ class LVAssistApp(ctk.CTk):
         if not svg_str:
             return
         preview_path = os.path.join(get_app_working_dir(), f"_preview_{fname}.html")
-        with open(preview_path, "w", encoding="utf-8") as fp:
-            fp.write(f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{fname}</title></head>"
-                     f"<body style='margin:20px;background:#F1F5F9;'>{svg_str}</body></html>")
+        feeders, summary, checks = self.last_results
+        choice = self.cmb_sheet_selector.get()
+        selected = None if choice.startswith('SLD:') else next(
+            (f.feeder_id for f in feeders if f' {f.feeder_id} ' in choice), None)
+        try:
+            GuiOutputBridge.export_selected_preview(preview_path, self.current_project, feeders, summary,
+                                                    validations=checks, feeder_id=selected)
+        except ExportSnapshotError:
+            messagebox.showwarning(tr('msg_warning'), tr('lbl_stale'))
+            return
+        except (OSError, ValueError):
+            messagebox.showerror(tr('msg_error'), tr('drawing_write_failed'))
+            return
         webbrowser.open(f"file://{preview_path}")
 
     def action_save_single_svg(self):
@@ -1161,8 +1187,20 @@ class LVAssistApp(ctk.CTk):
             return
         path = filedialog.asksaveasfilename(defaultextension=".svg", initialfile=fname, filetypes=[("SVG Vector", "*.svg")])
         if path:
-            with open(path, "w", encoding="utf-8") as fp:
-                fp.write(svg_str)
+            feeders, summary, checks = self.last_results
+            choice = self.cmb_sheet_selector.get()
+            selected = next((f.feeder_id for f in feeders if f' {f.feeder_id} ' in choice), None)
+            if choice.startswith('SLD:'):
+                selected = None
+            try:
+                GuiOutputBridge.export_selected_svg(path, self.current_project, feeders, summary,
+                                                    validations=checks, feeder_id=selected)
+            except ExportSnapshotError:
+                messagebox.showwarning(tr('msg_warning'), tr('lbl_stale'))
+                return
+            except (OSError, ValueError):
+                messagebox.showerror(tr('msg_error'), tr('drawing_write_failed'))
+                return
             messagebox.showinfo("ذخیره شد", f"فایل نقشه برداری SVG ذخیره شد:\n{path}")
 
     def action_save_all_svgs_folder(self):
@@ -1170,7 +1208,19 @@ class LVAssistApp(ctk.CTk):
             return
         folder = filedialog.askdirectory(title="انتخاب پوشه برای ذخیره تمام نقشه‌های SLD و مدار فرمان")
         if folder:
-            f_outs, summary, _ = self.last_results
-            files = GuiOutputBridge.export_all_svgs_to_folder(folder, self.current_project, f_outs, summary)
+            f_outs, summary, checks = self.last_results
+            target = os.path.join(folder, 'IEC_Schematics')
+            try:
+                files = GuiOutputBridge.export_all_svgs_to_folder(target, self.current_project, f_outs,
+                                                                 summary, validations=checks)
+            except ExportSnapshotError:
+                messagebox.showwarning(tr('msg_warning'), tr('lbl_stale'))
+                return
+            except FileExistsError:
+                messagebox.showwarning(tr('msg_warning'), tr('library_exists'))
+                return
+            except (OSError, ValueError):
+                messagebox.showerror(tr('msg_error'), tr('drawing_write_failed'))
+                return
             messagebox.showinfo("ذخیره دسته‌ای انجام شد", f"{len(files)} فایل نقشه SVG با موفقیت در پوشه زیر ساخته شد:\n{folder}")
     # --- end GUI additive ---

@@ -1,17 +1,16 @@
 """Publish a new library only; never overwrite a nonempty user directory."""
 
-import copy
 import os
 import tempfile
 from pathlib import Path
 
-from lv_assist.catalog import catalog_repo
-from lv_assist.export_preflight import require_current_result
+from lv_assist.export_context import ExportContext
+from lv_assist.output_notice import output_notice
 
 
 def export_current_library(folder, project, outputs, summary, checks, render):
-    snapshot = copy.deepcopy((project, outputs, summary, checks))
-    require_current_result(*snapshot, catalog_repo.db_path)
+    context = ExportContext.capture(project, outputs, summary, checks)
+    snapshot = context.materialize()
     target = Path(folder)
     if target.exists() and (not target.is_dir() or any(target.iterdir())):
         raise FileExistsError('Choose a new or empty library destination')
@@ -20,7 +19,9 @@ def export_current_library(folder, project, outputs, summary, checks, render):
     with tempfile.TemporaryDirectory(prefix='.lvassist-library-', dir=target.parent) as temporary:
         staging = Path(temporary) / 'content'
         staging.mkdir()
-        written = [Path(path) for path in render(str(staging), *snapshot)]
+        with context.render_session():
+            written = [Path(path) for path in render(str(staging), *snapshot)]
+            context.require_unchanged(snapshot)
         if not written or len(set(written)) != len(written):
             raise OSError('Empty or duplicate library output')
         names = []
@@ -28,13 +29,19 @@ def export_current_library(folder, project, outputs, summary, checks, render):
             if path.parent.resolve() != staging.resolve() or not path.is_file() or path.is_symlink():
                 raise OSError('Invalid library output path')
             names.append(path.name)
+            if path.suffix.lower() in ('.ema', '.emp'):
+                text = path.read_text(encoding='utf-8')
+                declaration, separator, body = text.partition('?>')
+                notice = '<!-- ' + output_notice(snapshot[2]) + ' -->\n'
+                path.write_text(declaration + separator + '\n' + notice + body if separator else notice + text,
+                                encoding='utf-8')
             with path.open('r+b') as stream:
                 if not path.stat().st_size:
                     raise OSError('Empty library output')
                 os.fsync(stream.fileno())
         if set(staging.iterdir()) != set(written):
             raise OSError('Unlisted library output')
-        require_current_result(*snapshot, catalog_repo.db_path)
+        context.require_current()
         if target.exists():
             # rmdir refuses a nonempty directory, including a late caller write.
             target.rmdir()
