@@ -56,6 +56,17 @@ def derating_table(rows):
     return result
 
 
+def pe_sections(rows):
+    """Positive finite distinct sections; order is independent of SQL affinity."""
+    result = set()
+    for row in rows:
+        section = number(row['section_mm2'], 'pe_standard_sections', 'section_mm2', positive=True)
+        if section in result:
+            invalid('pe_standard_sections', 'duplicate section_mm2')
+        result.add(section)
+    return sorted(result)
+
+
 def validate_rating_inventory(ampacity_rows, derating_rows, device_ids, standard_ids):
     """Validate every rating combination, including rows unused by a project."""
     standards = set()

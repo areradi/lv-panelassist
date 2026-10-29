@@ -12,7 +12,7 @@ import math
 import sqlite3
 from pathlib import Path
 from lv_assist.ip_rating import ip_meets
-from lv_assist.rating_table_validation import ampacity_table, derating_table, number, identity, invalid
+from lv_assist.rating_table_validation import ampacity_table, derating_table, pe_sections, number, identity, invalid
 from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.run_metadata import catalog_file_hash
@@ -186,22 +186,16 @@ class CatalogRepository:
                 rows = conn.execute(
                     "SELECT section_mm2 FROM pe_standard_sections ORDER BY section_mm2 ASC"
                 ).fetchall()
-                return [float(r["section_mm2"]) for r in rows]
+                return pe_sections(rows)
         return self._cached("_pe_cache", load)
 
     def get_standard_pe_section(self, required_pe_mm2: float) -> Optional[float]:
         """اولین مقطع استاندارد PE بزرگ‌تر یا مساوی مقدار لازم؛ اگر فراتر از جدول باشد None."""
-        with self._connect() as conn:
-            row = conn.execute(
-                """
-                SELECT section_mm2 FROM pe_standard_sections
-                WHERE section_mm2 >= ?
-                ORDER BY section_mm2 ASC
-                LIMIT 1
-                """,
-                (required_pe_mm2,),
-            ).fetchone()
-            return float(row["section_mm2"]) if row else None
+        required = number(required_pe_mm2, "pe_standard_sections", "required_pe_mm2", positive=True)
+        # Validate the complete inventory before selection, including sections
+        # below the requested value. Never extrapolate beyond the recorded table.
+        sections = pe_sections({'section_mm2': value} for value in self.get_pe_standard_sections())
+        return next((section for section in sections if section >= required), None)
 
     # ------------------------------------------------------------------
     # ۶. قواعد سلکتیویته، منحنی‌های قطع و رجیستری استانداردها

@@ -35,6 +35,7 @@ def database(tmp_path, *, identifier="TEST-PART", raw=None):
         connection.execute("CREATE TABLE standards_registry(standard_id TEXT, raw_json TEXT)")
         connection.execute("CREATE TABLE cable_ampacity_reference(standard_id TEXT, table_ref TEXT, material TEXT, insulation TEXT, installation_method TEXT, loaded_conductors INTEGER, section_mm2 REAL, iz0_a REAL)")
         connection.execute("CREATE TABLE device_thermal_derating(device_id TEXT, temp_c REAL, derating_factor REAL)")
+        connection.execute("CREATE TABLE pe_standard_sections(section_mm2 REAL)")
         payload = raw if raw is not None else device().model_dump_json()
         connection.execute("INSERT INTO catalog_devices VALUES (?, ?, 'ESTIMATED')", (identifier, payload))
     return path

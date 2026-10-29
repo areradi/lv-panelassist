@@ -532,3 +532,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [rating CLI policy](../engineering/rating_catalog_cli_policy.md).
 - **Remaining risks:** complete auxiliary schema, reference authenticity, immutable
   transactions and independent engineering verification remain open. P0 stays OPEN.
+
+## Review unit 32 — PE section inventory and lookup domains
+
+- **Observed:** unchecked/coerced PE rows, a separate SQL selection path and
+  nonpositive requirements could yield misleading section proposals; CLI omitted PE.
+- **Expected:** full inventory and request domains checked before selection;
+  empty/above-range data stays unknown and invalid data fails without repair.
+- **Implementation:** shared positive-finite/duplicate validator, numeric sorting,
+  shared cached inventory selection with revalidation, full read-only CLI PE scope
+  and count. Synthetic prior fixtures gain an empty required table.
+- **Tests:** 46 new helper/SQL/lookup/cache/actual-CLI/engine/three-language GUI
+  cases; 226 targeted regressions. Original database bytes remain unchanged.
+- **Evidence:** [PE section policy](../engineering/pe_section_data_gate_policy.md).
+- **Remaining risks:** PE applicability/thermal/ADS evidence, immutable snapshots,
+  other auxiliary tables and independent engineering review remain open. P0 OPEN.

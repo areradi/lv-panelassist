@@ -10,7 +10,7 @@ from typing import Any
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord
 from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.i18n import tr
-from lv_assist.rating_table_validation import validate_rating_inventory
+from lv_assist.rating_table_validation import pe_sections, validate_rating_inventory
 from lv_assist.run_metadata import catalog_file_hash
 
 
@@ -111,9 +111,10 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             connection.execute("SELECT * FROM device_thermal_derating"),
             {device.part_number for device in devices},
             [row[0] for row in connection.execute("SELECT standard_id FROM standards_registry")])
+        protective_sections = pe_sections(connection.execute("SELECT section_mm2 FROM pe_standard_sections"))
     if catalog_file_hash(path) != before_hash:
         raise CatalogValidationError(tr("audit_catalog_unstable"))
     return {"devices": len(devices), "selectivity_rules": len(rules), "trip_curves": len(curves),
-            **ratings, "catalog_hash": before_hash,
-            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure and ampacity/derating inventory",
+            **ratings, "pe_sections": len(protective_sections), "catalog_hash": before_hash,
+            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory and PE sections",
             "engineering_verification": "NOT_VERIFIED"}

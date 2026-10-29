@@ -27,6 +27,7 @@ def database(tmp_path):
                 'CREATE TABLE standards_registry(standard_id TEXT, raw_json TEXT)',
                 'CREATE TABLE cable_ampacity_reference(standard_id TEXT, table_ref TEXT, material TEXT, insulation TEXT, installation_method TEXT, loaded_conductors INTEGER, section_mm2 REAL, iz0_a REAL)',
                 'CREATE TABLE device_thermal_derating(device_id TEXT, temp_c REAL, derating_factor REAL)',
+                'CREATE TABLE pe_standard_sections(section_mm2 REAL)',
             ):
                 connection.execute(statement)
             device = CatalogDevice(part_number='T', manufacturer='TEST', series='TEST', device_type='MCB')
