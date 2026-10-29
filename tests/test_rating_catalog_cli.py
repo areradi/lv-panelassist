@@ -21,7 +21,7 @@ def database(tmp_path):
     try:
         with connection:
             for statement in (
-                'CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT)',
+                'CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT, category TEXT, manufacturer TEXT, series TEXT, model TEXT, in_a REAL, icu_ka_400v REAL, power_loss_w REAL, derating_40c REAL, derating_50c REAL, width_mm REAL, height_mm REAL, depth_mm REAL)',
                 'CREATE TABLE selectivity_rules(rule_id INTEGER, upstream_series TEXT, downstream_series TEXT, upstream_in_min_a REAL, upstream_in_max_a REAL, downstream_in_max_a REAL, min_ratio REAL, limit_ka REAL, selectivity_type TEXT, voltage_v REAL, is_verified_manufacturer_rule INTEGER, raw_json TEXT)',
                 'CREATE TABLE trip_curves(curve_id TEXT, curve_name TEXT, device_category TEXT, inst_min_mult REAL, inst_max_mult REAL, is_approximate INTEGER, allow_for_verification INTEGER, raw_json TEXT)',
                 'CREATE TABLE standards_registry(standard_id TEXT, raw_json TEXT)',
@@ -32,7 +32,7 @@ def database(tmp_path):
             ):
                 connection.execute(statement)
             device = CatalogDevice(part_number='T', manufacturer='TEST', series='TEST', device_type='MCB')
-            connection.execute("INSERT INTO catalog_devices VALUES ('T', ?, 'ESTIMATED')", (device.model_dump_json(),))
+            connection.execute("INSERT INTO catalog_devices VALUES ('T', ?, 'ESTIMATED', 'MCB', 'TEST', 'TEST', 'T', 0, 0, 0, 1, 1, 0, 0, 0)", (device.model_dump_json(),))
             connection.execute("INSERT INTO standards_registry VALUES ('STD', ?)", (json.dumps({'code': 'STD'}),))
             connection.execute("INSERT INTO cable_ampacity_reference VALUES ('STD','synthetic table','CU','PVC','C',3,16,57)")
             connection.execute("INSERT INTO device_thermal_derating VALUES ('T',50,0.9)")

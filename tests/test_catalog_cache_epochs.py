@@ -56,6 +56,7 @@ def test_each_cache_reloads_actual_changed_data_without_device_access(repo, name
         payload = json.loads(raw)
         if name == 'devices':
             payload['series'] += ' SYNTHETIC CACHE REVISION'
+            connection.execute('UPDATE catalog_devices SET series=? WHERE rowid=?', (payload['series'], rowid))
         elif name == 'trip_curves':
             payload['im_max_mult'] += 1
             connection.execute('UPDATE trip_curves SET inst_max_mult=? WHERE rowid=?', (payload['im_max_mult'], rowid))

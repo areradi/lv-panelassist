@@ -20,6 +20,9 @@ SELECTIVITY_COLUMNS = ('rule_id, upstream_series, downstream_series, upstream_in
                        'selectivity_type, voltage_v, is_verified_manufacturer_rule, raw_json')
 TRIP_CURVE_COLUMNS = ('curve_id, curve_name, device_category, inst_min_mult, inst_max_mult, '
                       'is_approximate, allow_for_verification, raw_json')
+DEVICE_COLUMNS = ('device_id, category, manufacturer, series, model, in_a, icu_ka_400v, '
+                  'power_loss_w, derating_40c, derating_50c, width_mm, height_mm, depth_mm, '
+                  'data_quality, raw_json')
 
 
 class CatalogValidationError(ValueError):
@@ -62,10 +65,37 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
     devices = []
     for row in rows:
         payload = catalog_object(row["raw_json"])
+        require_exportable_text(payload)
+        if 'data_quality' in payload and payload['data_quality'] != row['data_quality']:
+            raise CatalogValidationError('catalog_devices data_quality SQL/JSON mismatch')
         payload["data_quality"] = row["data_quality"]
         device = CatalogDevice.model_validate(payload)
         if device.part_number != row["device_id"]:
             raise CatalogValidationError("Catalog row device_id does not match its part_number")
+        try:
+            for sql_field, expected in (('category', device.device_type),
+                                        ('manufacturer', device.manufacturer), ('series', device.series),
+                                        ('model', payload.get('model', device.part_number))):
+                identity(row[sql_field], 'catalog_devices', sql_field)
+                identity(expected, 'catalog_devices', sql_field)
+                if row[sql_field] != expected:
+                    invalid('catalog_devices', sql_field + ' SQL/JSON mismatch')
+            for sql_field, field, nullable in (
+                    ('in_a', 'rated_current_in_a', True), ('icu_ka_400v', 'icu_ka_400v', True),
+                    ('power_loss_w', 'power_loss_w', False), ('derating_40c', 'derating_40c', False),
+                    ('derating_50c', 'derating_50c', False), ('width_mm', 'width_mm', True),
+                    ('height_mm', 'height_mm', True), ('depth_mm', 'depth_mm', True)):
+                # Check original JSON values as well as the normalized model.
+                if field in payload:
+                    number(payload[field], 'catalog_devices', field)
+                expected = getattr(device, field)
+                if row[sql_field] is None and nullable and expected == 0:
+                    continue  # Existing unknown/not-applicable representations.
+                value = number(row[sql_field], 'catalog_devices', sql_field)
+                if value < 0 or value != expected:
+                    invalid('catalog_devices', sql_field + ' SQL/JSON mismatch')
+        except ValueError as error:
+            raise CatalogValidationError(str(error)) from error
         devices.append(device)
     return validated_devices(devices)
 
@@ -214,7 +244,7 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
         integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
         if integrity != "ok":
             raise CatalogValidationError("Catalog integrity_check failed: " + integrity)
-        devices = device_rows(connection.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices"))
+        devices = device_rows(connection.execute('SELECT ' + DEVICE_COLUMNS + ' FROM catalog_devices'))
         rules, enabled_rules = selectivity_rows(connection.execute('SELECT ' + SELECTIVITY_COLUMNS + ' FROM selectivity_rules'), devices)
         curves = curve_rows(connection.execute('SELECT ' + TRIP_CURVE_COLUMNS + ' FROM trip_curves'))
         standards = registry_rows(connection.execute("SELECT standard_id, raw_json FROM standards_registry"))
@@ -237,5 +267,5 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             "standards_registry_rows": len(standards),
             "localized_standard_entries": len(registry_entries(standards)),
             "trip_curve_policy": "APPROXIMATE_ONLY",
-            "structural_scope": "device identity/numbers, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
+            "structural_scope": "device core SQL/JSON identities/numbers/quality consistency, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

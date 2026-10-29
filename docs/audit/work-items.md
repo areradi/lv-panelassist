@@ -633,3 +633,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** zero independent engineering cases; physical models,
   source applicability/tolerances, other formats, immutable contexts and electrical
   review remain open. A synthetic software PASS cannot close P0.
+
+## Review unit 38 — Device core SQL/JSON consistency gate
+
+- **Observed:** normalized core fields were ignored and SQL quality overwrote raw
+  quality, allowing conflicting representations to reach device selection.
+- **Expected:** bounded duplicate identities/numbers/quality agree before use;
+  native invalid values fail and existing unknowns cannot become certified ratings.
+- **Implementation:** shared core query and exact row checks, raw numeric/type and
+  exportable-text validation, explicit quality consistency before non-promotion,
+  nullable/default conventions, read-only connection closure and CLI scope update.
+- **Tests:** 60 new domain/row/cache/actual-CLI/engine/three-language GUI cases;
+  234 targeted regressions. Minimal source fixtures align SQL fields and valid
+  series refresh updates both representations; existing assertions remain active.
+- **Evidence:** [device core row policy](../engineering/device_core_row_gate_policy.md).
+- **Remaining risks:** other normalized/source fields, broader model coercion,
+  actual duty/temperature/voltage/thermal applicability, immutable contexts and
+  independent review remain open. Consistency alone cannot close P0.
