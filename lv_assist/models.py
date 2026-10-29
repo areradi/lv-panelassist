@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, get_args
 from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
 from lv_assist.result_contract import ValidationStatus
 from lv_assist.core_verification import CheckResult, ShortCircuitProfile, TripTimeEstimate
@@ -9,6 +9,7 @@ from lv_assist.i18n import tr
 from lv_assist.text_validation import require_exportable_text
 from lv_assist.evidence_matching import exact_applicability, exact_value, valid_review_date
 from lv_assist.rating_table_validation import number
+from lv_assist.input_numbers import native_input
 
 class EngineeringTextInput(BaseModel):
     @field_validator("*", mode="before")
@@ -128,7 +129,17 @@ class SpdClass(str, Enum):
     T2 = "T2"
     T1_T2 = "T1_T2"
 
-class ProjectSpec(EngineeringTextInput):
+class EngineeringNumericInput(EngineeringTextInput):
+    @field_validator('*', mode='before')
+    @classmethod
+    def explicit_numeric_inputs(cls, value, info):
+        annotation = cls.model_fields[info.field_name].annotation
+        args = get_args(annotation)
+        kind = next((item for item in (float, int, bool) if annotation is item or item in args), None)
+        return native_input(value, kind, info.field_name, optional=type(None) in args)
+
+
+class ProjectSpec(EngineeringNumericInput):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     project_name: str = Field(..., min_length=2)
@@ -161,7 +172,7 @@ class ProjectSpec(EngineeringTextInput):
     spd_class: SpdClass = Field(default=SpdClass.T2)
     spd_connection_length_m: float = Field(default=0.5, ge=0.0, le=10.0)
 
-class FeederInput(EngineeringTextInput):
+class FeederInput(EngineeringNumericInput):
     model_config = ConfigDict(allow_inf_nan=False, str_strip_whitespace=True)
 
     feeder_id: str = Field(..., min_length=1)
@@ -319,7 +330,7 @@ class ValidationResult(BaseModel):
         if self.scope == "CHECK":
             self.scope = self.feeder_id if self.feeder_id in ("PANEL", "NETWORK") else "FEEDER"
         if (self.status == ValidationStatus.COMPLETED
-                and self.method == "LEGACY_UNDOCUMENTED" and self.source_ref is None):
+                and self.method.strip().upper() in ('', 'UNSPECIFIED', 'LEGACY_UNDOCUMENTED')):
             self.status = ValidationStatus.WARNING
             note = "Legacy calculation; no reviewed source metadata recorded."
             if note not in self.assumptions:

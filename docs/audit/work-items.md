@@ -701,3 +701,31 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** device-specific physical ranges, broader input/import
   boundaries, source/duty/setting applicability, mutable contexts and independent
   engineering review remain open. Native input types cannot close P0.
+
+## Review unit 42 — Consolidated input, checklist and output consistency
+
+- **Observed:** project/feeder inputs still coerced bool/text, Excel silently
+  truncated counts and boolean cells, clipboard accepted NaN, a linked busbar
+  error could disappear as NOT_VERIFIED, and diagrams/parts used source-only Ik
+  or 400 V capacities outside their scope. Placeholder methods could claim
+  COMPLETED merely with a source label.
+- **Expected:** invalid inputs fail clearly; actual failures remain visible;
+  exported fault/rating scope agrees with the engine and project voltage.
+- **Implementation:** strict native numeric/boolean input boundary, explicit
+  exact spreadsheet conversion and workbook closure, finite clipboard checks,
+  method placeholder downgrade, linked ERROR-to-FAIL checklist behavior, exact
+  voltage TCC/parts capacity and total-main-bus SLD/TCC fault display. Existing
+  public export preflight and proposed/unverified statuses remain active.
+- **Tests:** 103 new cases, including actual engine and three-language file
+  exports; 106 focused cases pass. The prior TCC test now checks the correct
+  total scope while retaining the network-only value assertion. No acceptance
+  assertion or inherited PDF check was disabled. Final full suite: 1810 passed,
+  1 inherited PDF failure, 1 Windows compiler skip; all 30 synthetic scenario
+  runs and the four-feeder/71-check GUI smoke pass. Database bytes unchanged.
+- **Evidence:** [consolidated pass and remaining acceptance](p0_remaining_acceptance.md),
+  full command results and `/workspace/audit-evidence/p0-batch-*`.
+- **Remaining risks:** six grouped acceptance areas remain, including unfinished
+  physical models, source authentication, independent cases, immutable contexts
+  and actual PDF/runtime acceptance. PDF diagnostics did not resolve rendering;
+  no unsafe browser workaround was introduced. P0 remains OPEN; this batch is
+  not completion of all software or engineering requirements.

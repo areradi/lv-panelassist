@@ -1426,7 +1426,9 @@ def build_design_verification(project: ProjectSpec, feeders: List[FeederCalcOutp
     # No assembly test document or reviewer workflow exists yet. Preserve an
     # actual failed check, but never turn an unevidenced recommendation into PASS.
     for item in items:
-        if item.status != VerificationStatus.FAIL:
+        if any(v.status == ValidationStatus.ERROR for v in validations if v.rule_id in item.rule_ids):
+            item.status = VerificationStatus.FAIL
+        elif item.status != VerificationStatus.FAIL:
             item.status = VerificationStatus.NOT_VERIFIED
         item.evidence = tr("audit_missing_assembly_evidence") + " | " + item.evidence
 

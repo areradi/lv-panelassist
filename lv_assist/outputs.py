@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 from lv_assist.models import (
     ProjectSpec, FeederCalcOutput, PanelSummaryOutput, CatalogDevice, LoadType
 )
-from lv_assist.catalog import TripCurveRepository
+from lv_assist.catalog import TripCurveRepository, catalog_repo
 from lv_assist.i18n import tr
 from lv_assist.csv_export import CsvMode, write_csv
 from lv_assist.report_export import export_current_report, export_current_text
@@ -153,7 +153,7 @@ class SldGenerator:
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" font-family="Tahoma, Segoe UI, sans-serif">',
             f'<rect width="{w}" height="{h}" fill="white"/>',
             f'<text x="20" y="28" font-size="17" font-weight="bold" fill="#1F4E78">{_esc(tr("sld_title"))} — {_esc(project.project_name)} ({_esc(project.panel_tag)})</text>',
-            f'<text x="20" y="46" font-size="10" fill="#566573">{datetime.now().strftime("%Y-%m-%d %H:%M")} | {_esc(project.standard_ref)} | Ik″={summary.ik_used_ka if summary.ik_used_ka is not None else "?"} kA</text>',
+            f'<text x="20" y="46" font-size="10" fill="#566573">{datetime.now().strftime("%Y-%m-%d %H:%M")} | {_esc(project.standard_ref)} | {_esc(tr("audit_ik_main_bus_3p"))}={summary.ik_bus_total_ka if summary.ik_bus_total_ka is not None else "?"} kA</text>',
         ]
         sel_colors = {"VERIFIED_TOTAL": "#1E8449", "VERIFIED_PARTIAL": "#B7950B",
                       "PRELIMINARY": "#566573", "PRELIMINARY_RATIO": "#566573", "VIOLATION": "#C0392B"}
@@ -301,10 +301,11 @@ class TccGenerator:
         parts.append(f'<rect x="{TccGenerator.X0}" y="{TccGenerator.Y0}" width="{TccGenerator.X1 - TccGenerator.X0}" height="{TccGenerator.Y1 - TccGenerator.Y0}" fill="none" stroke="#BDC3C7" stroke-width="1.5"/>')
 
         # Ik line
-        if summary.ik_used_ka is not None:
-            x = TccGenerator._px(summary.ik_used_ka * 1000.0)
+        if summary.ik_bus_total_ka is not None:
+            x = TccGenerator._px(summary.ik_bus_total_ka * 1000.0)
             parts.append(f'<line x1="{x:.1f}" y1="{TccGenerator.Y0}" x2="{x:.1f}" y2="{TccGenerator.Y1}" stroke="#C0392B" stroke-width="2" stroke-dasharray="6,4"/>')
-            parts.append(f'<text x="{x + 5:.1f}" y="{TccGenerator.Y0 + 14}" font-size="11" font-weight="bold" fill="#C0392B">{_esc(tr("tcc_ik"))} {summary.ik_used_ka} kA</text>')
+            # Keep the scoped caption visible when the marker is near the right edge.
+            parts.append(f'<text x="20" y="46" font-size="11" font-weight="bold" fill="#C0392B">{_esc(tr("audit_ik_main_bus_3p"))} {summary.ik_bus_total_ka} kA</text>')
 
         legend_y = TccGenerator.Y0 + 6
         def _legend(color: str, text: str):
@@ -327,8 +328,9 @@ class TccGenerator:
             parts.append(TccGenerator._polyline(TccGenerator._curve_points(summary.main_breaker), "#1F4E78", 3.0))
             parts.append(TccGenerator._instantaneous_band(summary.main_breaker, "#1F4E78"))
             parts.append(_legend("#1F4E78", f'{tr("tcc_main")}: {summary.main_breaker.part_number} ({summary.main_breaker.rated_current_in_a:g}A){mb_mark}'))
-            if summary.main_breaker.icu_ka_400v > 0:
-                x = TccGenerator._px(summary.main_breaker.icu_ka_400v * 1000.0)
+            main_icu = catalog_repo.get_device_icu_at_voltage(summary.main_breaker.part_number, project.nominal_voltage_v)
+            if main_icu is not None:
+                x = TccGenerator._px(main_icu * 1000.0)
                 parts.append(f'<line x1="{x:.1f}" y1="{TccGenerator.Y0}" x2="{x:.1f}" y2="{TccGenerator.Y1}" stroke="#7F8C8D" stroke-width="1.5" stroke-dasharray="2,4"/>')
 
         # Feeder curves
@@ -341,8 +343,8 @@ class TccGenerator:
             parts.append(TccGenerator._polyline(TccGenerator._curve_points(dev), color))
             parts.append(TccGenerator._instantaneous_band(dev, color))
             parts.append(_legend(color, f"{f.feeder_id}: {dev.part_number} ({dev.rated_current_in_a:g}A){f_mark}"))
-            if dev.icu_ka_400v > 0:
-                x = TccGenerator._px(dev.icu_ka_400v * 1000.0)
+            if f.protection_icu_ka is not None and f.protection_icu_ka > 0:
+                x = TccGenerator._px(f.protection_icu_ka * 1000.0)
                 parts.append(f'<line x1="{x:.1f}" y1="{TccGenerator.Y0}" x2="{x:.1f}" y2="{TccGenerator.Y1}" stroke="#BDC3C7" stroke-width="1" stroke-dasharray="2,4"/>')
             if f.selectivity_limit_is_ka:
                 x = TccGenerator._px(f.selectivity_limit_is_ka * 1000.0)
@@ -570,8 +572,9 @@ class EplanPartsExporter:
         rows: List[list] = []
         for dev, qty in sorted(agg.values(), key=lambda x: x[0].part_number):
             td1 = f"In={dev.rated_current_in_a:g}A" if dev.rated_current_in_a else ""
-            if dev.icu_ka_400v > 0:
-                td1 += f" | Icu={dev.icu_ka_400v:g}kA"
+            icu = catalog_repo.get_device_icu_at_voltage(dev.part_number, project.nominal_voltage_v)
+            if icu is not None:
+                td1 += f" | Icu={icu:g}kA @ {project.nominal_voltage_v:g}V"
             td2 = f"Loss={dev.power_loss_w:g}W"
             dims = " x ".join(f"{d:g}" for d in (dev.width_mm, dev.height_mm, dev.depth_mm) if d)
             if dims:

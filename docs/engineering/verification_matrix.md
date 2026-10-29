@@ -11,7 +11,7 @@ not currently available and requested that unverified status be retained.
 | L-PE / hidden fault assumptions | No 10 kA or half-bus current; PE None / INSUFFICIENT_DATA | All four earth systems x three locales; physical model not implemented |
 | Network fault scopes | Transformer diagnostic cannot supply missing panel bus; explicit bus preserved, end/earth-fault values stay unknown without complex impedance data; scoped checks reach GUI/HTML/XLSX | `test_network_fault_scopes.py`; [scope policy](fault_scope_policy.md); reviewed source/route solver and independent cases still needed |
 | Icu/Ics | Exact voltage lookup; unknowns not passed, main and feeder checks; device remains proposed | Synthetic comparison cases; exact property/manufacturer and Ics policy incomplete |
-| Clause 10 checklist | 13 evidence rows including continuity; no unevidenced assembly PASS | Demo + HTML/XLSX integration; actual test evidence/reviewer absent |
+| Clause 10 checklist | 13 evidence rows including continuity; no unevidenced assembly PASS; linked actual ERROR remains FAIL | Demo + HTML/XLSX integration and actual busbar overload regression; actual test evidence/reviewer absent |
 | Cable ampacity | Exact combination lookup; unsupported Al/XLPE/method/1P table -> None | Synthetic scope tests; authenticated ampacity sources not supplied |
 | Cable/protection coordination | Actual Ir/I2 required; one verdict replaces the contradictory frame-rating comparison; Ib > Iz remains ERROR with unknown Ir; missing range/device cannot pass | `test_protection_setting_coordination.py`; [setting policy](protection_setting_policy.md); manufacturer/applicability evidence and installed-setting verification still open |
 | Earthing systems | Unsupported loop/ADS scope explicitly unverified for TN-S/TN-C-S/TT/IT | Validated TN/TT/IT modelling and independent references still required |
@@ -20,10 +20,14 @@ not currently available and requested that unverified status be retained.
 | Property provenance | Exact value/unit/subject/conditions matching used in engine Icu and selectivity; named buckets cannot promote whole device; invalid/duplicate catalog input rejected before results | `test_catalog_input_gate.py`, `test_property_evidence_binding.py`; [property policy](property_evidence_policy.md), [catalog policy](catalog_input_policy.md); real evidence, aggregate review and complete import/publish pipeline still absent |
 | IP | Solid/water digits compared separately; assembly Clause 10 unverified | Dimension comparisons; fan/gland/assembly evidence still absent |
 | Busbar/thermal | Existing calculations retained; not assembly proof in design checklist | Formula/conditions/manufacturer review and validation remain open |
-| Input validity | Finite Pydantic data, whitespace IDs, 1P/3P, unique/nonempty feeder set, revalidation | Invalid/duplicate/mutated-input tests; full overflow and all importer validation still open |
+| Input validity | Native finite project/feeder numbers and booleans, explicit spreadsheet conversion without count truncation, NaN/Inf clipboard rejection, whitespace IDs, 1P/3P, unique/nonempty feeder set, revalidation | Invalid/duplicate/mutated-input and actual spreadsheet tests; broader overflow/import/preview behavior still open |
 | Independent references | No invented results or numerical tolerances | All requested independent reference acceptance is BLOCKED |
 | Reproducible software scenarios | Ten synthetic policy cases across EN/FA/DE, engine/HTML/XLSX validation parity and explicit difference/error JSON | [Runner policy](software_scenario_runner_policy.md); zero independent reference cases; does not change the blocked engineering acceptance above |
-| UI/report status | Four counters, severity order, proposed BOM, preliminary HTML/XLSX, missing data preserved | GUI smoke + locale/export integration; immutable export context and all format parity remain open |
+| UI/report status | Four counters, severity order, proposed BOM, preliminary HTML/XLSX, missing data preserved; TCC/parts use exact-voltage Icu and SLD/TCC show main-bus total | GUI smoke + locale/export integration; immutable export context, all format parity and actual PDF rendering remain open |
+
+Remaining work is grouped with explicit closure requirements in the
+[P0 acceptance register](../audit/p0_remaining_acceptance.md). Review-unit counts
+must not be read as a P0 completion percentage or as independent reference cases.
 
 ## Required independent reference pack (not executed)
 

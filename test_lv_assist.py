@@ -499,7 +499,11 @@ class TestPhase3Tcc:
     def test_tcc_includes_ik_and_selectivity_markers(self):
         project, outs, summary, _ = _phase3_project()
         svg = TccGenerator.generate_svg(project, outs, summary)
-        assert "22.0 kA" in svg
+        # The bus marker includes the connected motors, unlike source-only Ik.
+        assert summary.ik_used_ka == 22.0
+        assert summary.ik_bus_total_ka > summary.ik_used_ka
+        assert f'{tr("audit_ik_main_bus_3p")} {summary.ik_bus_total_ka} kA' in svg
+        assert '22.0 kA' not in svg
         assert "55" in svg
 
     def test_tcc_curve_geometry_within_plot_area(self):

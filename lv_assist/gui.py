@@ -36,6 +36,7 @@ from lv_assist.eplan_field_test import EplanFieldTestKit
 from lv_assist.i18n import tr, i18n
 from lv_assist.gui_output_bridge import GuiOutputBridge
 from lv_assist.result_contract import STATUS_SEVERITY_ORDER
+from lv_assist.input_numbers import invalid_input, spreadsheet_number
 from lv_assist.run_metadata import result_fingerprint, run_is_current
 from lv_assist.catalog import catalog_repo
 
@@ -206,7 +207,7 @@ class ExcelInputManager:
 
         for col, values in [
             ("E", "MOTOR_DOL,MOTOR_STAR_DELTA,MOTOR_SOFT_STARTER,MOTOR_VFD,SUB_FEEDER,LIGHTING_SOCKET,HEATER_RESISTIVE"),
-            ("G", "1,2,3"),
+            ("G", "1,3"),
             ("M", "TRUE,FALSE"),
             ("N", "CU,AL"),
             ("O", "PVC,XLPE"),
@@ -227,23 +228,36 @@ class ExcelInputManager:
     def _parse_bool(val) -> bool:
         if val is None or val == "": return False
         if isinstance(val, bool): return val
-        if isinstance(val, (int, float)): return bool(val)
-        return str(val).strip().lower() in ("true", "1", "yes", "y")
+        if isinstance(val, (int, float)) and val in (0, 1): return bool(val)
+        if isinstance(val, str):
+            text = val.strip().lower()
+            if text in ('true', '1', 'yes', 'y', 'ja', 'بله'): return True
+            if text in ('false', '0', 'no', 'n', 'nein', 'خیر'): return False
+        invalid_input('boolean')
 
     @staticmethod
     def load_from_excel(filepath: str):
-        wb = openpyxl.load_workbook(filepath, data_only=True)
+        # Formula text is rejected as a quantity instead of borrowing stale or
+        # absent cached values. Literal text cells are never evaluated here.
+        wb = openpyxl.load_workbook(filepath, data_only=False)
+        try:
+            return ExcelInputManager._load_workbook(wb)
+        finally:
+            wb.close()
+
+    @staticmethod
+    def _load_workbook(wb):
         ws_proj = wb["Project_Spec"]
         proj_dict = {str(row[0]).strip(): row[1] for row in ws_proj.iter_rows(min_row=2, values_only=True) if row[0]}
         errors: List[str] = []
 
         def _f(key, default):
             val = proj_dict.get(key)
-            return float(val) if val not in (None, "") else default
+            return spreadsheet_number(val, 'Project_Spec.' + key) if val not in (None, "") else default
 
         def _f_opt(key):
             val = proj_dict.get(key)
-            return float(val) if val not in (None, "") else None
+            return spreadsheet_number(val, 'Project_Spec.' + key) if val not in (None, "") else None
 
         def _enum(cls, key, default):
             # F-013: مقدار نامعتبر Enum نباید بی‌صدا جایگزین شود
@@ -275,7 +289,9 @@ class ExcelInputManager:
             simultaneity_factor_ks=_f("simultaneity_factor_ks", 0.85),
             spare_factor=_f("spare_factor", 0.20),
             plc_hmi_24vdc_power_w=_f("plc_hmi_24vdc_power_w", 55.0),
-            simultaneous_motor_starts=int(_f("simultaneous_motor_starts", 2)),
+            simultaneous_motor_starts=spreadsheet_number(proj_dict.get('simultaneous_motor_starts', 2),
+                'Project_Spec.simultaneous_motor_starts', integer=True)
+                if proj_dict.get('simultaneous_motor_starts') not in (None, '') else 2,
             preferred_manufacturer=str(proj_dict.get("preferred_manufacturer", "ANY")).strip() or "ANY",
             spd_class=_enum(SpdClass, "spd_class", SpdClass.T2),
             spd_connection_length_m=_f("spd_connection_length_m", 0.5),
@@ -283,6 +299,7 @@ class ExcelInputManager:
 
         ws_feed = wb["Feeders_List"]
         headers = [str(c.value) if c.value else "" for c in ws_feed[1]]
+        headers += [''] * max(0, 19 - len(headers))
         feeders = []
         for row_no, row in enumerate(ws_feed.iter_rows(min_row=2, values_only=True), start=2):
             if not row or row[0] is None: continue
@@ -290,6 +307,18 @@ class ExcelInputManager:
 
             def _cell(i, default=None):
                 return row[i] if row[i] not in (None, "") else default
+
+            def _quantity(i, default=None, *, integer=False):
+                value = _cell(i, default)
+                if value is None and default is None and i != 5:
+                    return None
+                return spreadsheet_number(value, f'Feeders_List[{row_no}].{headers[i] or i + 1}', integer=integer)
+
+            def _boolean(i):
+                try:
+                    return ExcelInputManager._parse_bool(_cell(i))
+                except ValueError as error:
+                    raise ValueError(f'Feeders_List[{row_no}].{headers[i] or i + 1}: {error}') from error
 
             def _cell_enum(cls, i, default):
                 # F-013: خطای Enum با آدرس دقیق سلول (شیت/سطر/ستون) ثبت می‌شود
@@ -303,17 +332,17 @@ class ExcelInputManager:
 
             feeders.append(FeederInput(
                 feeder_id=str(row[0]).strip(), func_tag=str(_cell(1, "=PWR")), loc_tag=str(_cell(2, project.panel_tag)),
-                description=str(_cell(3, "")), load_type=_cell_enum(LoadType, 4, LoadType.SUB_FEEDER), power_kw=float(_cell(5)),
-                phases=int(_cell(6, 3)), cos_phi=float(_cell(7)) if _cell(7) is not None else None,
-                efficiency=float(_cell(8)) if _cell(8) is not None else None, demand_factor_kd=float(_cell(9, 1.0)),
-                cable_length_m=float(_cell(10)) if _cell(10) is not None else None, cable_section_mm2=float(_cell(11)) if _cell(11) is not None else None,
-                has_socket_outlets=ExcelInputManager._parse_bool(_cell(12)),
+                description=str(_cell(3, "")), load_type=_cell_enum(LoadType, 4, LoadType.SUB_FEEDER), power_kw=_quantity(5),
+                phases=_quantity(6, 3, integer=True), cos_phi=_quantity(7),
+                efficiency=_quantity(8), demand_factor_kd=_quantity(9, 1.0),
+                cable_length_m=_quantity(10), cable_section_mm2=_quantity(11),
+                has_socket_outlets=_boolean(12),
                 conductor_material=_cell_enum(ConductorMaterial, 13, ConductorMaterial.CU),
                 insulation=_cell_enum(InsulationType, 14, InsulationType.PVC),
                 installation_method=_cell_enum(InstallationMethod, 15, InstallationMethod.C),
-                fire_resistant=ExcelInputManager._parse_bool(_cell(16)),
-                thdi_pct=float(_cell(17)) if _cell(17) is not None else None,
-                fire_pump_service=ExcelInputManager._parse_bool(_cell(18)),
+                fire_resistant=_boolean(16),
+                thdi_pct=_quantity(17),
+                fire_pump_service=_boolean(18),
             ))
         return project, feeders, errors
 
@@ -567,7 +596,7 @@ class LVAssistApp(ctk.CTk):
         tab_rules = self.tabs.add(tr("tab_rules"))
 
         self._apply_tree_style(font_family)
-        style = ttk.Style()
+        ttk.Style()
 
         self.tree_feeders = ttk.Treeview(tab_feeders, columns=("id", "desc", "type", "ib", "cable", "vd", "prot", "contactors", "bimetal_vfd", "sel"), show="headings")
         for col, key, w in [("id", "col_id", 45), ("desc", "col_desc", 175), ("type", "col_type", 115), ("ib", "col_ib", 65), ("cable", "col_cable", 230), ("vd", "col_vd", 60), ("prot", "col_prot", 130), ("contactors", "col_contactors", 190), ("bimetal_vfd", "col_bimetal_vfd", 145), ("sel", "col_sel", 140)]:
