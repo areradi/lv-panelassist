@@ -12,6 +12,7 @@ from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.i18n import tr
 from lv_assist.rating_table_validation import identity, invalid, number, pe_sections, validate_rating_inventory
 from lv_assist.run_metadata import catalog_file_hash
+from lv_assist.registry_validation import registry_entries, registry_rows
 
 
 class CatalogValidationError(ValueError):
@@ -130,11 +131,12 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
         rules = validated_rules(SelectivityRuleRecord.model_validate(catalog_object(row[0]))
                                 for row in connection.execute("SELECT raw_json FROM selectivity_rules"))
         curves = curve_rows(connection.execute("SELECT curve_id, raw_json FROM trip_curves"))
+        standards = registry_rows(connection.execute("SELECT standard_id, raw_json FROM standards_registry"))
         ratings = validate_rating_inventory(
             connection.execute("SELECT * FROM cable_ampacity_reference"),
             connection.execute("SELECT * FROM device_thermal_derating"),
             {device.part_number for device in devices},
-            [row[0] for row in connection.execute("SELECT standard_id FROM standards_registry")])
+            standards)
         protective_sections = pe_sections(connection.execute("SELECT section_mm2 FROM pe_standard_sections"))
         breaking = breaking_capacity_rows(
             connection.execute("SELECT device_id, voltage_v, icu_ka, ics_ka FROM device_breaking_capacities"),
@@ -145,5 +147,7 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             **ratings, "pe_sections": len(protective_sections), "catalog_hash": before_hash,
             "breaking_capacity_rows": len(breaking),
             "breaking_capacity_devices": len({key[0] for key in breaking}),
-            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory, PE sections and breaking capacity inventory",
+            "standards_registry_rows": len(standards),
+            "localized_standard_entries": len(registry_entries(standards)),
+            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

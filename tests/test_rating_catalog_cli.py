@@ -33,7 +33,7 @@ def database(tmp_path):
                 connection.execute(statement)
             device = CatalogDevice(part_number='T', manufacturer='TEST', series='TEST', device_type='MCB')
             connection.execute("INSERT INTO catalog_devices VALUES ('T', ?, 'ESTIMATED')", (device.model_dump_json(),))
-            connection.execute("INSERT INTO standards_registry VALUES ('STD', '{}')")
+            connection.execute("INSERT INTO standards_registry VALUES ('STD', ?)", (json.dumps({'code': 'STD'}),))
             connection.execute("INSERT INTO cable_ampacity_reference VALUES ('STD','synthetic table','CU','PVC','C',3,16,57)")
             connection.execute("INSERT INTO device_thermal_derating VALUES ('T',50,0.9)")
     finally:

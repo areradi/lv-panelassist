@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import sqlite3
 from contextlib import closing
@@ -16,6 +15,7 @@ from lv_assist.ip_rating import ip_meets
 from lv_assist.rating_table_validation import ampacity_table, derating_table, pe_sections, number, identity, invalid
 from lv_assist.trip_curve_validation import validated_curve, positive_curve_argument
 from lv_assist.text_validation import require_exportable_text
+from lv_assist.registry_validation import registry_entries, registry_identifier, registry_rows
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.catalog_validation import CatalogValidationError, catalog_object, device_rows, validated_rules, curve_rows, validated_curves, breaking_capacity_rows
 from typing import Any, Dict, List, Optional
@@ -221,9 +221,9 @@ class CatalogRepository:
     @property
     def standards(self) -> Dict[str, Dict[str, Any]]:
         def load():
-            with self._connect() as conn:
+            with closing(self._connect()) as conn:
                 rows = conn.execute("SELECT standard_id, raw_json FROM standards_registry").fetchall()
-                return {r["standard_id"]: json.loads(r["raw_json"]) for r in rows}
+                return registry_rows(rows)
         return self._cached("_standards_cache", load)
 
     # ------------------------------------------------------------------
@@ -332,21 +332,11 @@ class TripCurveRepository:
 class StandardsRegistry:
     @staticmethod
     def _entries() -> Dict[str, Dict[str, Any]]:
-        with catalog_repo._connect() as conn:
-            rows = conn.execute("SELECT standard_id, raw_json FROM standards_registry").fetchall()
-        entries: Dict[str, Dict[str, Any]] = {}
-        for r in rows:
-            payload = json.loads(r["raw_json"])
-            if isinstance(payload, dict) and "title" in payload:
-                entries[r["standard_id"]] = payload
-            elif isinstance(payload, dict):
-                for std_id, entry in payload.items():
-                    if isinstance(entry, dict) and "title" in entry:
-                        entries[std_id] = entry
-        return entries
+        return registry_entries(catalog_repo.standards)
 
     @classmethod
     def title(cls, standard_id: str) -> str:
+        registry_identifier(standard_id)
         entry = cls._entries().get(standard_id)
         if not entry:
             return standard_id
@@ -355,6 +345,7 @@ class StandardsRegistry:
 
     @classmethod
     def scope(cls, standard_id: str) -> str:
+        registry_identifier(standard_id)
         entry = cls._entries().get(standard_id)
         if not entry:
             return ""

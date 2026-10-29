@@ -4,10 +4,13 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Sequence
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
+
+from lv_assist.registry_validation import registry_rows
 
 ENGINE_VERSION = "audit-p0.1"
 
@@ -79,9 +82,17 @@ LOADED_SOURCE_HASH = engine_source_hash()
 
 
 def registry_hash(catalog_path: Path) -> str:
-    with sqlite3.connect(catalog_path.resolve().as_uri() + "?mode=ro", uri=True) as connection:
+    before_hash = catalog_file_hash(catalog_path)
+    with closing(sqlite3.connect(catalog_path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+        connection.row_factory = sqlite3.Row
         rows = connection.execute("SELECT standard_id, raw_json FROM standards_registry ORDER BY standard_id").fetchall()
-    return hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+    registry_rows(rows)
+    if catalog_file_hash(catalog_path) != before_hash:
+        from lv_assist.i18n import tr
+
+        raise ValueError(tr("audit_catalog_unstable"))
+    raw_rows = [(row['standard_id'], row['raw_json']) for row in rows]
+    return hashlib.sha256(json.dumps(raw_rows, separators=(",", ":")).encode()).hexdigest()
 
 
 def create_run_metadata(project: BaseModel, feeders: Sequence[BaseModel], catalog_path: Path,

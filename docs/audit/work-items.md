@@ -564,3 +564,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** inherited migration/rating assumptions, manufacturer and
   Ics/duty/backup applicability, immutable snapshots and independent review remain
   open. P0 OPEN; numerical structure alone cannot approve a protection rating.
+
+## Review unit 34 — Registry payload, report lookup and run identity gate
+
+- **Observed:** unchecked JSON/dictionary overwrites, independent report reads,
+  silent invalid-entry skips and content hashing without payload validation.
+- **Expected:** supported registry shapes remain usable; malformed or duplicate
+  sources cannot enter reports or completed engine metadata without a clear error.
+- **Implementation:** shared row/shape/text/duplicate validator, cached report
+  lookup with revalidation, validated raw-row hashing with file identity guards,
+  full CLI registry payload scope/counts and explicit connection closure.
+- **Tests:** 54 new parser/cache/hash/CLI/engine/three-language GUI/sidecar cases;
+  171 targeted regressions. Existing synthetic fixture gains an explicit code;
+  no original assertions are removed and the packaged database remains unchanged.
+- **Evidence:** [registry payload policy](../engineering/standards_registry_data_gate_policy.md).
+- **Remaining risks:** normalized SQL fields, source/edition/applicability and
+  reference completeness, immutable snapshots and electrical review remain open.
+  Structural success cannot validate a source or close P0.
