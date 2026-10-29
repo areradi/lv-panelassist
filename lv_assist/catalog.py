@@ -38,7 +38,7 @@ class CatalogRepository:
     def __init__(self, db_path: Path = DB_PATH) -> None:
         self.db_path = _ensure_database(db_path)
         self._devices_cache: Optional[List[CatalogDevice]] = None
-        self._devices_file_hash: str | None = None
+        self._cache_file_hash: str | None = catalog_file_hash(self.db_path)
         self._rules_cache: Optional[List[SelectivityRuleRecord]] = None
         self._curves_cache: Optional[Dict[str, dict]] = None
         self._standards_cache: Optional[Dict[str, Dict[str, Any]]] = None
@@ -59,15 +59,31 @@ class CatalogRepository:
             rows = conn.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices").fetchall()
             return device_rows(rows)
 
+    def _invalidate_caches(self):
+        self._devices_cache = self._rules_cache = self._curves_cache = None
+        self._standards_cache = self._iz0_cache = self._pe_cache = None
+        self._cache_file_hash = None
+
+    def _cached(self, attribute, load):
+        try:
+            current_hash = catalog_file_hash(self.db_path)
+            if current_hash != self._cache_file_hash:
+                self._invalidate_caches()
+                self._cache_file_hash = current_hash
+            value = getattr(self, attribute)
+            if value is None:
+                value = load()
+            if catalog_file_hash(self.db_path) != current_hash:
+                raise CatalogValidationError(tr("audit_catalog_unstable"))
+            setattr(self, attribute, value)
+            return value
+        except Exception:
+            self._invalidate_caches()
+            raise
+
     @property
     def devices(self) -> List[CatalogDevice]:
-        current_hash = catalog_file_hash(self.db_path)
-        if self._devices_cache is None or self._devices_file_hash != current_hash:
-            self._devices_cache = self.load_devices()
-            self._devices_file_hash = current_hash
-            self._rules_cache = self._curves_cache = self._standards_cache = None
-            self._iz0_cache = self._pe_cache = None
-        return self._devices_cache
+        return self._cached("_devices_cache", self.load_devices)
 
     # ------------------------------------------------------------------
     # ۲. قدرت قطع وابسته به ولتاژ پروژه (رفع F-006)
@@ -188,13 +204,13 @@ class CatalogRepository:
 
     def get_pe_standard_sections(self) -> List[float]:
         """فهرست مقاطع استاندارد PE از دیتابیس (بدون سقف مصنوعی)."""
-        if self._pe_cache is None:
+        def load():
             with self._connect() as conn:
                 rows = conn.execute(
                     "SELECT section_mm2 FROM pe_standard_sections ORDER BY section_mm2 ASC"
                 ).fetchall()
-                self._pe_cache = [float(r["section_mm2"]) for r in rows]
-        return self._pe_cache
+                return [float(r["section_mm2"]) for r in rows]
+        return self._cached("_pe_cache", load)
 
     def get_standard_pe_section(self, required_pe_mm2: float) -> Optional[float]:
         """اولین مقطع استاندارد PE بزرگ‌تر یا مساوی مقدار لازم؛ اگر فراتر از جدول باشد None."""
@@ -222,25 +238,23 @@ class CatalogRepository:
 
     @property
     def selectivity_rules(self) -> List[SelectivityRuleRecord]:
-        if self._rules_cache is None:
-            self._rules_cache = self.load_selectivity_rules()
-        return self._rules_cache
+        return self._cached("_rules_cache", self.load_selectivity_rules)
 
     @property
     def trip_curves(self) -> Dict[str, dict]:
-        if self._curves_cache is None:
+        def load():
             with self._connect() as conn:
                 rows = conn.execute("SELECT curve_id, raw_json FROM trip_curves").fetchall()
-                self._curves_cache = curve_rows(rows)
-        return self._curves_cache
+                return curve_rows(rows)
+        return self._cached("_curves_cache", load)
 
     @property
     def standards(self) -> Dict[str, Dict[str, Any]]:
-        if self._standards_cache is None:
+        def load():
             with self._connect() as conn:
                 rows = conn.execute("SELECT standard_id, raw_json FROM standards_registry").fetchall()
-                self._standards_cache = {r["standard_id"]: json.loads(r["raw_json"]) for r in rows}
-        return self._standards_cache
+                return {r["standard_id"]: json.loads(r["raw_json"]) for r in rows}
+        return self._cached("_standards_cache", load)
 
     # ------------------------------------------------------------------
     # ۷. API سازگار با سایر ماژول‌ها (static)

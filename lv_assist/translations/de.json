@@ -905,5 +905,6 @@
   "verification_write_failed": "Die vorläufige Design-Checkliste konnte nicht gespeichert werden. Die bisherige Zieldatei blieb erhalten. Speicherplatz, Schreibrechte und eine mögliche Dateisperre prüfen.",
   "audit_text_invalid": "Der Text enthält das nicht unterstützte Zeichen {code}. Dieses Zeichen vor Berechnung oder Export entfernen.",
   "audit_curve_invalid": "Auslösekurve {name}: Feld {field} fehlt oder ist ungültig. Katalogdatensatz vor der Berechnung prüfen.",
-  "tcc_curve_missing": "Kennlinie nicht verfügbar"
+  "tcc_curve_missing": "Kennlinie nicht verfügbar",
+  "audit_catalog_unstable": "Der Katalog änderte sich beim Lesen oder enthält Journal-/WAL-Daten außerhalb der Hauptdatei. Einen geschlossenen, konsistenten Katalogstand verwenden und neu berechnen; keine automatische Reparatur durchgeführt."
 }

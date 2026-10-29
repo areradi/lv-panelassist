@@ -50,6 +50,13 @@ def result_fingerprint(outputs: Sequence[BaseModel], summary: BaseModel,
 
 
 def catalog_file_hash(catalog_path: Path) -> str:
+    # A main-file hash cannot identify uncheckpointed SQLite sidecar contents.
+    from lv_assist.i18n import tr
+
+    for suffix in ("-wal", "-journal"):
+        sidecar = Path(str(catalog_path) + suffix)
+        if sidecar.exists() and sidecar.stat().st_size:
+            raise ValueError(tr("audit_catalog_unstable"))
     return hashlib.sha256(catalog_path.read_bytes()).hexdigest()
 
 

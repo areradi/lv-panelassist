@@ -488,3 +488,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [lookup policy](../engineering/explicit_trip_curve_lookup_policy.md).
 - **Remaining risks:** reviewed ranges/tolerances, legacy known-curve clamping and
   endpoint behavior, source/setting applicability and engineering sign-off stay open.
+
+## Review unit 29 — Shared catalog-cache content epochs
+
+- **Observed:** only device reads refreshed auxiliary caches; standalone curve,
+  rule/standard/PE reads could retain old data after an external database edit.
+- **Expected:** every cached accessor detects a new file version or fails clearly;
+  failed reloads cannot silently fall back to old rowsets.
+- **Implementation:** shared hash epoch/pre/post load checks, whole-cache
+  invalidation on change/failure and conservative nonempty WAL/journal rejection
+  in catalog identity hashing, with localized guidance and no repair.
+- **Tests:** 19 copied-DB/cache/loader/sidecar/actual-engine cases; 125 targeted
+  regressions. No original database or sidecar is modified by tests.
+- **Evidence:** [cache epoch policy](../engineering/catalog_cache_epoch_policy.md).
+- **Remaining risks:** immutable transactions, races/retained references, full
+  auxiliary validation and independent engineering verification remain open.
