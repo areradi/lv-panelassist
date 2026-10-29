@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from contextlib import closing
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,8 @@ from typing import Any
 from lv_assist.models import CatalogDevice, SelectivityRuleRecord
 from lv_assist.trip_curve_validation import validated_curve
 from lv_assist.i18n import tr
+from lv_assist.rating_table_validation import validate_rating_inventory
+from lv_assist.run_metadata import catalog_file_hash
 
 
 class CatalogValidationError(ValueError):
@@ -90,17 +93,27 @@ def validated_curves(curves):
 
 
 def validate_catalog_database(path: Path) -> dict[str, Any]:
-    """Read-only structural scope: device identities/numbers and selectivity rows."""
+    """Read-only structural checks; scope and file identity accompany the result."""
     if not path.is_file():
         raise FileNotFoundError(f"Catalog database is missing: {path}")
-    with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as connection:
+    before_hash = catalog_file_hash(path)
+    with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
         connection.row_factory = sqlite3.Row
-        if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-            raise CatalogValidationError("Catalog integrity_check failed")
+        integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        if integrity != "ok":
+            raise CatalogValidationError("Catalog integrity_check failed: " + integrity)
         devices = device_rows(connection.execute("SELECT device_id, raw_json, data_quality FROM catalog_devices"))
         rules = validated_rules(SelectivityRuleRecord.model_validate(catalog_object(row[0]))
                                 for row in connection.execute("SELECT raw_json FROM selectivity_rules"))
         curves = curve_rows(connection.execute("SELECT curve_id, raw_json FROM trip_curves"))
+        ratings = validate_rating_inventory(
+            connection.execute("SELECT * FROM cable_ampacity_reference"),
+            connection.execute("SELECT * FROM device_thermal_derating"),
+            {device.part_number for device in devices},
+            [row[0] for row in connection.execute("SELECT standard_id FROM standards_registry")])
+    if catalog_file_hash(path) != before_hash:
+        raise CatalogValidationError(tr("audit_catalog_unstable"))
     return {"devices": len(devices), "selectivity_rules": len(rules), "trip_curves": len(curves),
-            "structural_scope": "device identity/numbers, selectivity conditions and trip curve structure",
+            **ratings, "catalog_hash": before_hash,
+            "structural_scope": "device identity/numbers, selectivity conditions, trip curve structure and ampacity/derating inventory",
             "engineering_verification": "NOT_VERIFIED"}

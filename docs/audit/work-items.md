@@ -517,3 +517,18 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Evidence:** [rating domain policy](../engineering/auxiliary_rating_domain_policy.md).
 - **Remaining risks:** existing proposal bins/device fallbacks, full auxiliary CLI
   coverage, reviewed sources and independent engineering verification stay open.
+
+## Review unit 31 — Read-only ampacity/thermal inventory CLI
+
+- **Observed:** CLI success did not inspect rating tables outside current-project
+  lookups, including unused malformed rows and dangling references.
+- **Expected:** complete rating inventory is structurally checked before use;
+  invalid catalogs exit nonzero, remain unchanged and are never certified.
+- **Implementation:** shared grouped row validation/reference checks, inventory
+  counts, pre/post file identity, explicit read-only connection closure and richer
+  SQLite integrity diagnostics. Minimal fixtures add empty required tables.
+- **Tests:** 31 helper/database/actual-CLI/version/sidecar cases; 132 targeted
+  regressions, with prior fixture assertions preserved.
+- **Evidence:** [rating CLI policy](../engineering/rating_catalog_cli_policy.md).
+- **Remaining risks:** complete auxiliary schema, reference authenticity, immutable
+  transactions and independent engineering verification remain open. P0 stays OPEN.
