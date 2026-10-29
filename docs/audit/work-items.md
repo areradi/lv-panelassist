@@ -650,3 +650,20 @@ uses Observed / Expected / Implementation / Tests / Evidence / Remaining risks.
 - **Remaining risks:** other normalized/source fields, broader model coercion,
   actual duty/temperature/voltage/thermal applicability, immutable contexts and
   independent review remain open. Consistency alone cannot close P0.
+
+## Review unit 39 — Device airflow/kvar/IP/pole metadata gate
+
+- **Observed:** auxiliary duplicate fields were unchecked; IP numeric metadata
+  could contradict the declaration and omitted source IP inherited model IP20.
+- **Expected:** stored metadata agrees before use, invalid representations fail,
+  unknown source IP remains unknown and matching metadata cannot certify a device.
+- **Implementation:** extended shared device query/numeric domains, native pole
+  metadata linkage, literal/derived IP consistency and explicit unknown IP when
+  loading absent declarations. Existing IP compatibility restrictions remain.
+- **Tests:** 65 new domain/row/cache/actual-CLI/engine/three-language GUI cases;
+  292 targeted regressions. Old fixtures gain matching fields; all assertions stay
+  active and the package database remains unchanged.
+- **Evidence:** [device auxiliary row policy](../engineering/device_aux_row_gate_policy.md).
+- **Remaining risks:** datasheet/FK provenance, physical pole/fan/capacitor/IP
+  applicability, broader model coercion, immutable contexts and independent review
+  remain open. No manufacturer/assembly approval or P0 closure is implied.

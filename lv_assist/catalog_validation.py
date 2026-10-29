@@ -14,6 +14,7 @@ from lv_assist.rating_table_validation import identity, invalid, number, pe_sect
 from lv_assist.run_metadata import catalog_file_hash
 from lv_assist.registry_validation import registry_entries, registry_rows
 from lv_assist.text_validation import require_exportable_text
+from lv_assist.device_aux_validation import validate_device_aux
 
 SELECTIVITY_COLUMNS = ('rule_id, upstream_series, downstream_series, upstream_in_min_a, '
                        'upstream_in_max_a, downstream_in_max_a, min_ratio, limit_ka, '
@@ -22,7 +23,7 @@ TRIP_CURVE_COLUMNS = ('curve_id, curve_name, device_category, inst_min_mult, ins
                       'is_approximate, allow_for_verification, raw_json')
 DEVICE_COLUMNS = ('device_id, category, manufacturer, series, model, in_a, icu_ka_400v, '
                   'power_loss_w, derating_40c, derating_50c, width_mm, height_mm, depth_mm, '
-                  'data_quality, raw_json')
+                  'airflow_m3h, kvar_rating, ip_rating, ip_numeric, poles, data_quality, raw_json')
 
 
 class CatalogValidationError(ValueError):
@@ -69,6 +70,8 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
         if 'data_quality' in payload and payload['data_quality'] != row['data_quality']:
             raise CatalogValidationError('catalog_devices data_quality SQL/JSON mismatch')
         payload["data_quality"] = row["data_quality"]
+        # An omitted source declaration is unknown, not the generic model IP20.
+        payload.setdefault('ip_rating', '')
         device = CatalogDevice.model_validate(payload)
         if device.part_number != row["device_id"]:
             raise CatalogValidationError("Catalog row device_id does not match its part_number")
@@ -84,7 +87,8 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
                     ('in_a', 'rated_current_in_a', True), ('icu_ka_400v', 'icu_ka_400v', True),
                     ('power_loss_w', 'power_loss_w', False), ('derating_40c', 'derating_40c', False),
                     ('derating_50c', 'derating_50c', False), ('width_mm', 'width_mm', True),
-                    ('height_mm', 'height_mm', True), ('depth_mm', 'depth_mm', True)):
+                    ('height_mm', 'height_mm', True), ('depth_mm', 'depth_mm', True),
+                    ('airflow_m3h', 'airflow_m3h', True), ('kvar_rating', 'cap_kvar_400v', True)):
                 # Check original JSON values as well as the normalized model.
                 if field in payload:
                     number(payload[field], 'catalog_devices', field)
@@ -94,6 +98,7 @@ def device_rows(rows: Iterable[Any]) -> list[CatalogDevice]:
                 value = number(row[sql_field], 'catalog_devices', sql_field)
                 if value < 0 or value != expected:
                     invalid('catalog_devices', sql_field + ' SQL/JSON mismatch')
+            validate_device_aux(row, payload)
         except ValueError as error:
             raise CatalogValidationError(str(error)) from error
         devices.append(device)
@@ -267,5 +272,5 @@ def validate_catalog_database(path: Path) -> dict[str, Any]:
             "standards_registry_rows": len(standards),
             "localized_standard_entries": len(registry_entries(standards)),
             "trip_curve_policy": "APPROXIMATE_ONLY",
-            "structural_scope": "device core SQL/JSON identities/numbers/quality consistency, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
+            "structural_scope": "device core SQL/JSON identities/numbers/quality consistency plus airflow/kvar/IP/poles, selectivity SQL/JSON conditions/references, trip curve SQL/JSON/approximation policy, ampacity/derating inventory, PE sections, breaking capacities and standards registry payloads",
             "engineering_verification": "NOT_VERIFIED"}

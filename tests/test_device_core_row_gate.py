@@ -37,6 +37,7 @@ def row(payload=None, **changes):
     return {'device_id': 'TEST', 'category': 'MCB', 'manufacturer': 'SYNTHETIC', 'series': 'SERIES',
             'model': 'TEST', 'in_a': 100, 'icu_ka_400v': 10, 'power_loss_w': 5,
             'derating_40c': 1, 'derating_50c': 1, 'width_mm': 100, 'height_mm': 200, 'depth_mm': 50,
+            'airflow_m3h': 0, 'kvar_rating': 0, 'ip_rating': 'IP20', 'ip_numeric': 20, 'poles': None,
             'data_quality': 'ESTIMATED', 'raw_json': json.dumps(BASE if payload is None else payload), **changes}
 
 

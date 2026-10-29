@@ -29,7 +29,7 @@ def device(**changes):
 def database(tmp_path, *, identifier="TEST-PART", raw=None):
     path = tmp_path / "catalog.db"
     with sqlite3.connect(path) as connection:
-        connection.execute("CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT, category TEXT, manufacturer TEXT, series TEXT, model TEXT, in_a REAL, icu_ka_400v REAL, power_loss_w REAL, derating_40c REAL, derating_50c REAL, width_mm REAL, height_mm REAL, depth_mm REAL)")
+        connection.execute("CREATE TABLE catalog_devices(device_id TEXT, raw_json TEXT, data_quality TEXT, category TEXT, manufacturer TEXT, series TEXT, model TEXT, in_a REAL, icu_ka_400v REAL, power_loss_w REAL, derating_40c REAL, derating_50c REAL, width_mm REAL, height_mm REAL, depth_mm REAL, airflow_m3h REAL, kvar_rating REAL, ip_rating TEXT, ip_numeric INTEGER, poles INTEGER)")
         connection.execute("CREATE TABLE selectivity_rules(rule_id INTEGER, upstream_series TEXT, downstream_series TEXT, upstream_in_min_a REAL, upstream_in_max_a REAL, downstream_in_max_a REAL, min_ratio REAL, limit_ka REAL, selectivity_type TEXT, voltage_v REAL, is_verified_manufacturer_rule INTEGER, raw_json TEXT)")
         connection.execute("CREATE TABLE trip_curves(curve_id TEXT, curve_name TEXT, device_category TEXT, inst_min_mult REAL, inst_max_mult REAL, is_approximate INTEGER, allow_for_verification INTEGER, raw_json TEXT)")
         connection.execute("CREATE TABLE standards_registry(standard_id TEXT, raw_json TEXT)")
@@ -38,7 +38,7 @@ def database(tmp_path, *, identifier="TEST-PART", raw=None):
         connection.execute("CREATE TABLE pe_standard_sections(section_mm2 REAL)")
         connection.execute("CREATE TABLE device_breaking_capacities(device_id TEXT, voltage_v REAL, icu_ka REAL, ics_ka REAL)")
         payload = raw if raw is not None else device().model_dump_json()
-        connection.execute("INSERT INTO catalog_devices VALUES (?, ?, 'ESTIMATED', 'MCB', 'TEST', 'TEST', 'TEST-PART', 0, 0, 0, 1, 1, 0, 0, 0)", (identifier, payload))
+        connection.execute("INSERT INTO catalog_devices VALUES (?, ?, 'ESTIMATED', 'MCB', 'TEST', 'TEST', 'TEST-PART', 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 'IP20', 20, NULL)", (identifier, payload))
     return path
 
 
